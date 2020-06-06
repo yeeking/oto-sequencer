@@ -3,8 +3,8 @@
 
 #include "SimpleClock.h"
 #include "Sequencer.h"
-#include "grovepi.h"
-#include "grove_rgb_lcd.h"
+#include "../lib/grovepi.h"
+#include "../lib/grove_rgb_lcd.h"
 #include "GroveUtils.h"
 
 /** utilities to make use of the Grove LCD RGB widget */

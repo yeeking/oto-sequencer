@@ -9,8 +9,8 @@ enum class JoystickEvent{up, down, left, right, click};
  */
 
 #include "Sequencer.h"
-#include "grovepi.h
-#include "grove_rgb_lcd.h"
+#include "../lib/grovepi.h"
+#include "../lib/grove_rgb_lcd.h"
 
 class GroveJoystick
 {
