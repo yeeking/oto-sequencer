@@ -1,6 +1,8 @@
 #include "Sequencer.h"
 #include <iostream>
 #include "RtMidiUtils.h"
+#include "RapidLibUtils.h"
+#include "../lib/rapidLib.h"
 
 bool testTick()
 {
@@ -272,6 +274,17 @@ bool testFollowEditCursorDownLimit()
   }
   else return true;
 }
+bool testNeuralNetwork()
+
+{
+  rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
+  std::vector<double> output = network.run({0.1, 0.2});
+  // verify it is not returning zeros
+  if (output[0] == 0) return false;
+  if (output[0] > 127) return false;
+  std::cout << output[0];
+  return true;
+}
 
 void log(std::string test, bool res)
 {
@@ -280,6 +293,7 @@ void log(std::string test, bool res)
   if (!res) msg = " failed.";
   std::cout << test << msg << std::endl;
 }
+
 
 int main()
 {
@@ -304,12 +318,6 @@ int main()
 //log("testFollowEditCursorRightLimit", testFollowEditCursorRightLimit());
 //log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
 
-PiRtMidi rtmidi;
-rtmidi.chooseMidiPort();
-rtmidi.playNote(0, 64, 64, 500);
-//rtmidi.playNote(0, 64, 64, 500);
-
-//log("testFollowEditCursorDownLimit", testFollowEditCursorDownLimit());
-  
+  log("testNeuralNetwork", testNeuralNetwork());
 
 }

@@ -6,14 +6,8 @@
 #include "../lib/grovepi.h"
 #include "../lib/grove_rgb_lcd.h"
 #include "GroveUtils.h"
-
-/** utilities to make use of the Grove LCD RGB widget */
-// class GroveLCD{
-//     public:
-
-// };
-
-
+#include "RapidLibUtils.h"
+#include "../lib/rapidLib.h"
 
 int main()
 {
@@ -21,14 +15,15 @@ int main()
     SequencerEditor seqEditor{&seqr};
     SimpleClock clock{};
     GrovePi::LCD lcd{};
+    // this will map joystick x,y to 16 sequences
+    rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
 
     clock.setCallback([&seqr, &lcd, &seqEditor](){
         seqr.tick();
             std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
             std::cout << disp << std::endl;
-            lcd.setText(disp.c_str());
+          //  lcd.setText(disp.c_str());
         });
-    clock.start(1000);
     
     try
 	{
@@ -36,15 +31,32 @@ int main()
 		lcd.connect();
 		// set text and RGB color on the LCD
 		lcd.setText("Loading sequencer....");
-		lcd.setRGB(255, 0, 0);
+		lcd.setRGB(0, 255, 0);
     }
     catch(GrovePi::I2CError &error)
 	{
 		printf(error.detail());
 		return -1;
 	}
+
+    GroveJoystickXY joy{
+        [&network](float x, float y)
+        {
+            std::cout << "joy x: " << x << " y: " << y << std::endl;
+            std::vector<double> input = {x, y};
+            std::vector<double> output = network.run(input);
+            // now we have the new sequence... what to 
+            // do withg it?
+            // pass it into the sequencer of course
+            
+        }
+    };
+
+    //clock.start(1000);
     
-    GroveJoystick joy([&seqEditor, &seqr, &lcd](JoystickEvent event){
+
+/*    
+    GroveJoystickDirection joy([&seqEditor, &seqr, &lcd](JoystickEvent event){
         switch (event)
         {
             case JoystickEvent::up:
@@ -72,7 +84,7 @@ int main()
         std::cout << disp << std::endl;
         lcd.setText(disp.c_str());		
     });
-
+*/
     int x;
     std::cin >> x;
 }
