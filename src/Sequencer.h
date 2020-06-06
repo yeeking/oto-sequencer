@@ -1,6 +1,7 @@
 /**
  * Sequencer stores a set of sequences each of which stores a step
- * 
+ * By Matthew Yee-King 2020
+* Porbably should separate into header and cpp at some point
  */
 
 #pragma once 

@@ -1,106 +1,78 @@
-/*
-  ==============================================================================
+#include <functional>
+#include <iostream>
 
-    This file was auto-generated!
+#include "SimpleClock.h"
+#include "Sequencer.h"
+#include "grovepi.h"
+#include "grove_rgb_lcd.h"
+#include "GroveUtils.h"
 
-    It contains the basic startup code for a JUCE application.
+/** utilities to make use of the Grove LCD RGB widget */
+// class GroveLCD{
+//     public:
 
-  ==============================================================================
-*/
+// };
 
-#include "../JuceLibraryCode/JuceHeader.h"
-#include "MainComponent.h"
 
-//==============================================================================
-class JuceSequencerApplication  : public JUCEApplication
+
+int main()
 {
-public:
-    //==============================================================================
-    JuceSequencerApplication() {}
+    Sequencer seqr;
+    SequencerEditor seqEditor{&seqr};
+    SimpleClock clock{};
+    GrovePi::LCD lcd{};
 
-    const String getApplicationName() override       { return ProjectInfo::projectName; }
-    const String getApplicationVersion() override    { return ProjectInfo::versionString; }
-    bool moreThanOneInstanceAllowed() override       { return true; }
-
-    //==============================================================================
-    void initialise (const String& commandLine) override
-    {
-        // This method is where you should put your application's initialisation code..
-
-        mainWindow.reset (new MainWindow (getApplicationName()));
+    clock.setCallback([&seqr, &lcd, &seqEditor](){
+        seqr.tick();
+            std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
+            std::cout << disp << std::endl;
+            lcd.setText(disp.c_str());
+        });
+    clock.start(1000);
+    
+    try
+	{
+		// connect to the i2c-line
+		lcd.connect();
+		// set text and RGB color on the LCD
+		lcd.setText("Loading sequencer....");
+		lcd.setRGB(255, 0, 0);
     }
-
-    void shutdown() override
-    {
-        // Add your application's shutdown code here..
-
-        mainWindow = nullptr; // (deletes our window)
-    }
-
-    //==============================================================================
-    void systemRequestedQuit() override
-    {
-        // This is called when the app is being asked to quit: you can ignore this
-        // request and let the app carry on running, or call quit() to allow the app to close.
-        quit();
-    }
-
-    void anotherInstanceStarted (const String& commandLine) override
-    {
-        // When another instance of the app is launched while this one is running,
-        // this method is invoked, and the commandLine parameter tells you what
-        // the other instance's command-line arguments were.
-    }
-
-    //==============================================================================
-    /*
-        This class implements the desktop window that contains an instance of
-        our MainComponent class.
-    */
-    class MainWindow    : public DocumentWindow
-    {
-    public:
-        MainWindow (String name)  : DocumentWindow (name,
-                                                    Desktop::getInstance().getDefaultLookAndFeel()
-                                                                          .findColour (ResizableWindow::backgroundColourId),
-                                                    DocumentWindow::allButtons)
+    catch(GrovePi::I2CError &error)
+	{
+		printf(error.detail());
+		return -1;
+	}
+    
+    GroveJoystick joy([&seqEditor, &seqr, &lcd](JoystickEvent event){
+        switch (event)
         {
-            setUsingNativeTitleBar (true);
-            setContentOwned (new MainComponent(), true);
-
-           #if JUCE_IOS || JUCE_ANDROID
-            setFullScreen (true);
-           #else
-            setResizable (true, true);
-            centreWithSize (getWidth(), getHeight());
-           #endif
-
-            setVisible (true);
+            case JoystickEvent::up:
+                //std::cout << "Received jpystick event up" << std::endl;
+                seqEditor.moveCursorUp();
+                break;
+            case JoystickEvent::down:
+                //std::cout << "Received jpystick event down" << std::endl;
+                seqEditor.moveCursorDown();
+                break;
+            case JoystickEvent::left:
+                //std::cout << "Received jpystick event left" << std::endl;
+                seqEditor.moveCursorLeft();              
+                break;
+            case JoystickEvent::right:
+                //std::cout << "Received jpystick event right " << std::endl;
+                seqEditor.moveCursorRight();
+                break;
+            case JoystickEvent::click:
+                std::cout << "Received jpystick event click " << std::endl;
+                break;   
         }
+        // now update the display
+        std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
+        std::cout << disp << std::endl;
+        lcd.setText(disp.c_str());		
+    });
 
-        void closeButtonPressed() override
-        {
-            // This is called when the user tries to close this window. Here, we'll just
-            // ask the app to quit when this happens, but you can change this to do
-            // whatever you need.
-            JUCEApplication::getInstance()->systemRequestedQuit();
-        }
-
-        /* Note: Be careful if you override any DocumentWindow methods - the base
-           class uses a lot of them, so by overriding you might break its functionality.
-           It's best to do all your work in your content component instead, but if
-           you really have to override any DocumentWindow methods, make sure your
-           subclass also calls the superclass's method.
-        */
-
-    private:
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)
-    };
-
-private:
-    std::unique_ptr<MainWindow> mainWindow;
-};
-
-//==============================================================================
-// This macro generates the main() routine that launches the app.
-START_JUCE_APPLICATION (JuceSequencerApplication)
+    int x;
+    std::cin >> x;
+}
