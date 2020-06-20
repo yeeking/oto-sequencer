@@ -18,19 +18,19 @@ class Step{
     {
       // for (auto i=0;i<16;i++)
       // {
-      //   data.push_back(0.0f);
+      //   data.push_back(0.0);
       // }
-      data.push_back(0.0f);
+      data.push_back(0.0);
     }
-    std::vector<float> getData() const
+    std::vector<double> getData() const
     {
       return data; 
     }
-    void setData(std::vector<float> data)
+    void setData(std::vector<double> data)
     {
       this->data = data; 
     }
-    void setCallback(std::function<void(std::vector<float>)> callback)
+    void setCallback(std::function<void(std::vector<double>)> callback)
     {
       this->stepCallback = callback;
     }
@@ -39,8 +39,8 @@ class Step{
       stepCallback(data);
     }
   private: 
-    std::vector<float> data;
-    std::function<void(std::vector<float>)> stepCallback;
+    std::vector<double> data;
+    std::function<void(std::vector<double>)> stepCallback;
 };
 
 
@@ -51,7 +51,7 @@ class Sequence{
       for (auto i=0;i<seqLength;i++)
       {
         Step s;
-        s.setCallback([i](std::vector<float> data){
+        s.setCallback([i](std::vector<double> data){
           std::cout << "step " << i << " triggered " << std::endl;
         });
         steps.push_back(s);
@@ -75,11 +75,11 @@ class Sequence{
       return true; 
     }
 
-    std::vector<float> getStepData(int step) const
+    std::vector<double> getStepData(int step) const
     {
       return steps[step].getData();
     }
-    std::vector<float> getCurrentStepData() const
+    std::vector<double> getCurrentStepData() const
     {
       return steps[currentStep].getData();
     }
@@ -98,18 +98,18 @@ class Sequence{
       currentLength = length;
     }
 
-    void setStepData(unsigned int step, std::vector<float> data)
+    void setStepData(unsigned int step, std::vector<double> data)
     {
       steps[step].setData(data);
     }
     void setStepCallback(unsigned int step, 
-                      std::function<void (std::vector<float>)> callback)
+                      std::function<void (std::vector<double>)> callback)
     {
       steps[step].setCallback(callback);
     }
     std::string stepToString(int step) const
     {
-      std::vector<float> data = getStepData(step);
+      std::vector<double> data = getStepData(step);
       return std::to_string(data[0]);
     }
 
@@ -165,7 +165,7 @@ class Sequencer  {
         sequences[sequence].setLength(length);
       }
       /** set a callback for all steps in a sequence*/
-      void setSequenceCallback(unsigned int sequence, std::function<void (std::vector<float>)> callback)
+      void setSequenceCallback(unsigned int sequence, std::function<void (std::vector<double>)> callback)
       {
         for (int step = 0; step<sequences[sequence].howManySteps(); ++step)
         {
@@ -174,27 +174,27 @@ class Sequencer  {
       }
 
       /** set a lambda to call when a particular step in a particular sequence happens */
-      void setStepCallback(unsigned int sequence, unsigned int step, std::function<void (std::vector<float>)> callback)
+      void setStepCallback(unsigned int sequence, unsigned int step, std::function<void (std::vector<double>)> callback)
       {
          sequences[sequence].setStepCallback(step, callback); 
       }
 
       /** update the data stored at a step in the sequencer */
-      void setStepData(unsigned int sequence, unsigned int step, std::vector<float> data)
+      void setStepData(unsigned int sequence, unsigned int step, std::vector<double> data)
       {
         if (!assertSeqAndStep(sequence, step)) return;
         sequences[sequence].setStepData(step, data);
       }
       /** retrieve the data for the current step */
-      std::vector<float> getCurrentStepData(int sequence) const
+      std::vector<double> getCurrentStepData(int sequence) const
       {
-        if (sequence >= sequences.size() || sequence < 0) return std::vector<float>{};
+        if (sequence >= sequences.size() || sequence < 0) return std::vector<double>{};
         return sequences[sequence].getCurrentStepData();
       }
       /** retrieve the data for a specific step */
-      std::vector<float> getStepData(int sequence, int step) const
+      std::vector<double> getStepData(int sequence, int step) const
       {
-        if (!assertSeqAndStep(sequence, step)) return std::vector<float>{};
+        if (!assertSeqAndStep(sequence, step)) return std::vector<double>{};
         return sequences[sequence].getStepData(step);
       }
       
@@ -315,6 +315,39 @@ class SequencerEditor {
   {
     return currentStepIndex;
   }
+  /** move the cursor to a specific sequence*/
+  void setCurrentSequence(int seq)
+  {
+    currentSequence = seq;
+  }
+  /** move the cursor to a specific step*/
+  void setCurrentStep(int step)
+  {
+    currentStep = step;
+  }
+  /** write the sent data to the current step and sequence */
+  void writeStepData(std::vector<double> data)
+  {
+    sequencer->setStepData(currentSequence, currentSequence, data);
+  }
+  /** write the sent data to the sequence at 'currentSequence' - 1D data version for simple one value per step -style sequences*/
+  void writeSequenceData(std::vector<double> data)
+  {
+    std::vector<double> stepData = {0};
+    for (int i=0; i<sequencer->howManySteps(currentSequence); ++i)
+    {
+      stepData[0] = data[i % data.size()]; // wrap it around :) 
+      sequencer->setStepData(currentSequence, currentSequence, stepData);
+    }
+  }
+  /** write the sent data to a sequence - 1D data version */
+  void writeSequenceData(std::vector<std::vector<double>> data)
+  {
+    for (int i=0; i<sequencer->howManySteps(currentSequence); ++i)
+    {
+      sequencer->setStepData(currentSequence, currentSequence, data[i % data.size()]); // wrap around
+    }
+  }
 
   private:
     Sequencer* sequencer; 
@@ -326,7 +359,7 @@ class SequencerEditor {
     int currentStepIndex;
     
     SequencerEditorMode editMode;
-    float stepIncrement;    
+    double stepIncrement;    
 };
 
 /** Provides functions to 

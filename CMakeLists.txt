@@ -1,7 +1,11 @@
+SET(GCC_COVERAGE_COMPILE_FLAGS "-Wno-psabi")
+
 cmake_minimum_required (VERSION 3.00)
 
 # Define the project
 project(oto-sequencer C CXX)
+
+add_definitions(${GCC_COVERAGE_COMPILE_FLAGS})
 
 # this adds all h and cpp files from lib folder to the 
 # build
@@ -20,5 +24,9 @@ add_library(libs ${LIB_DIR})
 
 # build the executable
 add_executable(oto-sequencer src/Main.cpp)
-# link the main exutable to the rapidlib library and pthreads
+add_executable(testit src/unit_tests.cpp)
+
+# link the main executable to the rapidlib library and pthreads
 target_link_libraries(oto-sequencer libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(testit libs ${CMAKE_THREAD_LIBS_INIT})
+

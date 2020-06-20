@@ -1,13 +1,14 @@
 #include <functional>
 #include <iostream>
 
-#include "SimpleClock.h"
-#include "Sequencer.h"
 #include "../lib/grovepi.h"
 #include "../lib/grove_rgb_lcd.h"
+#include "../lib/rapidLib.h"
+
+#include "SimpleClock.h"
+#include "Sequencer.h"
 #include "GroveUtils.h"
 #include "RapidLibUtils.h"
-#include "../lib/rapidLib.h"
 
 int main()
 {
@@ -24,7 +25,6 @@ int main()
             std::cout << disp << std::endl;
           //  lcd.setText(disp.c_str());
         });
-    
     try
 	{
 		// connect to the i2c-line
@@ -40,7 +40,7 @@ int main()
 	}
 
     GroveJoystickXY joy{
-        [&network](float x, float y)
+        [&network, &seqEditor](float x, float y)
         {
             std::cout << "joy x: " << x << " y: " << y << std::endl;
             std::vector<double> input = {x, y};
@@ -48,7 +48,9 @@ int main()
             // now we have the new sequence... what to 
             // do withg it?
             // pass it into the sequencer of course
-            
+            seqEditor.setCurrentSequence(0);
+            seqEditor.setCurrentStep(0);
+            seqEditor.writeSequenceData(output);    
         }
     };
 

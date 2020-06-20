@@ -15,8 +15,8 @@ bool testTick()
 bool testUpdate()
 {
   Sequence seq{};
-  seq.setStepData(0, std::vector<float>{0.1f});
-  std::vector<float> data = seq.getStepData(0);
+  seq.setStepData(0, std::vector<double>{0.1f});
+  std::vector<double> data = seq.getStepData(0);
   if (data[0] == 0.1f) return true;
   return false;
 }
@@ -24,8 +24,8 @@ bool testUpdate()
 bool testUpdate2()
 {
   Sequence seq{};
-  seq.setStepData(1, std::vector<float>{0.5f});
-  std::vector<float> data = seq.getStepData(1);
+  seq.setStepData(1, std::vector<double>{0.5f});
+  std::vector<double> data = seq.getStepData(1);
   if (data[0] == 0.5f) return true;
   return false;
 }
@@ -42,10 +42,10 @@ bool testTick2()
 {
   // set a value and check we get it back after a tick
   Sequencer seqr;
-  seqr.setStepData(0, 0, std::vector<float>{0.1f});
-  seqr.setStepData(0, 1, std::vector<float>{0.2f});
+  seqr.setStepData(0, 0, std::vector<double>{0.1f});
+  seqr.setStepData(0, 1, std::vector<double>{0.2f});
   // pull data for track 0, current step
-  std::vector<float> data = seqr.getCurrentStepData(0);
+  std::vector<double> data = seqr.getCurrentStepData(0);
   if (data[0] != 0.1f) return false;
   seqr.tick();
   data = seqr.getCurrentStepData(0);
@@ -278,7 +278,7 @@ bool testNeuralNetwork()
 
 {
   rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
-  std::vector<double> output = network.run({0.1, 0.2});
+  std::vector<double> output = network.run({0.1,   0.2});
   // verify it is not returning zeros
   if (output[0] == 0) return false;
   if (output[0] > 127) return false;
