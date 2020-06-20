@@ -2,7 +2,7 @@
 #include <iostream>
 #include "RtMidiUtils.h"
 #include "RapidLibUtils.h"
-#include "../lib/rapidLib.h"
+#include "../lib/ml/rapidLib.h"
 
 bool testTick()
 {

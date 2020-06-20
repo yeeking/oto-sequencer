@@ -1,4 +1,4 @@
-#include "../lib/rapidLib.h"
+#include "../lib/ml/rapidLib.h"
 #include <vector>
 
 class NeuralNetwork
