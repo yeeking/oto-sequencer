@@ -254,7 +254,10 @@ class SequencerEditor {
     {
 
     }
-
+    SequencerEditorMode getEditMode() const
+    {
+      return this->editMode;
+    }
     void setEditMode(SequencerEditorMode mode)
     {
       this->editMode = mode;
@@ -369,19 +372,25 @@ class SequencerViewer{
   public:
     SequencerViewer()
     {}
-    /** generate a 'rows' line string representation of the state of the editor
+
+/** generate a 'rows' line string representation of the state of the editor
      * and sequencer. Examples:
      * Starting state - I is where the 
      * 1-Iooooooo
      * 2-Oooooooo
      */
+   
     static std::string toTextDisplay(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)
     {
-      // the editor cursor dictates which bit we show
+    // the editor cursor dictates which bit we show
       std::string disp{""};
       // we display the bit of the sequences
       // that the editor is looking at
-      int seqOffset = editor->getCurrentSequence();
+      int seqOffset = 0;//-editor->getCurrentSequence();
+      if (editor->getCurrentSequence() >= rows)
+      {
+        seqOffset = editor->getCurrentSequence() - 1;
+      }
       int stepOffset = 0;//editor->getCurrentStep();
 
       if (editor->getCurrentStep() > cols - 4)
@@ -423,6 +432,7 @@ class SequencerViewer{
       
       return disp;
     }
+   
 }; 
 
 
