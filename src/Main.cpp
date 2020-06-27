@@ -39,10 +39,10 @@ char getch() {
 }
 
 void redraw(Sequencer& seqr, SequencerEditor& seqEditor)
-{
-  std::cout << "\x1B[2J\x1B[H";
-  std::string disp = SequencerViewer::toTextDisplay(8, 32, &seqr, &seqEditor);
-  std::cout << disp << std::endl;
+{ 
+    std::cout << "\x1B[2J\x1B[H";
+    std::string disp = SequencerViewer::toTextDisplay(16, 32, &seqr, &seqEditor);
+    std::cout << disp << std::endl;
 }
 
 int main()
@@ -54,16 +54,11 @@ int main()
     rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
 
     clock.setCallback([&seqr, &seqEditor](){
-            seqr.tick();
-            // only redraw if in step selecting mode
-            if (seqEditor.getEditMode() == SequencerEditorMode::selectingStep)
-            {
-              redraw(seqr, seqEditor);    
-            }
-            // otherwise, it will redraw as they move around
-        });
+      seqr.tick();
+      redraw(seqr, seqEditor);    
+    });
 
-   clock.start(1000);
+   clock.start(125);
 
  
     char x {1};
@@ -72,14 +67,19 @@ int main()
     {
       x = getch();
 
+      
 
-
-
-
-      if (x == '\033') {
-        escaped = true;
-        continue;
-      }
+      if (!escaped)
+      {
+        switch(x)
+        {
+          case '\033': // cursor key?
+            escaped = true;
+            continue;
+          case ' ': // cycle editor mode
+            seqEditor.cycleMode();
+        }// send switch on key
+      }// end if !escapted
       if (escaped){
         switch(x){
           case '[': 
@@ -87,21 +87,25 @@ int main()
           case 'A':
             // up
             seqEditor.moveCursorUp();
+            escaped = false;
             redraw(seqr, seqEditor);
             continue;
           case 'D':
             // left
             seqEditor.moveCursorLeft();
+            escaped = false;
             redraw(seqr, seqEditor);
             continue;
           case 'C':
             // right
             seqEditor.moveCursorRight();
+            escaped = false;
             redraw(seqr, seqEditor);
             continue;
           case 'B':
             // down
             seqEditor.moveCursorDown();
+            escaped = false;
             redraw(seqr, seqEditor);
             continue;     
         }

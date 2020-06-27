@@ -52,7 +52,7 @@ class Sequence{
       {
         Step s;
         s.setCallback([i](std::vector<double> data){
-          std::cout << "step " << i << " triggered " << std::endl;
+          //std::cout << "step " << i << " triggered " << std::endl;
         });
         steps.push_back(s);
       }
@@ -68,6 +68,7 @@ class Sequence{
     {
       return currentStep; 
     }
+ 
 
     bool assertStep(unsigned int step) const
     {
@@ -83,16 +84,25 @@ class Sequence{
     {
       return steps[currentStep].getData();
     }
-
+   unsigned int getLength() const
+    {
+      return currentLength; 
+    }
+    
     void setLength(int length)
     {
+      if (length < 1) return;
       if (length > steps.size()) // bad need more steps
       {
         int toAdd = length - steps.size();
 
         for (int i=0; i < toAdd; ++i)
         {
-          steps.push_back(Step{});
+          Step s;
+          s.setCallback([i](std::vector<double> data){
+            //std::cout << "step " << i << " triggered " << std::endl;
+          });
+          steps.push_back(s);
         }
       }
       currentLength = length;
@@ -110,12 +120,16 @@ class Sequence{
     std::string stepToString(int step) const
     {
       std::vector<double> data = getStepData(step);
-      return std::to_string(data[0]);
+      if (data.size() > 0)
+        return std::to_string(data[0]);
+      else
+        return "---";
     }
 
     unsigned int howManySteps() const 
     {
-      return steps.size();
+      //return steps.size();
+      return currentLength;
     }
 
   private:
@@ -164,6 +178,15 @@ class Sequencer  {
       {
         sequences[sequence].setLength(length);
       }
+
+      void shrinkSequence(unsigned int sequence)
+      {
+        sequences[sequence].setLength(sequences[sequence].getLength()-1);
+      }
+      void extendSequence(unsigned int sequence)
+      {
+        sequences[sequence].setLength(sequences[sequence].getLength()+1);
+      }
       /** set a callback for all steps in a sequence*/
       void setSequenceCallback(unsigned int sequence, std::function<void (std::vector<double>)> callback)
       {
@@ -209,7 +232,7 @@ class Sequencer  {
         s += std::to_string(step) + "\t: ";
         for (Sequence& seq : sequences)
         {
-          s += seq.stepToString(step) + "\t";
+         // s += seq.stepToString(step) + "\t";
         }
         s += "\n";
       }
@@ -246,11 +269,11 @@ class Sequencer  {
  * Used to build editing interfaces for a sequencer 
 */
 
-enum class SequencerEditorMode {selectingStep, editingStep};
+enum class SequencerEditorMode {settingSeqLength, selectingStep, editingStep};
 
 class SequencerEditor {
   public:
-    SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, currentSequence{0}, currentStep{0}, currentStepIndex{0}, editMode{SequencerEditorMode::selectingStep}, stepIncrement{0.5f}
+    SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, currentSequence{0}, currentStep{0}, currentStepIndex{0}, editMode{SequencerEditorMode::settingSeqLength}, stepIncrement{0.5f}
     {
 
     }
@@ -262,6 +285,28 @@ class SequencerEditor {
     {
       this->editMode = mode;
     }
+    /** cycle through the edit modes in the sequence:
+     * settingSeqLength (start mode)
+     * selectingStep
+     * editingStep
+    */
+    void cycleMode()
+    {
+      switch(editMode)
+      {
+        case SequencerEditorMode::settingSeqLength:
+          editMode = SequencerEditorMode::selectingStep;
+          return;
+        case SequencerEditorMode::selectingStep:
+          editMode = SequencerEditorMode::editingStep;
+          return;
+        case SequencerEditorMode::editingStep:
+          editMode = SequencerEditorMode::settingSeqLength;
+          currentStep = 0;
+          
+          return;  
+      }
+    }
 
   /** moves the editor cursor up. 
    * If in selectingStep mode, steps through the sequenbces, wrapping at the top
@@ -270,37 +315,73 @@ class SequencerEditor {
 
   void moveCursorUp()
   {
-    if (editMode == SequencerEditorMode::selectingStep)
-    {
-      currentSequence -= 1;
-      if (currentSequence < 0) currentSequence = 0;
-    }
+      switch(editMode)
+      {
+        case SequencerEditorMode::settingSeqLength:
+          currentSequence -= 1;
+          if (currentSequence < 0) currentSequence = 0;
+          if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
+          return;
+        case SequencerEditorMode::selectingStep:
+          currentSequence -= 1;
+          if (currentSequence < 0) currentSequence = 0;
+          if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
+          return;
+        case SequencerEditorMode::editingStep:
+          return;  
+      }
+
   }
 
   void moveCursorDown()
   {
-    if (editMode == SequencerEditorMode::selectingStep)
-    {
-      currentSequence += 1;
-      if (currentSequence >= sequencer->howManySequences()) currentSequence = sequencer->howManySequences() - 1;
-    }
-  }
+      switch(editMode)
+      {
+        case SequencerEditorMode::settingSeqLength:
+          currentSequence += 1;
+          if (currentSequence >= sequencer->howManySequences()) currentSequence = sequencer->howManySequences() - 1;
+          if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
+          return;
+        case SequencerEditorMode::selectingStep:
+          currentSequence += 1;
+          if (currentSequence >= sequencer->howManySequences()) currentSequence = sequencer->howManySequences() - 1;
+          if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
+
+          return;
+        case SequencerEditorMode::editingStep:
+          return;  
+      }
+   }
 
   void moveCursorLeft()
   {
-    if (editMode == SequencerEditorMode::selectingStep)
+      switch(editMode)
       {
-        currentStep -= 1;
-        if (currentStep < 0) currentStep = 0;
+        case SequencerEditorMode::settingSeqLength:
+          sequencer->shrinkSequence(currentSequence);
+          return;
+        case SequencerEditorMode::selectingStep:
+          currentStep -= 1;
+          if (currentStep < 0) currentStep = 0;
+          return;
+        case SequencerEditorMode::editingStep:        
+          return;  
       }
   }
 
   void moveCursorRight()
   {
-    if (editMode == SequencerEditorMode::selectingStep)
+      switch(editMode)
       {
-        currentStep += 1;
-        if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
+        case SequencerEditorMode::settingSeqLength:
+          sequencer->extendSequence(currentSequence);
+          return;
+        case SequencerEditorMode::selectingStep:
+          currentStep += 1;
+          if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
+          return;
+        case SequencerEditorMode::editingStep:
+          return;  
       }
   }
 
@@ -373,6 +454,26 @@ class SequencerViewer{
     SequencerViewer()
     {}
 
+    static std::string toTextDisplay(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)
+    {
+      switch(editor->getEditMode())
+      {
+        case SequencerEditorMode::settingSeqLength:
+         return getSequencerView(rows, cols, sequencer, editor);
+        case SequencerEditorMode::selectingStep:
+         return getSequencerView(rows, cols, sequencer, editor);
+        //case SequencerEditorMode::editingStep:
+         //return getSequencerView(rows, cols, sequencer, editor);
+      }
+      return "Nothing to draw...";
+    }
+
+
+    static std::string getSequenceView(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)
+    {
+      std::string disp{""};
+      return disp;
+    }
 /** generate a 'rows' line string representation of the state of the editor
      * and sequencer. Examples:
      * Starting state - I is where the 
@@ -380,7 +481,7 @@ class SequencerViewer{
      * 2-Oooooooo
      */
    
-    static std::string toTextDisplay(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)
+    static std::string getSequencerView(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)
     {
     // the editor cursor dictates which bit we show
       std::string disp{""};

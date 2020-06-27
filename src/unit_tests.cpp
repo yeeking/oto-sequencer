@@ -66,6 +66,7 @@ bool testCursorRight()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
   cursor.moveCursorRight();
   // should be at step 1
   if (cursor.getCurrentSequence() == 0 && cursor.getCurrentStep() == 1)
@@ -94,19 +95,23 @@ bool testCursorLeftLimit()
   // should be at step 0
   if (cursor.getCurrentSequence() == 0 && cursor.getCurrentStep() == 0)
   return true;
-  else return false; 
+  else {
+    return false; 
+  }
 }
 
 bool testCursorLeft()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
+  // go into step selecting mode
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
   // 10 to the right then 1 to the left
   // should be at 9
   for (int i=0;i<10;i++) cursor.moveCursorRight();
   cursor.moveCursorLeft();
   // should be at step 1
-  if (cursor.getCurrentSequence() == 0 && cursor.getCurrentStep() == 9)
+  if (cursor.getCurrentStep() == 9)
   return true;
   else return false; 
 }
@@ -116,7 +121,9 @@ bool testTwoLinesInit()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  std::string want = "1 -Ioooo\n2 -Ooooo";
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
+
+  std::string want = "1 -Ioooo\n2 --oooo";
   std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
   if (want != got) 
   {
@@ -130,7 +137,8 @@ bool testTwoLines16()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  std::string want = "1 -Ioooooooooooo\n2 -Ooooooooooooo";
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  std::string want = "1 -Ioooooooooooo\n2 --oooooooooooo";
   std::string got = SequencerViewer::toTextDisplay(2, 16, &seqr, &cursor);
   if (want != got) 
   {
@@ -145,7 +153,8 @@ bool testTwoLines16Tick()
   Sequencer seqr{};
   seqr.tick();
   SequencerEditor cursor{&seqr};
-  std::string want = "1 -IOooooooooooo\n2 -oOooooooooooo";
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  std::string want = "1 -I-ooooooooooo\n2 -o-ooooooooooo";
   std::string got = SequencerViewer::toTextDisplay(2, 16, &seqr, &cursor);
   if (want != got) 
   {
@@ -162,17 +171,18 @@ bool testTwoLinesWrapSeq()
   // 
   // 9 ticks takes it to step 1 (index 2)
   SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
   seqr.setSequenceLength(0, 8);
   seqr.setSequenceLength(1, 8);
   
   for (int i=0;i<10;++i) seqr.tick();
 
-  std::string want = "1 -IoOoo\n2 -ooOoo";
+  std::string want = "1 -Io-oo\n2 -oo-oo";
 
   std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
   if (want != got) 
   {
-    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    std::cout << "testTwoLinesWrapSeq:: Wanted \n" << want << " \n got \n" << got << std::endl;
     return false;
   }
   else return true;
@@ -182,13 +192,14 @@ bool testFollowEditCursorRight()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
   cursor.moveCursorRight();
-  std::string want = "1  Ioooo\n2  ooooo";
+  std::string want = "1 -Ioooo\n2 --oooo";
 
   std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
   if (want != got) 
   {
-    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    std::cout << "testFollowEditCursorRight:: Wanted \n" << want << " \n got \n" << got << std::endl;
     return false;
   }
   else return true;
@@ -198,13 +209,14 @@ bool testFollowEditCursorDown()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
   cursor.moveCursorDown();
-  std::string want = "2 -Ioooo\n3 -Ooooo";
+  std::string want = "1 -Ioooo\n2 --oooo";
 
   std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
   if (want != got) 
   {
-    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    std::cout << "testFollowEditCursorDown:: Wanted \n" << want << " \n got \n" << got << std::endl;
     return false;
   }
   else return true;
@@ -214,13 +226,14 @@ bool testFollowEditCursorLeftLimit()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
   cursor.moveCursorLeft();
-  std::string want = "1 -Ioooo\n2 -Ooooo";
+  std::string want = "1 -Ioooo\n2 --oooo";
 
   std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
   if (want != got) 
   {
-    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    std::cout << "testFollowEditCursorLeftLimit:: Wanted \n" << want << " \n got \n" << got << std::endl;
     return false;
   }
   else return true;
@@ -230,13 +243,14 @@ bool testFollowEditCursorRightLimit()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
   for (int i=0; i < 20; ++i) cursor.moveCursorRight();
   std::string want = "1  I    \n2  o    ";
 
   std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
   if (want != got) 
   {
-    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    std::cout << "testFollowEditCursorRightLimit:: Wanted \n" << want << " \n got \n" << got << std::endl;
     return false;
   }
   else return true;
@@ -246,6 +260,7 @@ bool testFollowEditCursorRightLimitNearly()
 {
   Sequencer seqr{4, 4};
   SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
   for (int i=0; i < 2; ++i) cursor.moveCursorRight();
   std::string want = "1  Io   \n2  oo   ";
 
@@ -262,14 +277,15 @@ bool testFollowEditCursorDownLimit()
 {
   Sequencer seqr{4}; // 4 seqs
   SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
   for (int i=0; i<10; ++i) cursor.moveCursorDown();
 
-  std::string want = "2 -Ioooo\n3 -Ooooo";
+  std::string want = "2 -Ioooo\n3 --oooo";
 
   std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
   if (want != got) 
   {
-    std::cout << "testTwoLinesInit:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    std::cout << "testFollowEditCursorDownLimit:: Wanted \n" << want << " \n got \n" << got << std::endl;
     return false;
   }
   else return true;
@@ -297,26 +313,26 @@ void log(std::string test, bool res)
 
 int main()
 {
-  // log("testTick", testTick());
-  // log("testTick2", testTick2());
-  // log("testUpdate", testUpdate());
-  // log("testUpdate2", testUpdate2());
-  // log("testToString", testToString());
+  log("testTick", testTick());
+  log("testTick2", testTick2());
+  log("testUpdate", testUpdate());
+  log("testUpdate2", testUpdate2());
+  log("testToString", testToString());
 
-  // log("testCursorStart", testCursorStart());
-  // log("testCursorLeft", testCursorLeft());
-  // log("testCursorLeftLimit", testCursorLeftLimit());
-  // log("testCursorRight", testCursorRight());
-  // log("testCursorRightLimit", testCursorRightLimit());
-  // log("testTwoLinesInit", testTwoLinesInit());
-  // log("testTwoLines16", testTwoLines16());
-  // log("testTwoLines16Tick", testTwoLines16());
-  // log("testTwoLinesWrapSeq", testTwoLinesWrapSeq());
-//  log("testFollowEditCursorRight", testFollowEditCursorRight());
-//  log("testFollowEditCursorDown", testFollowEditCursorDown());
-  //log("testFollowEditCursorLeftLimit", testFollowEditCursorLeftLimit());
-//log("testFollowEditCursorRightLimit", testFollowEditCursorRightLimit());
-//log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
+  log("testCursorStart", testCursorStart());
+  log("testCursorLeft", testCursorLeft());
+  log("testCursorLeftLimit", testCursorLeftLimit());
+  log("testCursorRight", testCursorRight());
+  log("testCursorRightLimit", testCursorRightLimit());
+  log("testTwoLinesInit", testTwoLinesInit());
+  log("testTwoLines16", testTwoLines16());
+  log("testTwoLines16Tick", testTwoLines16());
+  log("testTwoLinesWrapSeq", testTwoLinesWrapSeq());
+ log("testFollowEditCursorRight", testFollowEditCursorRight());
+ log("testFollowEditCursorDown", testFollowEditCursorDown());
+  log("testFollowEditCursorLeftLimit", testFollowEditCursorLeftLimit());
+log("testFollowEditCursorRightLimit", testFollowEditCursorRightLimit());
+log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
 
   log("testNeuralNetwork", testNeuralNetwork());
 
