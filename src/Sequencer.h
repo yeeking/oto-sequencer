@@ -326,7 +326,7 @@ enum class SequencerEditorSubMode {settingSeqMidiChannel, settingSeqSampleId};
 */
 class SequencerEditor {
   public:
-    SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, currentSequence{0}, currentStep{0}, currentStepIndex{0}, editMode{SequencerEditorMode::settingSeqLength}, stepIncrement{0.5f}
+    SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, currentSequence{0}, currentStep{0}, currentStepIndex{0}, editMode{SequencerEditorMode::selectingSeqAndStep}, stepIncrement{0.5f}
     {
 
     }
@@ -403,6 +403,21 @@ class SequencerEditor {
         // they 
         return;  
     }
+  }
+
+/**
+ * Tell the editor the user entered note data
+ */
+  void enterNoteData(double note)
+  {
+      if (editMode == SequencerEditorMode::editingStep)
+      {     
+        std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
+        //data[Step::velInd] = velocity;
+        //data[Step::lengthInd] = lengthMs;
+        data[Step::note1Ind] = note;
+        writeStepData(data);
+      }
   }
 
   /** moves the editor cursor up. 

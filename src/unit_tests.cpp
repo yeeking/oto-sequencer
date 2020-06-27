@@ -448,6 +448,17 @@ bool testStepEditModeVel2()
 }
 
 
+bool testEnterNoteData()
+{
+  Sequencer seqr;
+  SequencerEditor editor(&seqr);
+  editor.setEditMode(SequencerEditorMode::editingStep);
+  editor.enterNoteData(64);
+  std::vector<double> data = seqr.getStepData(0, 0);
+  if (data[Step::note1Ind] == 64) return true;
+  return false;
+}
+
 void log(std::string test, bool res)
 {
   std::string msg;
@@ -492,8 +503,8 @@ int main()
    //log("testShowInactiveSteps", testShowInactiveSteps());
   //log("testStepEditModeLen", testStepEditModeLen());
 //  log("testStepEditModeVel", testStepEditModeVel());
-log("testStepEditModeVel2", testStepEditModeVel2());
+//log("testStepEditModeVel2", testStepEditModeVel2());
 
-
+log("testEnterNoteData", testEnterNoteData());
 
 }

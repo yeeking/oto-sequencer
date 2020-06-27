@@ -47,6 +47,24 @@ void redraw(Sequencer& seqr, SequencerEditor& seqEditor)
 
 int main()
 {
+    const std::map<char, double> key_to_note =
+    {
+        { 'z', 60},
+        { 's', 61},
+        { 'x', 63},
+        { 'd', 64},
+        { 'c', 65},
+        { 'f', 66},
+        { 'v', 67},
+        { 'b', 68},
+        { 'h', 69},
+        { 'n', 70},
+        { 'j', 71},
+        { 'm', 72}
+    };
+    std::map<char, double>::iterator it;
+    
+
     Sequencer seqr;
     SequencerEditor seqEditor{&seqr};
     SimpleClock clock{};
@@ -58,38 +76,47 @@ int main()
       redraw(seqr, seqEditor);    
     });
 
-   clock.start(125);
-
- 
-    char x {1};
+    clock.start(125);
+    char input {1};
     bool escaped = false;
-    while (x != 'q')
+    while (input != 'q')
     {
-      x = getch();
-      std::cout << x << std::endl;
+      input = getch();
       if (!escaped)
       {
-        switch(x)
+        switch(input)
         {
-          case '\033': // cursor key?
+          case '\033': // first escape character cursor key?
             escaped = true;
             continue;
-          case '\t': // cycle editor mode
+          case '\t': 
             seqEditor.cycleEditMode();
             continue;
           case ' ':
-            //seqEditor.cycleMode();
             seqEditor.cycleAtCursor();
             continue;
           case '\n':
             //seqEditor.cycleMode();
             seqEditor.enterAtCursor();
             continue;
-                
         }// send switch on key
-      }// end if !escapted
+        // now check all the piano keys
+        bool key_note_match{false};
+        for (const std::pair<char, double>& key_note : key_to_note)
+        {
+          if (input == key_note.first) 
+          { 
+            std::cout << "match" << key_note.second << std::endl;
+            key_note_match = true;
+            seqEditor.enterNoteData(key_note.second);
+            redraw(seqr, seqEditor);
+            break;// break the for loop
+          }
+        }
+        //if (key_note_match) continue; // continue the while loop
+      } // end if !escapted
       if (escaped){
-        switch(x){
+        switch(input){
           case '[': 
             continue;
           case 'A':
