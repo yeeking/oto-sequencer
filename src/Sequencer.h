@@ -12,14 +12,24 @@
 #include <functional>
 
 
+/** default spec for a Step's data, 
+ * so data[0] specifies length, 
+ * data[1] specifies velocity 
+ * and data[2] is the first note
+ * 
+*/
+
 class Step{
+  
   public:
+    const static int lengthInd{0};
+    const static int velInd{1};
+    const static int note1Ind{2};
+  
     Step() : active{true}
     {
-      // for (auto i=0;i<16;i++)
-      // {
-      //   data.push_back(0.0);
-      // }
+      data.push_back(0.0);
+      data.push_back(0.0);
       data.push_back(0.0);
     }
     std::vector<double> getData() const
@@ -55,13 +65,20 @@ class Step{
 
 class Sequence{
   public:
-    Sequence(unsigned int seqLength = 16) : currentStep{0}, currentLength{seqLength}
+    Sequence(unsigned int seqLength = 16, unsigned short midiChannel = 1) : currentStep{0}, currentLength{seqLength}, midiChannel{midiChannel}
     {
       for (auto i=0;i<seqLength;i++)
       {
         Step s;
         s.setCallback([i](std::vector<double> data){
+          // actually, play a midi note
+          if (data.size() >= 3)
+          {
+            double noteLengthMs = data[Step::lengthInd];
+            double noteVolocity = data[Step::velInd];
+            double noteOne = data[Step::note1Ind];
           //std::cout << "step " << i << " triggered " << std::endl;
+          }
         });
         steps.push_back(s);
       }
@@ -153,6 +170,7 @@ class Sequence{
   private:
     unsigned int currentLength;
     unsigned int currentStep;
+    unsigned short midiChannel;
     std::vector<Step> steps;
 
 };
@@ -232,6 +250,7 @@ class Sequencer  {
         if (sequence >= sequences.size() || sequence < 0) return std::vector<double>{};
         return sequences[sequence].getCurrentStepData();
       }
+
       /** retrieve the data for a specific step */
       std::vector<double> getStepData(int sequence, int step) const
       {
@@ -291,13 +310,20 @@ class Sequencer  {
 
 };
 
+/**
+ * Top level modes that dictate the main UI output 
+ */
+enum class SequencerEditorMode {settingSeqLength, configuringSequence, selectingSeqAndStep, editingStep};
+
+/**
+ * Sub modes for moving between items in a sub menu (e.g. configuring midi channel)
+ */
+enum class SequencerEditorSubMode {settingSeqMidiChannel, settingSeqSampleId};
+
 /** Represents an editor for a sequencer, which allows stateful edit operations to be applied 
  * to sequences. For example, select sequemce, select step, enter data
  * Used to build editing interfaces for a sequencer 
 */
-
-enum class SequencerEditorMode {settingSeqLength, selectingStep, editingStep};
-
 class SequencerEditor {
   public:
     SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, currentSequence{0}, currentStep{0}, currentStepIndex{0}, editMode{SequencerEditorMode::settingSeqLength}, stepIncrement{0.5f}
@@ -314,7 +340,7 @@ class SequencerEditor {
     }
     /** cycle through the edit modes in the sequence:
      * settingSeqLength (start mode)
-     * selectingStep
+     * selectingSeqAndStep
      * editingStep
     */
     void cycleEditMode()
@@ -322,15 +348,19 @@ class SequencerEditor {
       switch(editMode)
       {
         case SequencerEditorMode::settingSeqLength:
-          editMode = SequencerEditorMode::selectingStep;
+          editMode = SequencerEditorMode::selectingSeqAndStep;
           return;
-        case SequencerEditorMode::selectingStep:
-          editMode = SequencerEditorMode::editingStep;
+        case SequencerEditorMode::selectingSeqAndStep:
+          editMode = SequencerEditorMode::settingSeqLength;
+          currentStep = 0;
           return;
         case SequencerEditorMode::editingStep:
+          editMode = SequencerEditorMode::selectingSeqAndStep;
+          return;  
+        case SequencerEditorMode::configuringSequence: 
           editMode = SequencerEditorMode::settingSeqLength;
           currentStep = 0; 
-          return;  
+          return;
       }
     }
     /** 
@@ -345,7 +375,7 @@ class SequencerEditor {
         case SequencerEditorMode::settingSeqLength:
           // change the type of sequence somehow??
           return;
-        case SequencerEditorMode::selectingStep:
+        case SequencerEditorMode::selectingSeqAndStep:
           // toggle the step on or off
           sequencer->toggleActive(currentSequence, currentStep);
           return;
@@ -353,9 +383,30 @@ class SequencerEditor {
           return;  
       }
     }
+    
+    /**
+     *  Go into edit mode for either the sequence or step
+     */
+  void enterAtCursor()
+  {
+    switch(editMode)
+    {
+      case SequencerEditorMode::settingSeqLength:
+      // go into configuring sequence mode
+        editMode = SequencerEditorMode::configuringSequence;
+        return;
+      case SequencerEditorMode::selectingSeqAndStep:
+        // go into edit step mode
+        editMode = SequencerEditorMode::editingStep;
+        return;
+      case SequencerEditorMode::editingStep:
+        // they 
+        return;  
+    }
+  }
 
   /** moves the editor cursor up. 
-   * If in selectingStep mode, steps through the sequenbces, wrapping at the top
+   * If in selectingSeqAndStep mode, steps through the sequenbces, wrapping at the top
    * if in editingStep mode, edits the 
    */
 
@@ -368,12 +419,17 @@ class SequencerEditor {
           if (currentSequence < 0) currentSequence = 0;
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
           return;
-        case SequencerEditorMode::selectingStep:
+        case SequencerEditorMode::selectingSeqAndStep:
           currentSequence -= 1;
           if (currentSequence < 0) currentSequence = 0;
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
           return;
         case SequencerEditorMode::editingStep:
+        // louder
+          std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
+          data[Step::velInd] ++;
+          if (data[Step::velInd] > 127) data[Step::velInd] = 127;
+          writeStepData(data);
           return;  
       }
   }
@@ -387,13 +443,19 @@ class SequencerEditor {
           if (currentSequence >= sequencer->howManySequences()) currentSequence = sequencer->howManySequences() - 1;
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
           return;
-        case SequencerEditorMode::selectingStep:
+        case SequencerEditorMode::selectingSeqAndStep:
           currentSequence += 1;
           if (currentSequence >= sequencer->howManySequences()) currentSequence = sequencer->howManySequences() - 1;
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
 
           return;
         case SequencerEditorMode::editingStep:
+        // quieter
+         std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
+          data[Step::velInd] --;
+          if (data[Step::velInd] < 0) data[Step::velInd] = 0;
+          writeStepData(data);
+
           return;  
       }
    }
@@ -405,11 +467,16 @@ class SequencerEditor {
         case SequencerEditorMode::settingSeqLength:
           sequencer->shrinkSequence(currentSequence);
           return;
-        case SequencerEditorMode::selectingStep:
+        case SequencerEditorMode::selectingSeqAndStep:
           currentStep -= 1;
           if (currentStep < 0) currentStep = 0;
           return;
         case SequencerEditorMode::editingStep:        
+        // left shortens the note
+          std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
+          data[Step::lengthInd] --;
+          if (data[Step::lengthInd] < 1) data[Step::lengthInd] = 1;
+          writeStepData(data);
           return;  
       }
   }
@@ -421,11 +488,16 @@ class SequencerEditor {
         case SequencerEditorMode::settingSeqLength:
           sequencer->extendSequence(currentSequence);
           return;
-        case SequencerEditorMode::selectingStep:
+        case SequencerEditorMode::selectingSeqAndStep:
           currentStep += 1;
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
           return;
         case SequencerEditorMode::editingStep:
+        // right lengthens the note
+          std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
+          data[Step::lengthInd] ++;
+          if (data[Step::lengthInd] > 100) data[Step::lengthInd] = 100;
+          writeStepData(data);
           return;  
       }
   }
@@ -457,7 +529,7 @@ class SequencerEditor {
   /** write the sent data to the current step and sequence */
   void writeStepData(std::vector<double> data)
   {
-    sequencer->setStepData(currentSequence, currentSequence, data);
+    sequencer->setStepData(currentSequence, currentStep, data);
   }
   /** write the sent data to the sequence at 'currentSequence' - 1D data version for simple one value per step -style sequences*/
   void writeSequenceData(std::vector<double> data)
@@ -505,21 +577,30 @@ class SequencerViewer{
       {
         case SequencerEditorMode::settingSeqLength:
          return getSequencerView(rows, cols, sequencer, editor);
-        case SequencerEditorMode::selectingStep:
+        case SequencerEditorMode::selectingSeqAndStep:
          return getSequencerView(rows, cols, sequencer, editor);
-        //case SequencerEditorMode::editingStep:
-         //return getSequencerView(rows, cols, sequencer, editor);
+        case SequencerEditorMode::configuringSequence:
+          return getSequenceConfigView();
+        case SequencerEditorMode::editingStep:
+          return getStepView(sequencer->getStepData(editor->getCurrentSequence(), editor->getCurrentStep()));
       }
       return "Nothing to draw...";
     }
 
-
-    static std::string getSequenceView(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)
+    static std::string getStepView(const std::vector<double> stepData)
     {
       std::string disp{""};
+      disp += "l: " + std::to_string((int)stepData[Step::lengthInd]);
+      disp += " v: " + std::to_string((int)stepData[Step::velInd]);
+      disp += " n: " + std::to_string((int)stepData[Step::note1Ind]);
       return disp;
     }
-/** generate a 'rows' line string representation of the state of the editor
+    static std::string getSequenceConfigView()
+    {
+      return "Just a regular sequence...";
+    }
+
+    /** generate a 'rows' line string representation of the state of the editor
      * and sequencer. Examples:
      * Starting state - I is where the 
      * 1-Iooooooo
@@ -550,7 +631,7 @@ class SequencerViewer{
         // the first thing is the channel number
         disp += std::to_string(displaySeq + 1);
         // space pad it
-        if (displaySeq < 10) disp += " ";
+        if (displaySeq < 9) disp += " ";
         // the second thing is a '-' if this is the start of the 
         // sequence or a ' ' if it is not, based on the 
         // position of the cursor
@@ -567,28 +648,24 @@ class SequencerViewer{
           //   : gone past the end of the sequence
           char state{'o'};// default
           char cursor{'I'};
+          if (editor->getEditMode() == SequencerEditorMode::settingSeqLength) state = '>';
 
           // inactive/ shortened/ non-existent sequence   
           if (sequencer->howManySteps(displaySeq) <= displayStep || 
               sequencer->isStepActive(displaySeq, displayStep) == false) state = ' ';
-       
           // sequencer playback is at this position
           if (sequencer->getCurrentStep(displaySeq) == displayStep) state = '-';
           // cursor is at this position
           if (editor->getCurrentSequence() == displaySeq &&
               editor->getCurrentStep() == displayStep)  state = cursor;          
-         // if (sequencer->howManySteps(displaySeq) <= displayStep 
-        //      ) state = ' ';
-        
+       
           disp += state;
         }
         if (seq < rows - 1)
           disp += "\n";
-      } 
-      
+      }  
       return disp;
-    }
-   
+    }   
 }; 
 
 

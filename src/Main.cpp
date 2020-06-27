@@ -63,7 +63,7 @@ int main()
  
     char x {1};
     bool escaped = false;
-    while (x != 'x')
+    while (x != 'q')
     {
       x = getch();
       std::cout << x << std::endl;
@@ -74,13 +74,18 @@ int main()
           case '\033': // cursor key?
             escaped = true;
             continue;
-          case '\n': // cycle editor mode
+          case '\t': // cycle editor mode
             seqEditor.cycleEditMode();
             continue;
           case ' ':
             //seqEditor.cycleMode();
             seqEditor.cycleAtCursor();
-            continue;    
+            continue;
+          case '\n':
+            //seqEditor.cycleMode();
+            seqEditor.enterAtCursor();
+            continue;
+                
         }// send switch on key
       }// end if !escapted
       if (escaped){

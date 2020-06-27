@@ -66,7 +66,7 @@ bool testCursorRight()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   cursor.moveCursorRight();
   // should be at step 1
   if (cursor.getCurrentSequence() == 0 && cursor.getCurrentStep() == 1)
@@ -105,7 +105,7 @@ bool testCursorLeft()
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
   // go into step selecting mode
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   // 10 to the right then 1 to the left
   // should be at 9
   for (int i=0;i<10;i++) cursor.moveCursorRight();
@@ -121,7 +121,7 @@ bool testTwoLinesInit()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
 
   std::string want = "1 -Ioooo\n2 --oooo";
   std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
@@ -137,7 +137,7 @@ bool testTwoLines16()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   std::string want = "1 -Ioooooooooooo\n2 --oooooooooooo";
   std::string got = SequencerViewer::toTextDisplay(2, 16, &seqr, &cursor);
   if (want != got) 
@@ -153,7 +153,7 @@ bool testTwoLines16Tick()
   Sequencer seqr{};
   seqr.tick();
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   std::string want = "1 -I-ooooooooooo\n2 -o-ooooooooooo";
   std::string got = SequencerViewer::toTextDisplay(2, 16, &seqr, &cursor);
   if (want != got) 
@@ -171,7 +171,7 @@ bool testTwoLinesWrapSeq()
   // 
   // 9 ticks takes it to step 1 (index 2)
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   seqr.setSequenceLength(0, 8);
   seqr.setSequenceLength(1, 8);
   
@@ -192,7 +192,7 @@ bool testFollowEditCursorRight()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   cursor.moveCursorRight();
   std::string want = "1 -Ioooo\n2 --oooo";
 
@@ -209,7 +209,7 @@ bool testFollowEditCursorDown()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   cursor.moveCursorDown();
   std::string want = "1 -Ioooo\n2 --oooo";
 
@@ -226,7 +226,7 @@ bool testFollowEditCursorLeftLimit()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   cursor.moveCursorLeft();
   std::string want = "1 -Ioooo\n2 --oooo";
 
@@ -243,7 +243,7 @@ bool testFollowEditCursorRightLimit()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   for (int i=0; i < 20; ++i) cursor.moveCursorRight();
   std::string want = "1  I    \n2  o    ";
 
@@ -260,7 +260,7 @@ bool testFollowEditCursorRightLimitNearly()
 {
   Sequencer seqr{4, 4};
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   for (int i=0; i < 2; ++i) cursor.moveCursorRight();
   std::string want = "1  Io   \n2  oo   ";
 
@@ -277,7 +277,7 @@ bool testFollowEditCursorDownLimit()
 {
   Sequencer seqr{4}; // 4 seqs
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   for (int i=0; i<10; ++i) cursor.moveCursorDown();
 
   std::string want = "2 -Ioooo\n3 --oooo";
@@ -307,7 +307,7 @@ bool testStepMode()
 {
   Sequencer seqr{4}; // 4 seqs
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   
 }
 
@@ -355,7 +355,7 @@ bool testCycleAtCursorTogglesActive()
 {
   Sequencer seqr{};
   SequencerEditor editor{&seqr};
-  editor.setEditMode(SequencerEditorMode::selectingStep);
+  editor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   // should set the first step to inactive
   editor.cycleAtCursor();
   return !seqr.isStepActive(0, 0);
@@ -366,7 +366,7 @@ bool testCycleAtCursorTogglesActiveTwice()
 {
   Sequencer seqr{};
   SequencerEditor editor{&seqr};
-  editor.setEditMode(SequencerEditorMode::selectingStep);
+  editor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   // should set the first step to inactive
   editor.cycleAtCursor();
   // another toggle to go back to true
@@ -379,7 +379,7 @@ bool testShowInactiveSteps()
 {
   Sequencer seqr{};
   SequencerEditor cursor{&seqr};
-  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
   cursor.moveCursorLeft();
   seqr.toggleActive(0, 3); // deactive step 4 on seq 1
   bool test = seqr.isStepActive(0, 3);
@@ -398,6 +398,55 @@ bool testShowInactiveSteps()
   
   else return true;
 }
+
+
+bool testStepEditModeLen()
+{
+  Sequencer seqr;
+  SequencerEditor editor(&seqr);
+  editor.setEditMode(SequencerEditorMode::editingStep);
+  // should now be editing seq 0, step 0
+  // make an edit then verify
+  std::vector<double> data;
+  editor.moveCursorRight();
+  data = seqr.getStepData(0, 0);
+  if (data[0] == 1) return true;
+  return false;
+}
+
+bool testStepEditModeVel()
+{
+  Sequencer seqr;
+  SequencerEditor editor(&seqr);
+  editor.setEditMode(SequencerEditorMode::editingStep);
+  // should now be editing seq 0, step 0
+  // make an edit then verify
+  std::vector<double> data;
+  editor.moveCursorUp();
+  data = seqr.getStepData(0, 0);
+  if (data[1] == 1) return true;
+  return false;
+}
+bool testStepEditModeVel2()
+{
+  Sequencer seqr;
+  SequencerEditor editor(&seqr);
+  editor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
+
+  editor.moveCursorRight();
+  // should now be editing seq 0, step 0
+  // make an edit then verify
+  std::vector<double> data;
+  editor.setEditMode(SequencerEditorMode::editingStep);
+  editor.moveCursorUp();
+  editor.moveCursorUp();
+  data = seqr.getStepData(editor.getCurrentSequence(), editor.getCurrentStep());
+  
+  std::cout << editor.getCurrentSequence() << ":" << editor.getCurrentStep() << " : " << SequencerViewer::getStepView(data);
+  if (data[1] == 2) return true;
+  return false;
+}
+
 
 void log(std::string test, bool res)
 {
@@ -440,7 +489,11 @@ int main()
   //  log("testToggleStepActiveSeqr", testIsStepActiveSeqr());
   // log("testCycleAtCursorTogglesActive", testCycleAtCursorTogglesActive());
    //log("testCycleAtCursorTogglesActiveTwice", testCycleAtCursorTogglesActiveTwice());
-   log("testShowInactiveSteps", testShowInactiveSteps());
+   //log("testShowInactiveSteps", testShowInactiveSteps());
+  //log("testStepEditModeLen", testStepEditModeLen());
+//  log("testStepEditModeVel", testStepEditModeVel());
+log("testStepEditModeVel2", testStepEditModeVel2());
+
 
 
 }
