@@ -14,7 +14,7 @@
 
 class Step{
   public:
-    Step()
+    Step() : active{true}
     {
       // for (auto i=0;i<16;i++)
       // {
@@ -36,10 +36,19 @@ class Step{
     }
     void trigger() const
     {
-      stepCallback(data);
+      if (active) stepCallback(data);
+    }
+    void toggleActive()
+    {
+      active = !active; 
+    }
+    bool isActive() const
+    {
+      return active; 
     }
   private: 
     std::vector<double> data;
+    bool active;
     std::function<void(std::vector<double>)> stepCallback;
 };
 
@@ -132,6 +141,15 @@ class Sequence{
       return currentLength;
     }
 
+    void toggleActive(unsigned int step)
+    {
+      steps[step].toggleActive();
+    }
+    bool isStepActive(unsigned int step) const
+    {
+      return steps[step].isActive();
+    }
+
   private:
     unsigned int currentLength;
     unsigned int currentStep;
@@ -220,7 +238,16 @@ class Sequencer  {
         if (!assertSeqAndStep(sequence, step)) return std::vector<double>{};
         return sequences[sequence].getStepData(step);
       }
-      
+      void toggleActive(int sequence, int step)
+      {
+        if (!assertSeqAndStep(sequence, step)) return;
+        sequences[sequence].toggleActive(step);
+      }
+      bool isStepActive(int sequence, int step) const
+      {
+        if (!assertSeqAndStep(sequence, step))  return false; 
+        return sequences[sequence].isStepActive(step);
+      }
       void addStepListener();
 
   /** print out a tracker style view of the sequence */
@@ -290,7 +317,7 @@ class SequencerEditor {
      * selectingStep
      * editingStep
     */
-    void cycleMode()
+    void cycleEditMode()
     {
       switch(editMode)
       {
@@ -302,8 +329,27 @@ class SequencerEditor {
           return;
         case SequencerEditorMode::editingStep:
           editMode = SequencerEditorMode::settingSeqLength;
-          currentStep = 0;
-          
+          currentStep = 0; 
+          return;  
+      }
+    }
+    /** 
+     * depending on the mode, whoops bad coupling again! 
+     * cycles the condition of the thing under the cursor
+     * 
+     */
+    void cycleAtCursor()
+    {
+    switch(editMode)
+      {
+        case SequencerEditorMode::settingSeqLength:
+          // change the type of sequence somehow??
+          return;
+        case SequencerEditorMode::selectingStep:
+          // toggle the step on or off
+          sequencer->toggleActive(currentSequence, currentStep);
+          return;
+        case SequencerEditorMode::editingStep:
           return;  
       }
     }
@@ -311,7 +357,7 @@ class SequencerEditor {
   /** moves the editor cursor up. 
    * If in selectingStep mode, steps through the sequenbces, wrapping at the top
    * if in editingStep mode, edits the 
-   * */
+   */
 
   void moveCursorUp()
   {
@@ -330,7 +376,6 @@ class SequencerEditor {
         case SequencerEditorMode::editingStep:
           return;  
       }
-
   }
 
   void moveCursorDown()
@@ -521,10 +566,20 @@ class SequencerViewer{
           // o : neither the editor or sequencer are at step
           //   : gone past the end of the sequence
           char state{'o'};// default
+          char cursor{'I'};
+
+          // inactive/ shortened/ non-existent sequence   
+          if (sequencer->howManySteps(displaySeq) <= displayStep || 
+              sequencer->isStepActive(displaySeq, displayStep) == false) state = ' ';
+       
+          // sequencer playback is at this position
           if (sequencer->getCurrentStep(displaySeq) == displayStep) state = '-';
+          // cursor is at this position
           if (editor->getCurrentSequence() == displaySeq &&
-              editor->getCurrentStep() == displayStep)  state = 'I';          
-          if (sequencer->howManySteps(displaySeq) <= displayStep) state = ' ';
+              editor->getCurrentStep() == displayStep)  state = cursor;          
+         // if (sequencer->howManySteps(displaySeq) <= displayStep 
+        //      ) state = ' ';
+        
           disp += state;
         }
         if (seq < rows - 1)

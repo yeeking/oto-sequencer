@@ -302,6 +302,103 @@ bool testNeuralNetwork()
   return true;
 }
 
+
+bool testStepMode()
+{
+  Sequencer seqr{4}; // 4 seqs
+  SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  
+}
+
+bool testIsStepActiveStep()
+{
+  Step step{};
+  return step.isActive();
+}
+
+bool testIsStepActiveSeq()
+{
+  Sequence seq{};
+  return seq.isStepActive(0);;
+}
+
+bool testIsStepActiveSeqr()
+{
+  Sequencer seqr{};
+  return seqr.isStepActive(0, 0);
+}
+
+bool testToggleStepActiveStep()
+{
+  Step step{};
+  step.toggleActive();
+  return !step.isActive();
+}
+
+bool testToggleStepActiveSeq()
+{
+  Sequence seq{};
+  seq.toggleActive(0);
+  return !seq.isStepActive(0);;
+}
+
+bool testToggleStepActiveSeqr()
+{
+  Sequencer seqr{};
+  seqr.toggleActive(0, 0);
+  return !seqr.isStepActive(0, 0);
+}
+
+
+bool testCycleAtCursorTogglesActive()
+{
+  Sequencer seqr{};
+  SequencerEditor editor{&seqr};
+  editor.setEditMode(SequencerEditorMode::selectingStep);
+  // should set the first step to inactive
+  editor.cycleAtCursor();
+  return !seqr.isStepActive(0, 0);
+}
+
+
+bool testCycleAtCursorTogglesActiveTwice()
+{
+  Sequencer seqr{};
+  SequencerEditor editor{&seqr};
+  editor.setEditMode(SequencerEditorMode::selectingStep);
+  // should set the first step to inactive
+  editor.cycleAtCursor();
+  // another toggle to go back to true
+  editor.cycleAtCursor();
+  
+  return seqr.isStepActive(0, 0);
+}
+
+bool testShowInactiveSteps()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingStep);
+  cursor.moveCursorLeft();
+  seqr.toggleActive(0, 3); // deactive step 4 on seq 1
+  bool test = seqr.isStepActive(0, 3);
+  std::cout << "testShowInactiveSteps:: state of 0.3 " << test << std::endl;
+
+  std::string want = "1 -Ioo o\n2 --oooo";
+
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+    std::cout << "testShowInactiveSteps:: Wanted \n" << want << " \n got \n" << got << std::endl;
+  
+  if (want != got) 
+  {
+    std::cout << "testShowInactiveSteps:: Wanted \n" << want << " \n got \n" << got << std::endl;
+    return false;
+  }
+  
+  else return true;
+}
+
 void log(std::string test, bool res)
 {
   std::string msg;
@@ -313,27 +410,37 @@ void log(std::string test, bool res)
 
 int main()
 {
-  log("testTick", testTick());
-  log("testTick2", testTick2());
-  log("testUpdate", testUpdate());
-  log("testUpdate2", testUpdate2());
-  log("testToString", testToString());
+//   log("testTick", testTick());
+//   log("testTick2", testTick2());
+//   log("testUpdate", testUpdate());
+//   log("testUpdate2", testUpdate2());
+//   log("testToString", testToString());
 
-  log("testCursorStart", testCursorStart());
-  log("testCursorLeft", testCursorLeft());
-  log("testCursorLeftLimit", testCursorLeftLimit());
-  log("testCursorRight", testCursorRight());
-  log("testCursorRightLimit", testCursorRightLimit());
-  log("testTwoLinesInit", testTwoLinesInit());
-  log("testTwoLines16", testTwoLines16());
-  log("testTwoLines16Tick", testTwoLines16());
-  log("testTwoLinesWrapSeq", testTwoLinesWrapSeq());
- log("testFollowEditCursorRight", testFollowEditCursorRight());
- log("testFollowEditCursorDown", testFollowEditCursorDown());
-  log("testFollowEditCursorLeftLimit", testFollowEditCursorLeftLimit());
-log("testFollowEditCursorRightLimit", testFollowEditCursorRightLimit());
-log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
+//   log("testCursorStart", testCursorStart());
+//   log("testCursorLeft", testCursorLeft());
+//   log("testCursorLeftLimit", testCursorLeftLimit());
+//   log("testCursorRight", testCursorRight());
+//   log("testCursorRightLimit", testCursorRightLimit());
+//   log("testTwoLinesInit", testTwoLinesInit());
+//   log("testTwoLines16", testTwoLines16());
+//   log("testTwoLines16Tick", testTwoLines16());
+//   log("testTwoLinesWrapSeq", testTwoLinesWrapSeq());
+//  log("testFollowEditCursorRight", testFollowEditCursorRight());
+//  log("testFollowEditCursorDown", testFollowEditCursorDown());
+//   log("testFollowEditCursorLeftLimit", testFollowEditCursorLeftLimit());
+// log("testFollowEditCursorRightLimit", testFollowEditCursorRightLimit());
+// log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
 
-  log("testNeuralNetwork", testNeuralNetwork());
+//   log("testNeuralNetwork", testNeuralNetwork());
+  //  log("testIsStepActiveStep", testIsStepActiveStep());
+  //  log("testIsStepActiveSeq", testIsStepActiveSeq());
+  //  log("testIsStepActiveSeqr", testIsStepActiveSeqr());
+  // log("testToggleStepActiveStep", testIsStepActiveStep());
+  //  log("testToggleStepActiveSeq", testIsStepActiveSeq());
+  //  log("testToggleStepActiveSeqr", testIsStepActiveSeqr());
+  // log("testCycleAtCursorTogglesActive", testCycleAtCursorTogglesActive());
+   //log("testCycleAtCursorTogglesActiveTwice", testCycleAtCursorTogglesActiveTwice());
+   log("testShowInactiveSteps", testShowInactiveSteps());
+
 
 }
