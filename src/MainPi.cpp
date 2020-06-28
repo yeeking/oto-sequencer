@@ -9,9 +9,11 @@
 #include "RapidLibUtils.h"
 #include "MidiUtils.h"
 #include "GroveUtils.h"
+#include "KeyUtils.h"
 
 #include <unistd.h>
 #include <termios.h>
+
 
 // getch with no echo and instant response
 // https://stackoverflow.com/a/912796/1240660
@@ -52,6 +54,8 @@ void redrawGroveLCD(Sequencer& seqr, SequencerEditor& seqEditor, GrovePi::LCD& l
 
 int main()
 {
+    KeyReader keyReader;
+
     const std::map<char, double> key_to_note =
     {
         { 'z', 60},
@@ -67,6 +71,7 @@ int main()
         { 'j', 71},
         { 'm', 72}
     };
+
 
     GrovePi::LCD lcd{};
     
@@ -106,75 +111,79 @@ int main()
     
     while (input != 'q')
     {
+
       if (!escaped) redrawGroveLCD(seqr, seqEditor, lcd);
-      input = getch();
-      if (!escaped)
-      {
-        switch(input)
-        {
-          case '\033': // first escape character cursor key?
-            escaped = true;
-            continue;
-          case '\t': 
-            seqEditor.cycleEditMode();
-            continue;
-          case ' ':
-            seqEditor.cycleAtCursor();
-            continue;
-          case '\n':
-            //seqEditor.cycleMode();
-            seqEditor.enterAtCursor();
-            continue;
-          case (wchar_t)(127):
-            //seqEditor.deleteAtCursor();
-            continue;
-        }// send switch on key
-        // now check all the piano keys
-        bool key_note_match{false};
-        for (const std::pair<char, double>& key_note : key_to_note)
-        {
-          if (input == key_note.first) 
-          { 
-      //      std::cout << "match" << key_note.second << std::endl;
-            key_note_match = true;
-            seqEditor.enterNoteData(key_note.second);
-            //redraw(seqr, seqEditor);
-            break;// break the for loop
-          }
-        }
-        //if (key_note_match) continue; // continue the while loop
-      } // end if !escapted
-      if (escaped){
-        switch(input){
-          case '[': 
-            continue;
-          case 'A':
-            // up
-            seqEditor.moveCursorUp();
-            escaped = false;
-            //redraw(seqr, seqEditor);
-            continue;
-          case 'D':
-            // left
-            seqEditor.moveCursorLeft();
-            escaped = false;
-            //redraw(seqr, seqEditor);
-            continue;
-          case 'C':
-            // right
-            seqEditor.moveCursorRight();
-            escaped = false;
-            //redraw(seqr, seqEditor);
-            continue;
-          case 'B':
-            // down
-            seqEditor.moveCursorDown();
-            escaped = false;
-            //redraw(seqr, seqEditor);
-            continue;     
-        }//  end switch on scapted mode
-      }// end if escapted mode
-      //redrawConsole(seqr, seqEditor);    
+      //input = getch();
+        input = keyReader.getChar();
+        //std::cout << input << std::endl;
+
+    //   if (!escaped)
+    //   {
+    //     switch(input)
+    //     {
+    //       case '\033': // first escape character cursor key?
+    //         escaped = true;
+    //         continue;
+    //       case '\t': 
+    //         seqEditor.cycleEditMode();
+    //         continue;
+    //       case ' ':
+    //         seqEditor.cycleAtCursor();
+    //         continue;
+    //       case '\n':
+    //         //seqEditor.cycleMode();
+    //         seqEditor.enterAtCursor();
+    //         continue;
+    //       case (wchar_t)(127):
+    //         //seqEditor.deleteAtCursor();
+    //         continue;
+    //     }// send switch on key
+    //     // now check all the piano keys
+    //     bool key_note_match{false};
+    //     for (const std::pair<char, double>& key_note : key_to_note)
+    //     {
+    //       if (input == key_note.first) 
+    //       { 
+    //   //      std::cout << "match" << key_note.second << std::endl;
+    //         key_note_match = true;
+    //         seqEditor.enterNoteData(key_note.second);
+    //         //redraw(seqr, seqEditor);
+    //         break;// break the for loop
+    //       }
+    //     }
+    //     //if (key_note_match) continue; // continue the while loop
+    //   } // end if !escapted
+    //   if (escaped){
+    //     switch(input){
+    //       case '[': 
+    //         continue;
+    //       case 'A':
+    //         // up
+    //         seqEditor.moveCursorUp();
+    //         escaped = false;
+    //         //redraw(seqr, seqEditor);
+    //         continue;
+    //       case 'D':
+    //         // left
+    //         seqEditor.moveCursorLeft();
+    //         escaped = false;
+    //         //redraw(seqr, seqEditor);
+    //         continue;
+    //       case 'C':
+    //         // right
+    //         seqEditor.moveCursorRight();
+    //         escaped = false;
+    //         //redraw(seqr, seqEditor);
+    //         continue;
+    //       case 'B':
+    //         // down
+    //         seqEditor.moveCursorDown();
+    //         escaped = false;
+    //         //redraw(seqr, seqEditor);
+    //         continue;     
+    //     }//  end switch on scapted mode
+    //   }// end if escapted mode
+    //   //redrawConsole(seqr, seqEditor);    
 
     }// end while loop
   return 0;
