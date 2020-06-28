@@ -48,14 +48,57 @@ void redrawGroveLCD(Sequencer& seqr, SequencerEditor& seqEditor, GrovePi::LCD& l
 { 
     std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
     std::cout << disp << std::endl;
+    
     lcd.setText(disp.c_str());
-
 }
+
+void updateLCDColour(SequencerEditor& editor, GrovePi::LCD& lcd)
+{
+    switch(editor.getEditMode() )
+    {
+        case SequencerEditorMode::editingStep:
+            lcd.setRGB(50, 0, 50);
+            break;
+        case SequencerEditorMode::selectingSeqAndStep:
+            lcd.setRGB(0, 0, 50);
+            break;
+        case SequencerEditorMode::settingSeqLength:
+            lcd.setRGB(0, 50, 0);
+            break;
+
+    }
+}
+
+void setupMidi(MidiStepDataReceiver& midiStepReceiver, KeyReader& keyReader, GrovePi::LCD& lcd)
+{
+int midiDev = -1;
+    std::vector<std::string> midiOuts = midiStepReceiver.getOutputDeviceList();
+    while(midiDev == -1)
+    {
+        for (const std::string& dev : midiOuts)
+        {
+            std::cout << dev << std::endl;
+            lcd.setText(dev.c_str());
+            sleep(1);
+        }
+        std::string msg = "Choose 1 to " + std::to_string(midiOuts.size());
+        
+        std::cout << msg << std::endl;
+        lcd.setText(msg.c_str());
+        midiDev = keyReader.getChar() - 2;
+        std::cout << "You chose " << midiDev << std::endl; 
+
+        if (midiDev > midiOuts.size() || midiDev < 0) midiDev = -1;
+    }
+    midiStepReceiver.selectOutputDevice(midiDev);
+}
+
 
 int main()
 {
     KeyReader keyReader;
-
+    // maps from raw event input keycodes
+    // to midi notes
     const std::map<int, double> key_to_note =
     {
         { 44, 60},
@@ -72,16 +115,16 @@ int main()
         { 50, 72}
     };
 
-
+    // access to the rgb lcd
     GrovePi::LCD lcd{};
-    
+
     try
 	{
 		// connect to the i2c-line
 		lcd.connect();
 		// set text and RGB color on the LCD
 		lcd.setText("Loading sequencer....");
-		lcd.setRGB(0, 0, 255);
+		lcd.setRGB(255, 0, 0);
     }
     catch(GrovePi::I2CError &error)
 	{
@@ -91,6 +134,8 @@ int main()
 
     // this constructor will trigger midi initialisation
     MidiStepDataReceiver midiStepReceiver;
+    setupMidi(midiStepReceiver, keyReader, lcd);
+
     //NaiveStepDataReceiver midiStepReceiver;
 
     Sequencer seqr{&midiStepReceiver};
@@ -116,12 +161,14 @@ int main()
         {
             case 15: // tab 
                 seqEditor.cycleEditMode();
+                updateLCDColour(seqEditor, lcd);
                 continue;
             case 57: // space
                 seqEditor.cycleAtCursor();
                 continue;
             case 28: // return
                 seqEditor.enterAtCursor();
+                updateLCDColour(seqEditor, lcd);
                 continue;
             case 103: // up
                 seqEditor.moveCursorUp();

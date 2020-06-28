@@ -14,6 +14,7 @@ class KeyReader
                 perror("KeyReader::construct cannot read keyboard device ");
             }
         }
+        /** read a character from the raw keyboard device */
         char getChar()
         {
           

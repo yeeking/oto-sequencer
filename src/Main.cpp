@@ -61,6 +61,8 @@ int main()
     std::map<char, double>::iterator it;
     
     MidiStepDataReceiver midiStepReceiver;
+    midiStepReceiver.interactiveInitMidi();
+
     //NaiveStepDataReceiver midiStepReceiver;
 
     Sequencer seqr{&midiStepReceiver};
