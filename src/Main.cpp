@@ -2,16 +2,12 @@
 #include <iostream>
 #include <stdio.h>  
 
-
-//#include "../lib/grovepi.h"
-//#include "../lib/grove_rgb_lcd.h"
 #include "../lib/ml/rapidLib.h"
 
 #include "SimpleClock.h"
 #include "Sequencer.h"
-//#include "GroveUtils.h"
 #include "RapidLibUtils.h"
-
+#include "MidiUtils.h"
 
 #include <unistd.h>
 #include <termios.h>
@@ -64,8 +60,11 @@ int main()
     };
     std::map<char, double>::iterator it;
     
+    MidiStepDataReceiver midiStepReceiver;
+    //NaiveStepDataReceiver midiStepReceiver;
 
-    Sequencer seqr;
+    Sequencer seqr{&midiStepReceiver};
+
     SequencerEditor seqEditor{&seqr};
     SimpleClock clock{};
     // this will map joystick x,y to 16 sequences
@@ -98,6 +97,9 @@ int main()
           case '\n':
             //seqEditor.cycleMode();
             seqEditor.enterAtCursor();
+            continue;
+          case (wchar_t)(127):
+            //seqEditor.deleteAtCursor();
             continue;
         }// send switch on key
         // now check all the piano keys
@@ -146,7 +148,5 @@ int main()
         }
       }
     }
-
-  
   return 0;
 }

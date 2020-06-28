@@ -37,7 +37,8 @@ add_executable(testit src/unit_tests.cpp)
 add_executable(oto-sequencer src/Main.cpp)
 
 # link the main executable to the rapidlib library and pthreads
+
 target_link_libraries(oto-sequencer-pi ml-libs grove-libs ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(oto-sequencer ml-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(oto-sequencer -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(testit ml-libs ${CMAKE_THREAD_LIBS_INIT})
 

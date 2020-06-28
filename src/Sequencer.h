@@ -11,6 +11,14 @@
 #include <string>
 #include <functional>
 
+/** abstract class that Steps talk to when sending their data */
+class StepDataReceiver 
+{
+  public:
+    StepDataReceiver() = default;
+    /** implement this to allow the data receiver to play a single note*/
+    virtual void playSingleNote(int channel, int note, int velocity, double lengthMs) = 0;
+};
 
 /** default spec for a Step's data, 
  * so data[0] specifies length, 
@@ -46,7 +54,7 @@ class Step{
     }
     void trigger() const
     {
-      if (active) stepCallback(data);
+      if (active && data[Step::note1Ind] != 0) stepCallback(data);
     }
     void toggleActive()
     {
@@ -65,18 +73,20 @@ class Step{
 
 class Sequence{
   public:
-    Sequence(unsigned int seqLength = 16, unsigned short midiChannel = 1) : currentStep{0}, currentLength{seqLength}, midiChannel{midiChannel}
+    Sequence(StepDataReceiver* stepDataReceiver, unsigned int seqLength = 16, unsigned short midiChannel = 1) : currentStep{0}, currentLength{seqLength}, midiChannel{midiChannel}
     {
       for (auto i=0;i<seqLength;i++)
       {
         Step s;
-        s.setCallback([i](std::vector<double> data){
+        s.setCallback([i, stepDataReceiver](std::vector<double> data){
           // actually, play a midi note
           if (data.size() >= 3)
           {
             double noteLengthMs = data[Step::lengthInd];
             double noteVolocity = data[Step::velInd];
             double noteOne = data[Step::note1Ind];
+            stepDataReceiver->playSingleNote(0, noteOne, noteVolocity, noteLengthMs);
+            
           //std::cout << "step " << i << " triggered " << std::endl;
           }
         });
@@ -95,7 +105,6 @@ class Sequence{
       return currentStep; 
     }
  
-
     bool assertStep(unsigned int step) const
     {
       if (step >= steps.size() || step < 0) return false;
@@ -168,21 +177,21 @@ class Sequence{
     }
 
   private:
+  //  StepDataReceiver* stepDataReceiver; 
     unsigned int currentLength;
     unsigned int currentStep;
     unsigned short midiChannel;
     std::vector<Step> steps;
-
 };
 
 /** represents a sequencer which is used to store a grid of data and to step through it */
 class Sequencer  {
     public:
-      Sequencer(unsigned int seqCount = 4, unsigned int seqLength = 16) 
+      Sequencer(StepDataReceiver* stepDataReceiver, unsigned int seqCount = 4, unsigned int seqLength = 16) 
       {
         for (auto i=0;i<seqCount;++i)
         {
-          sequences.push_back(Sequence{seqLength});
+          sequences.push_back(Sequence{stepDataReceiver, seqLength});
         }
       }
 
@@ -303,11 +312,8 @@ class Sequencer  {
         } 
       return true;
     }
-
     /// class data members  
-
     std::vector<Sequence> sequences;
-
 };
 
 /**
@@ -380,6 +386,9 @@ class SequencerEditor {
           sequencer->toggleActive(currentSequence, currentStep);
           return;
         case SequencerEditorMode::editingStep:
+          //std::vector<double> data = {0, 0, 0};
+          //writeStepData(data);
+          sequencer->toggleActive(currentSequence, currentStep);
           return;  
       }
     }
@@ -400,7 +409,8 @@ class SequencerEditor {
         editMode = SequencerEditorMode::editingStep;
         return;
       case SequencerEditorMode::editingStep:
-        // they 
+      // go back out to the sequence view
+        editMode = SequencerEditorMode::selectingSeqAndStep;
         return;  
     }
   }
@@ -410,11 +420,13 @@ class SequencerEditor {
  */
   void enterNoteData(double note)
   {
-      if (editMode == SequencerEditorMode::editingStep)
+      if (editMode == SequencerEditorMode::editingStep ||
+          editMode == SequencerEditorMode::selectingSeqAndStep)
       {     
         std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-        //data[Step::velInd] = velocity;
-        //data[Step::lengthInd] = lengthMs;
+        // set a default vel and len if needed.
+        if (data[Step::velInd] == 0) data[Step::velInd] = 64;
+        if (data[Step::lengthInd] == 0) data[Step::lengthInd] = 100;
         data[Step::note1Ind] = note;
         writeStepData(data);
       }
@@ -440,10 +452,15 @@ class SequencerEditor {
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
           return;
         case SequencerEditorMode::editingStep:
-        // louder
+        // octave control
           std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          data[Step::velInd] ++;
-          if (data[Step::velInd] > 127) data[Step::velInd] = 127;
+          if (data[Step::note1Ind] > 0) // note is set
+          {
+            data[Step::note1Ind] += 12;
+            if (data[Step::note1Ind] > 127) data[Step::note1Ind] = 127;      
+          }
+          //data[Step::velInd] ++;
+          //if (data[Step::velInd] > 127) data[Step::velInd] = 127;
           writeStepData(data);
           return;  
       }
@@ -467,10 +484,14 @@ class SequencerEditor {
         case SequencerEditorMode::editingStep:
         // quieter
          std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          data[Step::velInd] --;
-          if (data[Step::velInd] < 0) data[Step::velInd] = 0;
+          if (data[Step::note1Ind] > 0) // note is set
+          {
+            data[Step::note1Ind] -= 12;
+            if (data[Step::note1Ind] < 0) data[Step::note1Ind] = 0;      
+          }
+          //data[Step::velInd] --;
+          //if (data[Step::velInd] < 0) data[Step::velInd] = 0;
           writeStepData(data);
-
           return;  
       }
    }
@@ -597,17 +618,19 @@ class SequencerViewer{
         case SequencerEditorMode::configuringSequence:
           return getSequenceConfigView();
         case SequencerEditorMode::editingStep:
-          return getStepView(sequencer->getStepData(editor->getCurrentSequence(), editor->getCurrentStep()));
+          return getStepView(sequencer->getStepData(editor->getCurrentSequence(), editor->getCurrentStep()), sequencer->isStepActive(editor->getCurrentSequence(), editor->getCurrentStep()));
       }
       return "Nothing to draw...";
     }
 
-    static std::string getStepView(const std::vector<double> stepData)
+    static std::string getStepView(const std::vector<double> stepData, bool active)
     {
       std::string disp{""};
-      disp += "l: " + std::to_string((int)stepData[Step::lengthInd]);
+      if (active) disp += "O";
+      else disp += " ";
+      disp += "n: " + std::to_string((int)stepData[Step::note1Ind]);
+      disp += " l: " + std::to_string((int)stepData[Step::lengthInd]);
       disp += " v: " + std::to_string((int)stepData[Step::velInd]);
-      disp += " n: " + std::to_string((int)stepData[Step::note1Ind]);
       return disp;
     }
     static std::string getSequenceConfigView()
@@ -682,7 +705,6 @@ class SequencerViewer{
       return disp;
     }   
 }; 
-
 
 
 
