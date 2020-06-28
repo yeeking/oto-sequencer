@@ -628,9 +628,9 @@ class SequencerViewer{
       std::string disp{""};
       if (active) disp += "O";
       else disp += " ";
-      disp += "n: " + std::to_string((int)stepData[Step::note1Ind]);
-      disp += " l: " + std::to_string((int)stepData[Step::lengthInd]);
-      disp += " v: " + std::to_string((int)stepData[Step::velInd]);
+      disp += "n:" + std::to_string((int)stepData[Step::note1Ind]);
+      disp += " l:" + std::to_string((int)stepData[Step::lengthInd]);
+      disp += " v:" + std::to_string((int)stepData[Step::velInd]);
       return disp;
     }
     static std::string getSequenceConfigView()
@@ -686,11 +686,15 @@ class SequencerViewer{
           //   : gone past the end of the sequence
           char state{'o'};// default
           char cursor{'I'};
-          if (editor->getEditMode() == SequencerEditorMode::settingSeqLength) state = '>';
-
+          
           // inactive/ shortened/ non-existent sequence   
-          if (sequencer->howManySteps(displaySeq) <= displayStep || 
-              sequencer->isStepActive(displaySeq, displayStep) == false) state = ' ';
+          if ((sequencer->howManySteps(displaySeq) <= displayStep || 
+              sequencer->isStepActive(displaySeq, displayStep) == false)) state = ' ';
+          
+          if (editor->getEditMode() == SequencerEditorMode::settingSeqLength && 
+              sequencer->howManySteps(displaySeq) > displayStep) state = '>';
+
+          // override inactive ' ' for 
           // sequencer playback is at this position
           if (sequencer->getCurrentStep(displaySeq) == displayStep) state = '-';
           // cursor is at this position

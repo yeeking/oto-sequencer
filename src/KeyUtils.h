@@ -52,7 +52,7 @@ class KeyReader
                 //     std::cout << "KeyUtils:: waiting " << std::endl;
                 // }
             }
-            std::cout << "KeyUtils:: returning " << key_code << std::endl;
+            //std::cout << "KeyUtils:: returning " << key_code << std::endl;
 
             return key_code;  
         }

@@ -56,20 +56,20 @@ int main()
 {
     KeyReader keyReader;
 
-    const std::map<char, double> key_to_note =
+    const std::map<int, double> key_to_note =
     {
-        { 'z', 60},
-        { 's', 61},
-        { 'x', 63},
-        { 'd', 64},
-        { 'c', 65},
-        { 'f', 66},
-        { 'v', 67},
-        { 'b', 68},
-        { 'h', 69},
-        { 'n', 70},
-        { 'j', 71},
-        { 'm', 72}
+        { 44, 60},
+        { 31, 61},
+        { 45, 63},
+        { 32, 64},
+        { 46, 65},
+        { 47, 66},
+        { 34, 67},
+        { 48, 68},
+        { 35, 69},
+        { 49, 70},
+        { 36, 71},
+        { 50, 72}
     };
 
 
@@ -107,84 +107,46 @@ int main()
 
     clock.start(125);
     char input {1};
-    bool escaped = false;
     
-    while (input != 'q')
+    while (input != 16) // q for quit
     {
-
-      if (!escaped) redrawGroveLCD(seqr, seqEditor, lcd);
-      //input = getch();
+        redrawGroveLCD(seqr, seqEditor, lcd);
         input = keyReader.getChar();
-        //std::cout << input << std::endl;
-
-    //   if (!escaped)
-    //   {
-    //     switch(input)
-    //     {
-    //       case '\033': // first escape character cursor key?
-    //         escaped = true;
-    //         continue;
-    //       case '\t': 
-    //         seqEditor.cycleEditMode();
-    //         continue;
-    //       case ' ':
-    //         seqEditor.cycleAtCursor();
-    //         continue;
-    //       case '\n':
-    //         //seqEditor.cycleMode();
-    //         seqEditor.enterAtCursor();
-    //         continue;
-    //       case (wchar_t)(127):
-    //         //seqEditor.deleteAtCursor();
-    //         continue;
-    //     }// send switch on key
-    //     // now check all the piano keys
-    //     bool key_note_match{false};
-    //     for (const std::pair<char, double>& key_note : key_to_note)
-    //     {
-    //       if (input == key_note.first) 
-    //       { 
-    //   //      std::cout << "match" << key_note.second << std::endl;
-    //         key_note_match = true;
-    //         seqEditor.enterNoteData(key_note.second);
-    //         //redraw(seqr, seqEditor);
-    //         break;// break the for loop
-    //       }
-    //     }
-    //     //if (key_note_match) continue; // continue the while loop
-    //   } // end if !escapted
-    //   if (escaped){
-    //     switch(input){
-    //       case '[': 
-    //         continue;
-    //       case 'A':
-    //         // up
-    //         seqEditor.moveCursorUp();
-    //         escaped = false;
-    //         //redraw(seqr, seqEditor);
-    //         continue;
-    //       case 'D':
-    //         // left
-    //         seqEditor.moveCursorLeft();
-    //         escaped = false;
-    //         //redraw(seqr, seqEditor);
-    //         continue;
-    //       case 'C':
-    //         // right
-    //         seqEditor.moveCursorRight();
-    //         escaped = false;
-    //         //redraw(seqr, seqEditor);
-    //         continue;
-    //       case 'B':
-    //         // down
-    //         seqEditor.moveCursorDown();
-    //         escaped = false;
-    //         //redraw(seqr, seqEditor);
-    //         continue;     
-    //     }//  end switch on scapted mode
-    //   }// end if escapted mode
-    //   //redrawConsole(seqr, seqEditor);    
-
+        switch(input)
+        {
+            case 15: // tab 
+                seqEditor.cycleEditMode();
+                continue;
+            case 57: // space
+                seqEditor.cycleAtCursor();
+                continue;
+            case 28: // return
+                seqEditor.enterAtCursor();
+                continue;
+            case 103: // up
+                seqEditor.moveCursorUp();
+                continue;
+            case 105: // left
+                seqEditor.moveCursorLeft();
+                continue;
+            case 106: // right
+                seqEditor.moveCursorRight();
+                continue;
+            case 108: // down
+                seqEditor.moveCursorDown();
+                continue;     
+        }// end switch on key
+        // now check all the piano keys
+        bool key_note_match{false};
+        for (const std::pair<int, double>& key_note : key_to_note)
+        {
+            if (input == key_note.first) 
+            { 
+                key_note_match = true;
+                seqEditor.enterNoteData(key_note.second);
+                break;// break the for loop
+            }
+        }
     }// end while loop
   return 0;
 }
