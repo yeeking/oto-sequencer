@@ -1,9 +1,84 @@
 #pragma once
 
-#include "Sequencer.h"
-#include "EventQueue.h"
-
+#include <list>
 #include "/usr/include/rtmidi/RtMidi.h"
+
+
+typedef std::vector<unsigned char> MidiMessage;
+typedef std::vector<MidiMessage> MidiMessageVector;
+
+struct TimeStampedMessages{
+    long timestamp;
+    MidiMessageVector messages;
+};
+/** 
+ * Maintains a linked list of midi messages tagged with timestamps
+*/
+class MidiQueue
+{
+    public:
+        MidiQueue();
+        /** q a message at the specified time point*/
+        void addMessage(const long timestamp, const MidiMessage& msg);
+        /** get all q's messages for the specified time point and remove them from the linked likst */
+        MidiMessageVector getAndClearMessages(long timestamp);
+    private:    
+        std::list<TimeStampedMessages> messageList;
+};
+
+MidiQueue::MidiQueue()
+{
+
+}
+void MidiQueue::addMessage(const long timestamp, const MidiMessage& msg)
+{
+   // iterate over the list and insert the event 
+    // at a point where the ts ==  or < 
+    bool done = false;
+    for ( TimeStampedMessages& item : messageList)
+    {
+        if (item.timestamp == timestamp)
+        {
+            item.messages.push_back(msg);// now we pass by value
+            done = true;
+            break;
+        } 
+    }
+    if (!done)
+    {
+       // std::cout << "EventQueue::addEvent no timestapm match for " << timestamp << std::endl;        
+        TimeStampedMessages item {timestamp, MidiMessageVector{msg}};
+        messageList.push_back(item);
+    }
+
+}
+MidiMessageVector MidiQueue::getAndClearMessages(long timestamp)
+{
+    MidiMessageVector retMessages{};
+
+    std::list<TimeStampedMessages>::iterator it;
+    for (it=messageList.begin(); it!=messageList.end(); ++it)
+    {
+        //TimestampedCallbacks item = *it;
+        if (it->timestamp == timestamp)
+        //if (it->timestamp == timestamp) 
+        {
+            // trigger all the callbacks 
+            std::cout << "MidiQueue::getAndClearMessages : " << it->messages.size() << std::endl;
+            for (MidiMessage& msg : it->messages)
+            {
+                retMessages.push_back(msg);            
+            }
+            // erase it
+            messageList.erase(it);
+            // go back one so we can process the next one
+            it--;
+           // break;
+        }
+    }
+    return retMessages;
+}
+
 
 
 /**
@@ -98,42 +173,27 @@ class MidiUtils
     */
     void sendQueuedMessages(long tick)
     {
-      eventQ.triggerAndClearEventsAtTimestamp(tick);
+      for (MidiMessage& msg : midiQ.getAndClearMessages(tick))
+      {
+        midiout->sendMessage(&msg);
+      }
     }
+    /** stores the midi out port */
+    RtMidiOut *midiout;
 
 
   private:
-    /** stores the midi out port */
-    RtMidiOut *midiout;
     /** stores the queue of events*/
-    EventQueue eventQ;
+    //EventQueue eventQ;
+    MidiQueue midiQ;
 
-     void queueNoteOff(int channel, int note, long offTick)
+    void queueNoteOff(int channel, int note, long offTick)
     { 
       std::vector<unsigned char> message = {0, 0, 0};
       message[0] = 128 + channel;
       message[1] = note;
       message[2] = 0;
-      RtMidiOut *midioutP = midiout;
-      midioutP->sendMessage( &message ); 
-       
-      // have to send in a new pointer to midiout
-      // by value as otherwise bad things happen.
-      // same for message because it gets destructed 
-      // otherwise
-      //https://en.cppreference.com/w/cpp/language/lambda
-      eventQ.addEvent(offTick, [&message, midioutP](){
-      //eventQ.addEvent(offTick, [=](){
-        std::cout << "EventQqueueNoteOff " << message[1] << std::endl;
-        // we have to make a copy of the message
-        // as otherwise the origina message appears
-        // as const and sendMessage won't accept const.
-          std::vector<unsigned char> msg2 = {0, 0, 0};
-          msg2[0] = message[0];
-          msg2[1] = message[1];
-          msg2[2] = message[2];
-            midioutP->sendMessage( &msg2 ); 
-        });
+      midiQ.addMessage(offTick, message);
     }
 };
 

@@ -13,6 +13,7 @@ struct TimestampedCallbacks{
     CallbackVector callbacks;
 };
 
+
 /**
  * Class used to maintain a sorted list of timestamped events
  * The idea is that c clock function triggers the calling of these evens

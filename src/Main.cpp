@@ -173,3 +173,32 @@ int main()
     }
   return 0;
 }
+
+
+// int main()
+// {
+//    MidiUtils midiUtils;
+//    midiUtils.interactiveInitMidi();
+ 
+//   char x{'x'};
+//   std::vector<unsigned char> message = {0, 0, 0};
+  
+//   while(x != 'q')
+//   {
+//     std::cin >> x;
+//     if(x=='z'){
+//       midiUtils.playSingleNote(1, 64, 100, 10);
+//     } 
+//     if (x=='x'){
+//      message[0] = 128 + 1;
+//      message[1] = 64;
+//      message[2] = 0;  
+//      midiUtils.midiout->sendMessage(&message);
+
+//     //midiUtils.sendQueuedMessages(10);
+      
+//     }
+//   }
+  
+// }
+
