@@ -11,15 +11,6 @@
 #include <string>
 #include <functional>
 
-/** abstract class that Steps talk to when sending their data */
-class StepDataReceiver 
-{
-  public:
-    StepDataReceiver() = default;
-    /** implement this to allow the data receiver to play a single note*/
-    virtual void playSingleNote(int channel, int note, int velocity, double lengthMs) = 0;
-};
-
 /** default spec for a Step's data, 
  * so data[0] specifies length, 
  * data[1] specifies velocity 
@@ -73,21 +64,14 @@ class Step{
 
 class Sequence{
   public:
-    Sequence(StepDataReceiver* stepDataReceiver, unsigned int seqLength = 16, unsigned short midiChannel = 1) : currentStep{0}, currentLength{seqLength}, midiChannel{midiChannel}
+    Sequence(unsigned int seqLength = 16, unsigned short midiChannel = 1) : currentStep{0}, currentLength{seqLength}, midiChannel{midiChannel}
     {
       for (auto i=0;i<seqLength;i++)
       {
         Step s;
-        s.setCallback([i, stepDataReceiver](std::vector<double> data){
-          // actually, play a midi note
-          if (data.size() >= 3)
-          {
-            double noteLengthMs = data[Step::lengthInd];
-            double noteVolocity = data[Step::velInd];
-            double noteOne = data[Step::note1Ind];
-            stepDataReceiver->playSingleNote(0, noteOne, noteVolocity, noteLengthMs);
-            
-          //std::cout << "step " << i << " triggered " << std::endl;
+        s.setCallback([i](std::vector<double> data){
+          if (data.size() > 0){
+            std::cout << "Sequence::Sequence default step callback " << i << " triggered " << std::endl;
           }
         });
         steps.push_back(s);
@@ -187,11 +171,11 @@ class Sequence{
 /** represents a sequencer which is used to store a grid of data and to step through it */
 class Sequencer  {
     public:
-      Sequencer(StepDataReceiver* stepDataReceiver, unsigned int seqCount = 4, unsigned int seqLength = 16) 
+      Sequencer(unsigned int seqCount = 4, unsigned int seqLength = 16) 
       {
         for (auto i=0;i<seqCount;++i)
         {
-          sequences.push_back(Sequence{stepDataReceiver, seqLength});
+          sequences.push_back(Sequence{seqLength});
         }
       }
 
@@ -232,6 +216,16 @@ class Sequencer  {
       {
         sequences[sequence].setLength(sequences[sequence].getLength()+1);
       }
+
+
+      void setAllCallbacks(std::function<void (std::vector<double>)> callback)
+      {
+          for (int seq = 0; seq < sequences.size(); ++seq)
+          {
+            setSequenceCallback(seq, callback);
+          }
+      }
+
       /** set a callback for all steps in a sequence*/
       void setSequenceCallback(unsigned int sequence, std::function<void (std::vector<double>)> callback)
       {

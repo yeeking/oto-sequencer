@@ -65,7 +65,20 @@ int main()
 
     //NaiveStepDataReceiver midiStepReceiver;
 
-    Sequencer seqr{&midiStepReceiver};
+    Sequencer seqr{};
+    // set up a midi note triggering callback 
+    // on all steps
+    seqr.setAllCallbacks(
+        [&midiStepReceiver](std::vector<double> data){
+          if (data.size() >= 3)
+          {
+            double noteLengthMs = data[Step::lengthInd];
+            double noteVolocity = data[Step::velInd];
+            double noteOne = data[Step::note1Ind];
+            midiStepReceiver.playSingleNote(0, noteOne, noteVolocity, noteLengthMs);            
+          }
+        }
+    );
 
     SequencerEditor seqEditor{&seqr};
     SimpleClock clock{};

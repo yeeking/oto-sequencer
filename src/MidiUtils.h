@@ -5,21 +5,10 @@
 #include "/usr/include/rtmidi/RtMidi.h"
 
 
-class NaiveStepDataReceiver : public StepDataReceiver
-{
-    public:
-        void playSingleNote(int channel, int note, int velocity, double lengthMs)
-        {
-            std::cout << "NaiveStepDataReceiver:: playSingleNote "<< std::endl;            
-            return;
-        }
-
-};
-
 /** implementation of the STepDataReceiver abstract class 
  * which can send midi data when a step is triggered
 */
-class MidiStepDataReceiver : public StepDataReceiver 
+class MidiStepDataReceiver  
 {
   public:
     MidiStepDataReceiver() 
@@ -128,3 +117,14 @@ class MidiStepDataReceiver : public StepDataReceiver
 };
 
 
+class MidiQueue {
+  public:
+   MidiQueue()
+   {
+
+   }
+
+   
+   private:
+
+};

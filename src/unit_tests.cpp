@@ -1,8 +1,9 @@
-#include "Sequencer.h"
 #include <iostream>
-#include "RtMidiUtils.h"
-#include "RapidLibUtils.h"
 #include "../lib/ml/rapidLib.h"
+#include "Sequencer.h"
+#include "MidiUtils.h"
+#include "RapidLibUtils.h"
+#include "EventQueue.h"
 
 bool testTick()
 {
@@ -442,7 +443,6 @@ bool testStepEditModeVel2()
   editor.moveCursorUp();
   data = seqr.getStepData(editor.getCurrentSequence(), editor.getCurrentStep());
   
-  std::cout << editor.getCurrentSequence() << ":" << editor.getCurrentStep() << " : " << SequencerViewer::getStepView(data);
   if (data[1] == 2) return true;
   return false;
 }
@@ -458,6 +458,16 @@ bool testEnterNoteData()
   if (data[Step::note1Ind] == 64) return true;
   return false;
 }
+
+// add something to the queue
+bool testEQAdd()
+{
+  EventQueue q;
+  q.addEvent(0, [](std::vector<double> data){});
+  return true;
+}
+
+
 
 void log(std::string test, bool res)
 {
@@ -505,6 +515,7 @@ int main()
 //  log("testStepEditModeVel", testStepEditModeVel());
 //log("testStepEditModeVel2", testStepEditModeVel2());
 
-log("testEnterNoteData", testEnterNoteData());
+//log("testEnterNoteData", testEnterNoteData());
+  log("testEQAdd", testEQAdd());
 
 }
