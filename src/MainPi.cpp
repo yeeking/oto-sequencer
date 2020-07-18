@@ -69,10 +69,10 @@ void updateLCDColour(SequencerEditor& editor, GrovePi::LCD& lcd)
     }
 }
 
-void setupMidi(MidiStepDataReceiver& midiStepReceiver, KeyReader& keyReader, GrovePi::LCD& lcd)
+void setupMidi(MidiUtils& midiUtils, KeyReader& keyReader, GrovePi::LCD& lcd)
 {
-int midiDev = -1;
-    std::vector<std::string> midiOuts = midiStepReceiver.getOutputDeviceList();
+    int midiDev = -1;
+    std::vector<std::string> midiOuts = midiUtils.getOutputDeviceList();
     while(midiDev == -1)
     {
         for (const std::string& dev : midiOuts)
@@ -90,7 +90,7 @@ int midiDev = -1;
 
         if (midiDev > midiOuts.size() || midiDev < 0) midiDev = -1;
     }
-    midiStepReceiver.selectOutputDevice(midiDev);
+    midiUtils.selectOutputDevice(midiDev);
 }
 
 
@@ -133,21 +133,21 @@ int main()
 	}
 
     // this constructor will trigger midi initialisation
-    MidiStepDataReceiver midiStepReceiver;
-    setupMidi(midiStepReceiver, keyReader, lcd);
+    MidiUtils midiUtils;
+    setupMidi(midiUtils, keyReader, lcd);
 
     //NaiveStepDataReceiver midiStepReceiver;
 
     Sequencer seqr{};
 
     seqr.setAllCallbacks(
-        [&midiStepReceiver](std::vector<double> data){
+        [&midiUtils](std::vector<double> data){
           if (data.size() >= 3)
           {
             double noteLengthMs = data[Step::lengthInd];
             double noteVolocity = data[Step::velInd];
             double noteOne = data[Step::note1Ind];
-            midiStepReceiver.playSingleNote(0, noteOne, noteVolocity, noteLengthMs);            
+            midiUtils.playSingleNote(0, noteOne, noteVolocity, noteLengthMs);            
           }
         }
     );

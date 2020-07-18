@@ -93,7 +93,9 @@ class MidiUtils
       midiout->sendMessage( &message );
       queueNoteOff(channel, note, offTick);
     }
-
+    /** send any messages that are due to be sent at the sent tick
+     * generally this means note offs.
+    */
     void sendQueuedMessages(long tick)
     {
       eventQ.triggerAndClearEventsAtTimestamp(tick);
@@ -107,19 +109,30 @@ class MidiUtils
     EventQueue eventQ;
 
      void queueNoteOff(int channel, int note, long offTick)
-    {
+    { 
       std::vector<unsigned char> message = {0, 0, 0};
       message[0] = 128 + channel;
       message[1] = note;
       message[2] = 0;
       RtMidiOut *midioutP = midiout;
+      midioutP->sendMessage( &message ); 
+       
       // have to send in a new pointer to midiout
       // by value as otherwise bad things happen.
       // same for message because it gets destructed 
       // otherwise
-      eventQ.addEvent(offTick, [message, midioutP](){
-        //std::cout << "EventQqueueNoteOff " << message[1] << std::endl;
-          midioutP->sendMessage( &message ); 
+      //https://en.cppreference.com/w/cpp/language/lambda
+      eventQ.addEvent(offTick, [&message, midioutP](){
+      //eventQ.addEvent(offTick, [=](){
+        std::cout << "EventQqueueNoteOff " << message[1] << std::endl;
+        // we have to make a copy of the message
+        // as otherwise the origina message appears
+        // as const and sendMessage won't accept const.
+          std::vector<unsigned char> msg2 = {0, 0, 0};
+          msg2[0] = message[0];
+          msg2[1] = message[1];
+          msg2[2] = message[2];
+            midioutP->sendMessage( &msg2 ); 
         });
     }
 };
