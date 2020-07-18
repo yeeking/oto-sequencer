@@ -463,8 +463,77 @@ bool testEnterNoteData()
 bool testEQAdd()
 {
   EventQueue q;
-  q.addEvent(0, [](std::vector<double> data){});
+  q.addEvent(0, [](){});
   return true;
+}
+
+bool testEQAddAtTs()
+{
+  EventQueue q;
+  q.addEvent(0, [](){});
+  // verify that we get back this item when we query
+  CallbackVector callbacks = q.getEventsAtTimestamp(0);
+  if (callbacks.size() == 1) return true;
+  return false;
+}
+
+bool testEQAddAtTs2()
+{
+  EventQueue q;
+  q.addEvent(0, [](){});
+  q.addEvent(0, [](){});
+  
+  q.addEvent(10, [](){});
+  
+  // verify that we get back this item when we query
+  CallbackVector callbacks = q.getEventsAtTimestamp(0);
+  if (callbacks.size() == 2) return true;
+  return false;
+}
+
+
+bool testEQAddAtTs10()
+{
+  EventQueue q;
+  q.addEvent(0, [](){});
+  q.addEvent(0, [](){});
+  q.addEvent(10, [](){});
+  // verify that we get back this item when we query
+  CallbackVector callbacks = q.getEventsAtTimestamp(10);
+  if (callbacks.size() == 1) return true;
+  return false;
+}
+
+
+bool testEQTriggerRemove()
+{
+  EventQueue q;
+  q.addEvent(0, [](){std::cout << "0 1" << std::endl;});
+  q.addEvent(0, [](){std::cout << "0 2" << std::endl;});
+  q.addEvent(10, [](){std::cout << "10 1" << std::endl;});
+  
+  // now ts 0 should have one event
+  int sizeBefore =  q.getEventsAtTimestamp(0).size();
+  q.triggerAndClearEventsAtTimestamp(0);
+  int sizeAfter =  q.getEventsAtTimestamp(0).size();
+  if (sizeBefore == 2 && sizeAfter == 0) return true;
+  return false;
+}
+
+
+bool testEQTriggerRemove10()
+{
+  EventQueue q;
+  q.addEvent(0, [](){std::cout << "0 1" << std::endl;});
+  q.addEvent(0, [](){std::cout << "0 2" << std::endl;});
+  q.addEvent(10, [](){std::cout << "10 1" << std::endl;});
+  
+  // now ts 0 should have one event
+  int sizeBefore =  q.getEventsAtTimestamp(10).size();
+  q.triggerAndClearEventsAtTimestamp(10);
+  int sizeAfter =  q.getEventsAtTimestamp(10).size();
+  if (sizeBefore == 1 && sizeAfter == 0) return true;
+  return false;
 }
 
 
@@ -516,6 +585,11 @@ int main()
 //log("testStepEditModeVel2", testStepEditModeVel2());
 
 //log("testEnterNoteData", testEnterNoteData());
-  log("testEQAdd", testEQAdd());
+  // log("testEQAdd", testEQAdd());
 
+  // log("testEQAddAtTs", testEQAddAtTs());
+  // log("testEQAddAtTs2", testEQAddAtTs2());
+  // log("testEQAddAtTs10", testEQAddAtTs10());
+//log("testEQTriggerRemove", testEQTriggerRemove());
+log("testEQTriggerRemove10", testEQTriggerRemove10());
 }
