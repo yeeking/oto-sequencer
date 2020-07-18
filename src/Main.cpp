@@ -60,36 +60,44 @@ int main()
     };
     std::map<char, double>::iterator it;
     
-    MidiStepDataReceiver midiStepReceiver;
-    midiStepReceiver.interactiveInitMidi();
+    MidiUtils midiUtils;
+    midiUtils.interactiveInitMidi();
+
+    SimpleClock clock{};
 
     //NaiveStepDataReceiver midiStepReceiver;
 
     Sequencer seqr{};
+    SequencerEditor seqEditor{&seqr};
+   
     // set up a midi note triggering callback 
     // on all steps
     seqr.setAllCallbacks(
-        [&midiStepReceiver](std::vector<double> data){
+        [&midiUtils, &clock](std::vector<double> data){
           if (data.size() >= 3)
           {
-            double noteLengthMs = data[Step::lengthInd];
+            double offTick = clock.getCurrentTick() + data[Step::lengthInd];
+            // make the length quantised by steps
             double noteVolocity = data[Step::velInd];
             double noteOne = data[Step::note1Ind];
-            midiStepReceiver.playSingleNote(0, noteOne, noteVolocity, noteLengthMs);            
+            midiUtils.playSingleNote(0, noteOne, noteVolocity, offTick);            
           }
         }
     );
 
-    SequencerEditor seqEditor{&seqr};
-    SimpleClock clock{};
-    // this will map joystick x,y to 16 sequences
-    rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
-
-    clock.setCallback([&seqr, &seqEditor](){
+  // tick the sequencer and send any queued notes
+    clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock](){
+      //std::cout << "main.cpp clock callback " << clock.getCurrentTick() << std::endl;
       seqr.tick();
+      midiUtils.sendQueuedMessages(clock.getCurrentTick());
       redraw(seqr, seqEditor);    
     });
 
+
+    // this will map joystick x,y to 16 sequences
+    rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
+
+  
     clock.start(125);
     char input {1};
     bool escaped = false;

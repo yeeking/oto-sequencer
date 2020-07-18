@@ -1,17 +1,18 @@
 #pragma once
 
 #include "Sequencer.h"
+#include "EventQueue.h"
 
 #include "/usr/include/rtmidi/RtMidi.h"
 
 
-/** implementation of the STepDataReceiver abstract class 
- * which can send midi data when a step is triggered
+/**
+ * 
 */
-class MidiStepDataReceiver  
+class MidiUtils 
 {
   public:
-    MidiStepDataReceiver() 
+    MidiUtils() 
     {
       try {
         midiout = new RtMidiOut();
@@ -21,11 +22,14 @@ class MidiStepDataReceiver
 
       }  
     }
-    ~MidiStepDataReceiver()
+    ~MidiUtils()
     {
       delete midiout;
     }
 
+/** 
+ * Presents command line promots to the user to allow them to initiate MIDI output
+*/
   void interactiveInitMidi()
     {
    
@@ -54,41 +58,29 @@ class MidiStepDataReceiver
       std::cout << "Preparing to open the port... " << std::endl;
       midiout->openPort( i );
       std::cout << "Port opened... " << std::endl;
-      
-
     }
 
 
+/** returns a list of midi output devices */
     std::vector<std::string> getOutputDeviceList()
     {
       std::vector<std::string> deviceList;
 
       std::string portName;
       unsigned int i = 0, nPorts = midiout->getPortCount();
-      // if ( nPorts == 0 ) {
-      //   std::cout << "No output ports available!" << std::endl;
-      // }
-
-      // if ( nPorts == 1 ) {
-      //   std::cout << "\nOpening " << midiout->getPortName() << std::endl;
-      // }
-      //else {
         for ( i=0; i<nPorts; i++ ) {
           deviceList.push_back(midiout->getPortName(i));
         }
-      //}
       return deviceList;
     }
+    /** opens the sent output device, ready for use */
     void selectOutputDevice(int deviceId)
     {
-      //std::cout << "\n";
-      //std::cout << "Preparing to open the port... " << std::endl;
       midiout->openPort( deviceId );
-      //std::cout << "Port opened... " << std::endl;
     }
 
-
-    void playSingleNote(int channel, int note, int velocity, double lengthMs)
+  /** play a note */
+    void playSingleNote(int channel, int note, int velocity, long offTick)
     {
       //std::cout << "MidiStepDataReceiver:: playSingleNote "<< std::endl;
       std::vector<unsigned char> message = {0, 0, 0};
@@ -96,35 +88,40 @@ class MidiStepDataReceiver
       message[0] = 144 + channel; // 128 + channel
       message[1] = note; // note value
       message[2] = velocity; // velocity value
+     // std::cout << "playSingleNote " << message[1] << "off "<< offTick << std::endl;
+
       midiout->sendMessage( &message );
-      queueNoteOff(channel, note, lengthMs);
+      queueNoteOff(channel, note, offTick);
+    }
+
+    void sendQueuedMessages(long tick)
+    {
+      eventQ.triggerAndClearEventsAtTimestamp(tick);
     }
 
 
   private:
+    /** stores the midi out port */
+    RtMidiOut *midiout;
+    /** stores the queue of events*/
+    EventQueue eventQ;
 
-     void queueNoteOff(int channel, int note, double lengthMs)
+     void queueNoteOff(int channel, int note, long offTick)
     {
       std::vector<unsigned char> message = {0, 0, 0};
       message[0] = 128 + channel;
       message[1] = note;
       message[2] = 0;
-      midiout->sendMessage( &message );
+      RtMidiOut *midioutP = midiout;
+      // have to send in a new pointer to midiout
+      // by value as otherwise bad things happen.
+      // same for message because it gets destructed 
+      // otherwise
+      eventQ.addEvent(offTick, [message, midioutP](){
+        //std::cout << "EventQqueueNoteOff " << message[1] << std::endl;
+          midioutP->sendMessage( &message ); 
+        });
     }
-
-    /** stores the midi out port */
-    RtMidiOut *midiout;
 };
 
 
-class MidiQueue {
-  public:
-   MidiQueue()
-   {
-
-   }
-
-   
-   private:
-
-};

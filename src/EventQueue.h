@@ -39,10 +39,10 @@ class EventQueue
 
 bool EventQueue::timestampCloseEnough(long ts1, long ts2)
 {
-    long diff = ts1 - ts2;
-    diff = diff * diff;
-   if (diff < 25) return true; // max 5 ms
-//   if (diff == 0) return true;
+//     long diff = ts1 - ts2;
+//     diff = diff * diff;
+//    if (diff < 25) return true; // max 5 ms
+   if (ts1 == ts2) return true;
     return false;
 }
 
@@ -87,6 +87,7 @@ void EventQueue::triggerAndClearEventsAtTimestamp(long timestamp)
         //if (it->timestamp == timestamp) 
         {
             // trigger all the callbacks 
+            std::cout << "EventQueue::triggerAndClearEventsAtTimestamp callbacks : " << it->callbacks.size() << std::endl;
             for (SequencerCallback& callback : it->callbacks)
             {
                 callback();            

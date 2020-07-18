@@ -420,7 +420,7 @@ class SequencerEditor {
         std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
         // set a default vel and len if needed.
         if (data[Step::velInd] == 0) data[Step::velInd] = 64;
-        if (data[Step::lengthInd] == 0) data[Step::lengthInd] = 100;
+        if (data[Step::lengthInd] == 0) data[Step::lengthInd] = 1; // two ticks
         data[Step::note1Ind] = note;
         writeStepData(data);
       }
@@ -526,7 +526,7 @@ class SequencerEditor {
         // right lengthens the note
           std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
           data[Step::lengthInd] ++;
-          if (data[Step::lengthInd] > 100) data[Step::lengthInd] = 100;
+          if (data[Step::lengthInd] > 10) data[Step::lengthInd] = 10;
           writeStepData(data);
           return;  
       }

@@ -11,7 +11,7 @@ class SimpleClock
     SimpleClock(int sleepTimeMs = 5, 
                 std::function<void()>callback = [](){
                     std::cout << "SimpleClock::default tick callback" << std::endl;
-                }) : sleepTimeMs{sleepTimeMs}, running{false}, callback{callback}
+                }) : sleepTimeMs{sleepTimeMs}, running{false}, callback{callback}, currentTick{0}
      {
        // constructor body
      }
@@ -45,9 +45,14 @@ class SimpleClock
     }
     void tick()
     {
+      currentTick ++;
       // call the callback
       //std::cout << "SimpleClock::tick" << std::endl; 
       callback();     
+    }
+    long getCurrentTick() const 
+    {
+      return currentTick;
     }
 
  static void ticker(SimpleClock* clock, long intervalMs, long sleepTimeMs)
@@ -88,4 +93,6 @@ class SimpleClock
     bool running;     
     std::thread* tickThread;
     std::function<void()> callback;
+    long currentTick;
 };
+
