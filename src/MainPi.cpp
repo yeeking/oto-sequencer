@@ -153,8 +153,6 @@ int main()
     );
 
 
-
-
     SequencerEditor seqEditor{&seqr};
     SimpleClock clock{};
     // this will map joystick x,y to 16 sequences
