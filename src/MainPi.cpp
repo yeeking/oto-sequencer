@@ -143,37 +143,30 @@ int main()
     // this constructor will trigger midi initialisation
     MidiUtils midiUtils;
     setupMidi(midiUtils, keyReader, lcd);
-
-    //NaiveStepDataReceiver midiStepReceiver;
-
     Sequencer seqr{};
-
-    seqr.setAllCallbacks(
-        [&midiUtils](std::vector<double> data){
-          if (data.size() >= 3)
-          {
-            double noteLengthMs = data[Step::lengthInd];
-            double noteVolocity = data[Step::velInd];
-            double noteOne = data[Step::note1Ind];
-            midiUtils.playSingleNote(0, noteOne, noteVolocity, noteLengthMs);            
-          }
-        }
-    );
-
-
     SequencerEditor seqEditor{&seqr};
     SimpleClock clock{};
     // this will map joystick x,y to 16 sequences
     rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
 
+    seqr.setAllCallbacks(
+        [&midiUtils, &clock](std::vector<double> data){
+          if (data.size() >= 3)
+          {
+            double offTick = clock.getCurrentTick() + data[Step::lengthInd];
+            // make the length quantised by steps
+            double noteVolocity = data[Step::velInd];
+            double noteOne = data[Step::note1Ind];
+            midiUtils.playSingleNote(0, noteOne, noteVolocity, offTick);            
+          }
+        }
+    );
+
     clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock](){
-      // send any q'd messages for this tick
-      std::cout << "MainPi sending q'd message " << std::endl;
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
-      // generate and possibly send any new messages
       seqr.tick();
-      //redrawConsole(seqr, seqEditor);    
     });
+
 
     clock.start(125);
     char input {1};

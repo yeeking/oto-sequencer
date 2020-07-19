@@ -50,21 +50,18 @@ void MidiQueue::addMessage(const long timestamp, const MidiMessage& msg)
         TimeStampedMessages item {timestamp, MidiMessageVector{msg}};
         messageList.push_back(item);
     }
-
 }
 MidiMessageVector MidiQueue::getAndClearMessages(long timestamp)
 {
     MidiMessageVector retMessages{};
-
     std::list<TimeStampedMessages>::iterator it;
     for (it=messageList.begin(); it!=messageList.end(); ++it)
-    {
+    {            
         //TimestampedCallbacks item = *it;
         if (it->timestamp == timestamp)
         //if (it->timestamp == timestamp) 
         {
             // trigger all the callbacks 
-            std::cout << "MidiQueue::getAndClearMessages : " << it->messages.size() << std::endl;
             for (MidiMessage& msg : it->messages)
             {
                 retMessages.push_back(msg);            
@@ -192,9 +189,11 @@ class MidiUtils
     */
     void sendQueuedMessages(long tick)
     {
+      int msgind = 0;
       for (MidiMessage& msg : midiQ.getAndClearMessages(tick))
       {
         midiout->sendMessage(&msg);
+        msgind ++;
       }
     }
     /** stores the midi out port */
@@ -205,9 +204,9 @@ class MidiUtils
     /** stores the queue of events*/
     //EventQueue eventQ;
     MidiQueue midiQ;
-
+    
     void queueNoteOff(int channel, int note, long offTick)
-    { 
+    {
       std::vector<unsigned char> message = {0, 0, 0};
       message[0] = 128 + channel;
       message[1] = note;
