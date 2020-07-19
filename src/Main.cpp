@@ -62,6 +62,7 @@ int main()
     
     MidiUtils midiUtils;
     midiUtils.interactiveInitMidi();
+    midiUtils.allNotesOff();
 
     SimpleClock clock{};
 
@@ -88,8 +89,8 @@ int main()
   // tick the sequencer and send any queued notes
     clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock](){
       //std::cout << "main.cpp clock callback " << clock.getCurrentTick() << std::endl;
-      seqr.tick();
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
+      seqr.tick();
       redraw(seqr, seqEditor);    
     });
 
@@ -171,6 +172,7 @@ int main()
         }
       }
     }
+  midiUtils.allNotesOff();
   return 0;
 }
 

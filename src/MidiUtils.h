@@ -148,11 +148,30 @@ class MidiUtils
         }
       return deviceList;
     }
-    /** opens the sent output device, ready for use */
+    /** opens the sent output device, ready for use 
+     * Should be in the range 0->(number of ports-1) inclusive
+    */
     void selectOutputDevice(int deviceId)
     {
       midiout->openPort( deviceId );
     }
+
+    void allNotesOff()
+    {
+        std::vector<unsigned char> message = {0, 0, 0};
+
+      for (char channel = 0; channel < 16; ++channel)
+      {
+        for (char note = 0; note < 127; note ++)
+        {
+          message[0] = 128 + channel;
+          message[1] = note;
+          message[2] = 0;
+          midiout->sendMessage( &message );
+        }
+      }
+    }
+
 
   /** play a note */
     void playSingleNote(int channel, int note, int velocity, long offTick)

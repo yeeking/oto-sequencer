@@ -75,8 +75,12 @@ void setupMidi(MidiUtils& midiUtils, KeyReader& keyReader, GrovePi::LCD& lcd)
     std::vector<std::string> midiOuts = midiUtils.getOutputDeviceList();
     while(midiDev == -1)
     {
-        for (const std::string& dev : midiOuts)
+        std::cout << "Attempting device selection " << std::endl;
+        int option_ind = 0;
+        for (std::string& dev : midiOuts)
         {
+            option_ind ++;
+            dev = std::to_string(option_ind) + ":" + dev;
             std::cout << dev << std::endl;
             lcd.setText(dev.c_str());
             sleep(1);
@@ -86,11 +90,15 @@ void setupMidi(MidiUtils& midiUtils, KeyReader& keyReader, GrovePi::LCD& lcd)
         std::cout << msg << std::endl;
         lcd.setText(msg.c_str());
         midiDev = keyReader.getChar() - 2;
-        std::cout << "You chose " << midiDev << std::endl; 
+        std::cout << "You chose " << midiDev << std::endl;
+        // it is zero indexed.
+ //       midiDev --; 
 
         if (midiDev > midiOuts.size() || midiDev < 0) midiDev = -1;
     }
+    std::cout << "selecting a device " << midiDev << std::endl;
     midiUtils.selectOutputDevice(midiDev);
+    midiUtils.allNotesOff();
 }
 
 
@@ -158,7 +166,11 @@ int main()
     // this will map joystick x,y to 16 sequences
     rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
 
-    clock.setCallback([&seqr, &seqEditor](){
+    clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock](){
+      // send any q'd messages for this tick
+      std::cout << "MainPi sending q'd message " << std::endl;
+      midiUtils.sendQueuedMessages(clock.getCurrentTick());
+      // generate and possibly send any new messages
       seqr.tick();
       //redrawConsole(seqr, seqEditor);    
     });
@@ -208,5 +220,6 @@ int main()
             }
         }
     }// end while loop
+    midiUtils.allNotesOff();
   return 0;
 }
