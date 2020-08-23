@@ -536,6 +536,54 @@ bool testEQTriggerRemove10()
   return false;
 }
 
+// get it into configuring sequence mode
+// via controls
+bool testSequenceConfigMode()
+{
+   bool res = false;
+   // check if we can get into sequence config mode
+   Sequencer seqr{};
+   SequencerEditor cursor{&seqr};
+   // starting at sequence edit mode
+   // this should put it into config sequence 
+   // mode
+   cursor.enterAtCursor();
+   if (cursor.getEditMode() == SequencerEditorMode::configuringSequence){
+     res = true;
+   } 
+   return res;
+}
+
+
+// direct version instructs it directly
+// to go into the configuring seq mode
+bool testSequenceConfigModeDirect()
+{
+   bool res = false;
+   // check if we can get into sequence config mode
+   Sequencer seqr{};
+   SequencerEditor cursor{&seqr};
+   cursor.setEditMode(SequencerEditorMode::configuringSequence);
+   if (cursor.getEditMode() == SequencerEditorMode::configuringSequence){
+     res = true;
+   } 
+   return res;
+}
+
+bool testSequenceConfigModeSetChannel()
+{
+   bool res = false;
+   // check if we can get into sequence config mode
+   Sequencer seqr{};
+   SequencerEditor cursor{&seqr};
+   // now we should be able to 
+   // move up and down to set the channel
+   seqr.updateStepData(0, 0, Step::channelInd, 1);
+   // verify we have that as our midi channel
+   double channel = seqr.getStepData(0, 0)[Step::channelInd]; 
+   if (channel == 1) res = true;
+   return res;
+}
 
 
 void log(std::string test, bool res)
@@ -591,5 +639,8 @@ int main()
   // log("testEQAddAtTs2", testEQAddAtTs2());
   // log("testEQAddAtTs10", testEQAddAtTs10());
 //log("testEQTriggerRemove", testEQTriggerRemove());
-log("testEQTriggerRemove10", testEQTriggerRemove10());
+//log("testEQTriggerRemove10", testEQTriggerRemove10());
+//log("testSequenceConfigMode", testSequenceConfigMode());
+//log("testSequenceConfigModeDirect", testSequenceConfigMode());
+log("testSequenceConfigModeSetChannel", testSequenceConfigModeSetChannel());
 }

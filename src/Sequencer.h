@@ -21,15 +21,18 @@
 class Step{
   
   public:
-    const static int lengthInd{0};
-    const static int velInd{1};
-    const static int note1Ind{2};
+    const static int channelInd{0};
+    const static int lengthInd{1};
+    const static int velInd{2};
+    const static int note1Ind{3};
   
     Step() : active{true}
     {
       data.push_back(0.0);
       data.push_back(0.0);
       data.push_back(0.0);
+      data.push_back(0.0);
+      
     }
     std::vector<double> getData() const
     {
@@ -38,6 +41,10 @@ class Step{
     void setData(std::vector<double> data)
     {
       this->data = data; 
+    }
+    void updateData(unsigned int dataInd, double value)
+    {
+      if(dataInd < data.size()) data[dataInd] = value;
     }
     void setCallback(std::function<void(std::vector<double>)> callback)
     {
@@ -76,7 +83,6 @@ class Sequence{
         });
         steps.push_back(s);
       }
-      
     }
     /** go to the next step */
     void tick()
@@ -103,7 +109,7 @@ class Sequence{
     {
       return steps[currentStep].getData();
     }
-   unsigned int getLength() const
+    unsigned int getLength() const
     {
       return currentLength; 
     }
@@ -114,7 +120,6 @@ class Sequence{
       if (length > steps.size()) // bad need more steps
       {
         int toAdd = length - steps.size();
-
         for (int i=0; i < toAdd; ++i)
         {
           Step s;
@@ -131,6 +136,12 @@ class Sequence{
     {
       steps[step].setData(data);
     }
+    /** update a single data value in a given step*/
+    void updateStepData(unsigned int step, unsigned int dataInd, double value)
+    {
+      steps[step].updateData(dataInd, value);
+    }
+    
     void setStepCallback(unsigned int step, 
                       std::function<void (std::vector<double>)> callback)
     {
@@ -247,6 +258,14 @@ class Sequencer  {
         if (!assertSeqAndStep(sequence, step)) return;
         sequences[sequence].setStepData(step, data);
       }
+      /** update a single value in the  data 
+       * stored at a step in the sequencer */
+      void updateStepData(unsigned int sequence, unsigned int step, unsigned int dataInd, double value)
+      {
+        if (!assertSeqAndStep(sequence, step)) return;
+        sequences[sequence].updateStepData(step, dataInd, value);
+      }
+      
       /** retrieve the data for the current step */
       std::vector<double> getCurrentStepData(int sequence) const
       {

@@ -77,11 +77,12 @@ int main()
         [&midiUtils, &clock](std::vector<double> data){
           if (data.size() >= 3)
           {
+            double channel = data[Step::channelInd];
             double offTick = clock.getCurrentTick() + data[Step::lengthInd];
             // make the length quantised by steps
             double noteVolocity = data[Step::velInd];
             double noteOne = data[Step::note1Ind];
-            midiUtils.playSingleNote(0, noteOne, noteVolocity, offTick);            
+            midiUtils.playSingleNote(channel, noteOne, noteVolocity, offTick);            
           }
         }
     );
