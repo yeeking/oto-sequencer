@@ -623,10 +623,29 @@ bool testDisplaySeqInfoPage()
    SequencerEditor cursor{&seqr};
    cursor.setEditMode(SequencerEditorMode::settingSeqLength);
    cursor.enterAtCursor();// go into sequence config edit 
-  
   std::string want = "c:0";
   std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
-  
+  if (want != got) 
+  {
+    std::cout << "testDisplaySeqInfoPage:: Wanted \n'" << want << "'\n got \n'" << got << "'" << std::endl;
+  }
+  else {
+    res = true;
+  }
+  return res;     
+}
+
+
+bool testDisplaySeqInfoPageUpdates()
+{
+  bool res = false;
+   Sequencer seqr{};
+   SequencerEditor cursor{&seqr};
+   cursor.setEditMode(SequencerEditorMode::settingSeqLength);
+   cursor.enterAtCursor();// go into sequence config edit 
+   cursor.enterNoteData(4);
+  std::string want = "c:4";
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
   if (want != got) 
   {
     std::cout << "testDisplaySeqInfoPage:: Wanted \n'" << want << "'\n got \n'" << got << "'" << std::endl;
@@ -697,6 +716,7 @@ int main()
   //log("testSetChannelDirect", testSetChannelDirect());
 //  log("testSetChannelEditor", testSetChannelEditor());
 
-log("testDisplaySeqInfoPage", testDisplaySeqInfoPage());
+//log("testDisplaySeqInfoPage", testDisplaySeqInfoPage());
+log("testDisplaySeqInfoPageUpdates", testDisplaySeqInfoPageUpdates());
 
 }
