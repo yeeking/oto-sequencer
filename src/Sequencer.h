@@ -442,6 +442,17 @@ class SequencerEditor {
         if (data[Step::lengthInd] == 0) data[Step::lengthInd] = 1; // two ticks
         data[Step::note1Ind] = note;
         writeStepData(data);
+        return;
+      }
+      if (editMode == SequencerEditorMode::configuringSequence)
+      {
+        // set channel on all notes for this sequence
+        int noteI = (unsigned int) note;
+        noteI = noteI % 16; // 16 channels
+        for (int step=0; step < sequencer->howManySteps(currentSequence); ++step)
+        {
+          sequencer->updateStepData(currentSequence, step, Step::channelInd, noteI);
+        }
       }
   }
 
@@ -629,14 +640,17 @@ class SequencerViewer{
         case SequencerEditorMode::selectingSeqAndStep:
          return getSequencerView(rows, cols, sequencer, editor);
         case SequencerEditorMode::configuringSequence:
-          return getSequenceConfigView();
+          return getSequenceConfigView(sequencer->getStepData(editor->getCurrentSequence(), 0)[Step::channelInd]);
         case SequencerEditorMode::editingStep:
           return getStepView(sequencer->getStepData(editor->getCurrentSequence(), editor->getCurrentStep()), sequencer->isStepActive(editor->getCurrentSequence(), editor->getCurrentStep()));
       }
       return "Nothing to draw...";
     }
 
-    static std::string getStepView(const std::vector<double> stepData, bool active)
+    /**
+     * Returns a view of an individual step based on the sent step data
+     */
+    static std::string getStepView(const std::vector<double>& stepData, bool active)
     {
       std::string disp{""};
       if (active) disp += "O";
@@ -646,16 +660,28 @@ class SequencerViewer{
       disp += " v:" + std::to_string((int)stepData[Step::velInd]);
       return disp;
     }
-    static std::string getSequenceConfigView()
+    /**
+     * Returns a view that shows the config for the sent sequence, i.e.
+     * the channel, where the channel is based on the first step's channel data
+     */
+    static std::string getSequenceConfigView(const unsigned int channel)
     {
-      return "Just a regular sequence...";
+      std::string disp{""};
+      disp += "c:" + std::to_string(channel);
+      //disp += " l:" + std::to_string((int)stepData[Step::lengthInd]);
+      //disp += " v:" + std::to_string((int)stepData[Step::velInd]);
+      return disp;
     }
+  
 
     /** generate a 'rows' line string representation of the state of the editor
      * and sequencer. Examples:
      * Starting state - I is where the 
      * 1-Iooooooo
      * 2-Oooooooo
+     * For the student of module coupling, this is control coupling because the state of the incoming 
+     * edutor dictates the behaviour of the function. It would probably be better to remove that 
+     * and make two separate functions even if they are really similar
      */
    
     static std::string getSequencerView(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)

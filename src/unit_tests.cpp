@@ -547,6 +547,7 @@ bool testSequenceConfigMode()
    // starting at sequence edit mode
    // this should put it into config sequence 
    // mode
+   cursor.cycleEditMode();// it starts in selectingSequence and step. this takes it to seq edit
    cursor.enterAtCursor();
    if (cursor.getEditMode() == SequencerEditorMode::configuringSequence){
      res = true;
@@ -570,7 +571,7 @@ bool testSequenceConfigModeDirect()
    return res;
 }
 
-bool testSequenceConfigModeSetChannel()
+bool testSetChannelDirect()
 {
    bool res = false;
    // check if we can get into sequence config mode
@@ -583,6 +584,57 @@ bool testSequenceConfigModeSetChannel()
    double channel = seqr.getStepData(0, 0)[Step::channelInd]; 
    if (channel == 1) res = true;
    return res;
+}
+
+bool testSetChannel()
+{
+   bool res = false;
+   // check if we can get into sequence config mode
+   Sequencer seqr{};
+   SequencerEditor cursor{&seqr};
+   // now we should be able to 
+   // move up and down to set the channel
+   seqr.updateStepData(0, 0, Step::channelInd, 1);
+   // verify we have that as our midi channel
+   double channel = seqr.getStepData(0, 0)[Step::channelInd]; 
+   if (channel == 1) res = true;
+   return res;
+}
+bool testSetChannelEditor()
+{
+   bool res = false;
+   // check if we can get into sequence config mode
+   Sequencer seqr{};
+   SequencerEditor cursor{&seqr};
+   cursor.cycleEditMode();// go to seq length edit
+   cursor.enterAtCursor();// go into sequence config edit 
+  
+   cursor.enterNoteData(3); // change channel to 3 
+   double channel = seqr.getStepData(0, 0)[Step::channelInd]; 
+   if (channel == 3) res = true;
+   return res;
+}
+
+
+bool testDisplaySeqInfoPage()
+{
+  bool res = false;
+   Sequencer seqr{};
+   SequencerEditor cursor{&seqr};
+   cursor.setEditMode(SequencerEditorMode::settingSeqLength);
+   cursor.enterAtCursor();// go into sequence config edit 
+  
+  std::string want = "c:0";
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  
+  if (want != got) 
+  {
+    std::cout << "testDisplaySeqInfoPage:: Wanted \n'" << want << "'\n got \n'" << got << "'" << std::endl;
+  }
+  else {
+    res = true;
+  }
+  return res;     
 }
 
 
@@ -640,7 +692,11 @@ int main()
   // log("testEQAddAtTs10", testEQAddAtTs10());
 //log("testEQTriggerRemove", testEQTriggerRemove());
 //log("testEQTriggerRemove10", testEQTriggerRemove10());
-//log("testSequenceConfigMode", testSequenceConfigMode());
+//  log("testSequenceConfigMode", testSequenceConfigMode());
 //log("testSequenceConfigModeDirect", testSequenceConfigMode());
-log("testSequenceConfigModeSetChannel", testSequenceConfigModeSetChannel());
+  //log("testSetChannelDirect", testSetChannelDirect());
+//  log("testSetChannelEditor", testSetChannelEditor());
+
+log("testDisplaySeqInfoPage", testDisplaySeqInfoPage());
+
 }
