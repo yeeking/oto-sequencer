@@ -1,6 +1,7 @@
 #include <iostream>
 #include "../lib/ml/rapidLib.h"
 #include "Sequencer.h"
+#include "SequencerUtils.h"
 #include "MidiUtils.h"
 #include "RapidLibUtils.h"
 #include "EventQueue.h"
@@ -15,7 +16,8 @@ bool testTick()
 
 bool testUpdate()
 {
-  Sequence seq{};
+  Sequencer* seqrP;
+Sequence seq{seqrP};
   seq.setStepData(0, std::vector<double>{0.1f});
   std::vector<double> data = seq.getStepData(0);
   if (data[0] == 0.1f) return true;
@@ -24,7 +26,8 @@ bool testUpdate()
 
 bool testUpdate2()
 {
-  Sequence seq{};
+  Sequencer* seqrP;
+Sequence seq{seqrP};
   seq.setStepData(1, std::vector<double>{0.5f});
   std::vector<double> data = seq.getStepData(1);
   if (data[0] == 0.5f) return true;
@@ -320,7 +323,8 @@ bool testIsStepActiveStep()
 
 bool testIsStepActiveSeq()
 {
-  Sequence seq{};
+  Sequencer* seqrP;
+Sequence seq{seqrP};
   return seq.isStepActive(0);;
 }
 
@@ -339,7 +343,8 @@ bool testToggleStepActiveStep()
 
 bool testToggleStepActiveSeq()
 {
-  Sequence seq{};
+  Sequencer* seqrP;
+Sequence seq{seqrP};
   seq.toggleActive(0);
   return !seq.isStepActive(0);;
 }
@@ -657,6 +662,126 @@ bool testDisplaySeqInfoPageUpdates()
 }
 
 
+bool testChannelUp()
+{
+  bool res = false;
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::settingSeqLength);
+  cursor.enterAtCursor();// go into sequence config edit 
+  cursor.moveCursorUp();// increase channel to 1
+  cursor.moveCursorUp();// increase channel to 2
+  double channel = seqr.getStepData(0, 0)[Step::channelInd]; 
+  if (channel == 2) res = true;
+  return res;
+}
+
+bool testAddPrePro()
+{
+  Sequencer seqr{};
+  Sequence seq{&seqr};
+  StepDataTranspose t{2};
+  // this is what eventually, a sequence would do to another sequence
+  // but here we do it directly
+  seq.setStepProcessorTranspose(StepDataTranspose{4});
+  // we pass if we get through the function!  
+  return true;
+}
+
+bool testTranspose()
+{
+  bool res = false;
+  std::string test{""};
+  Sequencer seqr{};
+  Sequence seq{&seqr};
+  seq.setStepProcessorTranspose(StepDataTranspose{2});
+  // now we have added a transposer, verify that 
+  // the sequences are being transposed
+  // by setting a callback that checks the transposed data
+  seq.setStepData(1, {0,0,0,0});
+  seq.setStepCallback(1, 
+    [&test](std::vector<double> data){
+      test = std::to_string((int)data[Step::note1Ind]);
+    });
+  seq.tick();  
+
+  if (test == "2") // it went up from 0 to 2 as a result of the transpose
+  {
+    res = true;
+  }
+  else {
+    std::cout << "Wanted 2 but got " << test << std::endl;
+  }
+  return res;
+}
+
+
+
+bool testTransposeReturns()
+{
+  bool res = false;
+  std::string test{""};
+  Sequencer seqr{};
+  Sequence seq{&seqr};
+  seq.setStepProcessorTranspose(StepDataTranspose{2});
+  // now we have added a transposer, verify that 
+  // the sequences are being transposed
+  // by setting a callback that checks the transposed data
+  seq.setStepData(1, {0,0,0,0});
+  seq.setStepCallback(1, 
+    [&test](std::vector<double> data){
+      test = std::to_string((int)data[Step::note1Ind]);
+    });
+  seq.setStepProcessorTranspose(StepDataTranspose{1});
+  
+  seq.tick();  
+
+  if (test == "1") // it went up from 0 to 2 as a result of the transpose
+  {
+    res = true;
+  }
+  else {
+    std::cout << "Wanted 2 but got " << test << std::endl;
+  }
+  return res;
+}
+
+bool testTransposeViaSeq()
+{
+  bool res = false;
+  std::string test{""};
+  Sequencer seqr{};
+  // setup seq 0 to transpose seq 1
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::channelInd] = 1;  // channel 2
+  data[Step::note1Ind] = 3; // up by 3
+  seqr.setSequenceType(0, SequenceType::transposer);
+  seqr.setStepData(0, 1, data);// 
+  // now seq 1
+  std::vector<double> data2 {0, 0, 0, 0};
+  data2[Step::note1Ind] = 10; // should go up to 13
+  seqr.setStepData(1, 1, data2);
+  seqr.setStepCallback(1, 1, // seq 1, step 1
+    [&test](std::vector<double> data){
+      test = std::to_string((int)data[Step::note1Ind]);
+    });
+  // calling tick should 
+  // cause seq 0 to attach a transposer 
+  // to seq 1
+  seqr.tick();  
+
+  if (test == "13") // it went up from 0 to 2 as a result of the transpose
+  {
+    res = true;
+  }
+  else {
+    std::cout << "Wanted 13 but got " << test << std::endl;
+  }
+  return res;
+}
+
+
+
 void log(std::string test, bool res)
 {
   std::string msg;
@@ -717,6 +842,10 @@ int main()
 //  log("testSetChannelEditor", testSetChannelEditor());
 
 //log("testDisplaySeqInfoPage", testDisplaySeqInfoPage());
-log("testDisplaySeqInfoPageUpdates", testDisplaySeqInfoPageUpdates());
-
+//log("testDisplaySeqInfoPageUpdates", testDisplaySeqInfoPageUpdates());
+//log("testChannelUp", testChannelUp());
+//log("testAddPrePro", testAddPrePro());
+//log("testTranspose", testTranspose());
+//log("testTransposeReturns", testTransposeReturns());
+log("testTransposeViaSeq", testTransposeViaSeq());
 }

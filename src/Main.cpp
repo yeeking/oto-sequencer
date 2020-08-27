@@ -6,6 +6,7 @@
 
 #include "SimpleClock.h"
 #include "Sequencer.h"
+#include "SequencerUtils.h"
 #include "RapidLibUtils.h"
 #include "MidiUtils.h"
 
