@@ -22,6 +22,13 @@ On normal linux or raspi linux without grove sensors:
   ./oto-sequencer
 ```
 
+## TODO
+
+* probability per step
+* ticks per beat per sequence
+* pre-processor for ticks per beat
+* pre-processor for sequence length
+* pre-processor for repeats
 
 
 
