@@ -36,7 +36,6 @@ class SimpleClock
        //t << "SimpleClock::stop shutting down " << std::endl;
         running = false; 
         tickThread->join(); 
-        delete tickThread;
       }
     }
     /** set the function to be called when the click ticks */

@@ -146,18 +146,18 @@ class SequencerEditor {
           if (currentSequence < 0) currentSequence = 0;
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
           break;
+    
         case SequencerEditorMode::editingStep:
         {
-          // octave control
           std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          if (data[Step::note1Ind] > 0) // note is set
-          {
-            data[Step::note1Ind] += 12;
-            if (data[Step::note1Ind] > 127) data[Step::note1Ind] = 127;      
-          }
-          writeStepData(data);
+          //if (data[Step::note1Ind] > 0) // note is set
+          //{
+            SequencerEditor::incrementStepData(data, sequencer->getSequenceType(currentSequence));
+            writeStepData(data);
+          //}
           break;  
         }
+  
         case SequencerEditorMode::configuringSequence:
         {
           // set the channel based on step 0
@@ -193,16 +193,12 @@ class SequencerEditor {
         }
         case SequencerEditorMode::editingStep:
         {
-        // quieter
-         std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          if (data[Step::note1Ind] > 0) // note is set
-          {
-            data[Step::note1Ind] -= 12;
-            if (data[Step::note1Ind] < 0) data[Step::note1Ind] = 0;      
-          }
-          //data[Step::velInd] --;
-          //if (data[Step::velInd] < 0) data[Step::velInd] = 0;
-          writeStepData(data);
+          std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
+          //if (data[Step::note1Ind] > 0) // note is set
+          //{
+            SequencerEditor::decrementStepData(data, sequencer->getSequenceType(currentSequence));
+            writeStepData(data);
+          //}
           break;  
         }
         case SequencerEditorMode::configuringSequence:
@@ -219,6 +215,48 @@ class SequencerEditor {
         }
       }
    }
+/** does an in place increment of the step data, as appropriate for the 
+ * type of sequence
+*/
+static void decrementStepData(std::vector<double>& data, SequenceType seqType)
+{
+  switch(seqType)
+  {
+    case SequenceType::midiNote: // octave adjust
+    {
+        data[Step::note1Ind] -= 12;
+        if (data[Step::note1Ind] < 0) data[Step::note1Ind] += 12;      
+        break;
+    }
+    case SequenceType::transposer: // single step wrapped on 24
+    {
+        data[Step::note1Ind] -= 1;
+
+        //data[Step::note1Ind] = fmod(data[Step::note1Ind], 24);
+        //if (data[Step::note1Ind] < 0) data[Step::note1Ind] += 1;      
+        break;
+    }
+  }
+}
+static void incrementStepData(std::vector<double>& data, SequenceType seqType)
+{
+    switch(seqType)
+  {
+    case SequenceType::midiNote: // octave adjust
+    {
+        data[Step::note1Ind] += 12;
+        if (data[Step::note1Ind] > 127) data[Step::note1Ind] -= 12;      
+        break;
+    }
+    case SequenceType::transposer: // single step wrapped on 24
+    {
+        data[Step::note1Ind] += 1;
+        //data[Step::note1Ind] = fmod(data[Step::note1Ind], 24);
+        //if (data[Step::note1Ind] < 0) data[Step::note1Ind] = 0;      
+        break;
+    }
+  }
+}
 
   void moveCursorLeft()
   {
@@ -433,8 +471,12 @@ class SequencerViewer{
      * and make two separate functions even if they are really similar
      */
    
-    static std::string getSequencerView(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)
+    static std::string getSequencerView(const int rows, int cols, const Sequencer* sequencer, const SequencerEditor* editor)
     {
+
+    // fix to display key info at the end of the row 
+    //cols = cols - 3;
+
     // the editor cursor dictates which bit we show
       std::string disp{""};
       // we display the bit of the sequences
@@ -451,6 +493,7 @@ class SequencerViewer{
         stepOffset = editor->getCurrentStep();
       }
       int displaySeq, displayStep;
+      std::string preview {""};
       for (int seq=0;seq<rows;++seq)
       {
         displaySeq = seq + seqOffset;
@@ -464,6 +507,7 @@ class SequencerViewer{
         if (editor->getCurrentStep() == 0) disp += "-";
         else disp += " ";
         for (int step=0;step<cols - 3;++step) // -3 as we we used 3 chars already
+       
         {
           displayStep = step + stepOffset;
           
@@ -475,24 +519,43 @@ class SequencerViewer{
           char state{'o'};// default
           char cursor{'I'};
           
+          // in step edit mode, printing a particular step
+          // that does not have data
+          if (editor->getEditMode() == SequencerEditorMode::selectingSeqAndStep && 
+              sequencer->howManySteps(displaySeq) > displayStep && 
+              sequencer->getStepData(displaySeq, displayStep)[Step::note1Ind] == 0)
+          {
+            state = '.';
+          } 
+       
           // inactive/ shortened/ non-existent sequence   
           if ((sequencer->howManySteps(displaySeq) <= displayStep || 
               sequencer->isStepActive(displaySeq, displayStep) == false)) state = ' ';
-          
+
+          // sequence length mode
           if (editor->getEditMode() == SequencerEditorMode::settingSeqLength && 
               sequencer->howManySteps(displaySeq) > displayStep) state = '>';
 
           // override inactive ' ' for 
           // sequencer playback is at this position
           if (sequencer->getCurrentStep(displaySeq) == displayStep) state = '-';
+          
+          
           // cursor is at this position
           if (editor->getCurrentSequence() == displaySeq &&
-              editor->getCurrentStep() == displayStep)  state = cursor;          
+              editor->getCurrentStep() == displayStep &&
+              sequencer->isStepActive(displaySeq, displayStep) 
+              )
+              {
+                preview = std::to_string((int)sequencer->getStepData(displaySeq, displayStep)[Step::note1Ind]);
+                state = cursor;          
+              }
        
           disp += state;
         }
         if (seq < rows - 1)
-          disp += "\n";
+          disp += preview + "\n";
+          preview = "";
       }  
       return disp;
     }   

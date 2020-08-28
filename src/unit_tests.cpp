@@ -805,6 +805,57 @@ bool viewSeqTypeMidi()
 }
 
 
+bool testIncStepMidi()
+{
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 60;
+  SequencerEditor::incrementStepData(data, SequenceType::midiNote);
+  if (data[Step::note1Ind] == 72) res = true;
+  return res;
+}
+bool testIncStepMidiWrap()
+{
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 120;
+  SequencerEditor::incrementStepData(data, SequenceType::midiNote);
+  if (data[Step::note1Ind] == 120) res = true;
+  return res;
+}
+
+bool testIncStepTrans()
+{
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 5;
+  SequencerEditor::incrementStepData(data, SequenceType::transposer);
+  if (data[Step::note1Ind] == 6) res = true;
+  return res;
+}
+
+bool testIncStepTransWrap()
+{
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 60;
+  SequencerEditor::incrementStepData(data, SequenceType::transposer);
+  if (data[Step::note1Ind] == 13) res = true;
+  return res;
+}
+
+
+bool testIncStepTransWrapDown()
+{
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 0;
+  SequencerEditor::decrementStepData(data, SequenceType::transposer);
+  if (data[Step::note1Ind] == -1) res = true;
+  return res;
+}
+
+
 int global_pass_count = 0;
 int global_fail_count = 0;
 
@@ -881,8 +932,13 @@ int main()
 //log("testAddPrePro", testAddPrePro());
 //log("testTranspose", testTranspose());
 //log("testTransposeReturns", testTransposeReturns());
-log("testTransposeViaSeq", testTransposeViaSeq());
- log("testSeqTakesTransposeMode", testSeqTakesTransposeMode());
-log("viewSeqTypeMidi", viewSeqTypeMidi());
+//log("testTransposeViaSeq", testTransposeViaSeq());
+// log("testSeqTakesTransposeMode", testSeqTakesTransposeMode());
+//log("viewSeqTypeMidi", viewSeqTypeMidi());
+//log("testIncStepMidi", testIncStepMidi());
+//log("testIncStepMidiWrap", testIncStepMidiWrap());
+log("testIncStepTrans", testIncStepTrans());
+log("testIncStepTransWrap", testIncStepTransWrap());
+log("testIncStepTransWrapDown", testIncStepTransWrapDown());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

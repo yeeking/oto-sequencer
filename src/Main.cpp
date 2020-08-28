@@ -37,7 +37,7 @@ char getch() {
 
 void redraw(Sequencer& seqr, SequencerEditor& seqEditor)
 { 
-//    std::cout << "\x1B[2J\x1B[H";
+    std::cout << "\x1B[2J\x1B[H";
     std::string disp = SequencerViewer::toTextDisplay(16, 32, &seqr, &seqEditor);
     std::cout << disp << std::endl;
 }

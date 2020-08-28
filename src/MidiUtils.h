@@ -2,7 +2,9 @@
 
 #include <list>
 #include "/usr/include/rtmidi/RtMidi.h"
-
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
+ 
 
 typedef std::vector<unsigned char> MidiMessage;
 typedef std::vector<MidiMessage> MidiMessageVector;
@@ -75,8 +77,6 @@ MidiMessageVector MidiQueue::getAndClearMessages(long timestamp)
     }
     return retMessages;
 }
-
-
 
 /**
  * 
@@ -152,18 +152,21 @@ class MidiUtils
     {
       midiout->openPort( deviceId );
     }
-
+    /** send note off messages on all channels to all notes */
     void allNotesOff()
     {
-        std::vector<unsigned char> message = {0, 0, 0};
+      std::cout << "MidiUtils:: All notes off " << std::endl;
+      std::vector<unsigned char> message = {0, 0, 0};
 
       for (char channel = 0; channel < 16; ++channel)
       {
-        for (char note = 0; note < 127; note ++)
+        std::cout << std::to_string(channel) << std::endl;
+        for (char note = 0; note < 127; ++note)
         {
           message[0] = 128 + channel;
           message[1] = note;
           message[2] = 0;
+          std::this_thread::sleep_for (std::chrono::milliseconds(1));
           midiout->sendMessage( &message );
         }
       }
