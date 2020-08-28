@@ -11,7 +11,6 @@
 #include <string>
 #include <functional>
 
-
 /** default spec for a Step's data, 
  * so data[0] specifies length, 
  * data[1] specifies velocity 

@@ -111,7 +111,20 @@ class SequencerEditor {
         // set a default vel and len if needed.
         if (data[Step::velInd] == 0) data[Step::velInd] = 64;
         if (data[Step::lengthInd] == 0) data[Step::lengthInd] = 1; // two ticks
-        data[Step::note1Ind] = note;
+        switch (sequencer->getSequenceType(currentSequence))
+        {
+          case SequenceType::midiNote:
+          {
+            data[Step::note1Ind] = note;
+            break;
+          }
+          case SequenceType::transposer:
+          {
+            data[Step::note1Ind] = fmod(note, 12);
+            break;    
+          }
+        }
+        
         writeStepData(data);
         return;
       }

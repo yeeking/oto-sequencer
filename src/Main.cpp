@@ -65,7 +65,6 @@ int main()
     midiUtils.interactiveInitMidi();
     midiUtils.allNotesOff();
   
-
     SimpleClock clock{};
 
     //NaiveStepDataReceiver midiStepReceiver;
@@ -97,10 +96,8 @@ int main()
       redraw(seqr, seqEditor);    
     });
 
-
     // this will map joystick x,y to 16 sequences
     rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
-
   
     clock.start(125);
     char input {1};
