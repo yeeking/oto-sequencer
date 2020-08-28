@@ -225,19 +225,30 @@ class SequencerEditor {
       switch(editMode)
       {
         case SequencerEditorMode::settingSeqLength:
+        {
           sequencer->shrinkSequence(currentSequence);
-          return;
+          break;
+        }
         case SequencerEditorMode::selectingSeqAndStep:
+        {
           currentStep -= 1;
           if (currentStep < 0) currentStep = 0;
-          return;
-        case SequencerEditorMode::editingStep:        
+          break;
+        }
+        case SequencerEditorMode::editingStep:
+        {
         // left shortens the note
           std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
           data[Step::lengthInd] --;
           if (data[Step::lengthInd] < 1) data[Step::lengthInd] = 1;
           writeStepData(data);
-          return;  
+          break;  
+        }
+        case SequencerEditorMode::configuringSequence:
+        {
+          SequencerEditor::nextSequenceType(sequencer, currentSequence);
+          break;
+        }
       }
   }
 
@@ -246,21 +257,49 @@ class SequencerEditor {
       switch(editMode)
       {
         case SequencerEditorMode::settingSeqLength:
+        {
           sequencer->extendSequence(currentSequence);
-          return;
+          break;
+        }
         case SequencerEditorMode::selectingSeqAndStep:
-          currentStep += 1;
+         {
+            currentStep += 1;
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
-          return;
+          break;
+         }
         case SequencerEditorMode::editingStep:
+        {
         // right lengthens the note
           std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
           data[Step::lengthInd] ++;
           if (data[Step::lengthInd] > 10) data[Step::lengthInd] = 10;
           writeStepData(data);
-          return;  
+          break;  
+        }
+        case SequencerEditorMode::configuringSequence:
+        {
+        // right changes the type
+          SequencerEditor::nextSequenceType(sequencer, currentSequence);
+          break;
+        }
       }
   }
+
+ static void nextSequenceType(Sequencer* seqr, unsigned int sequence)
+ {
+   SequenceType type = seqr->getSequenceType(sequence);
+   switch (type){
+     case SequenceType::midiNote:
+      seqr->setSequenceType(sequence, SequenceType::transposer);
+      break;
+     //case SequenceType::samplePlayer:
+     // break;
+     case SequenceType::transposer:
+      seqr->setSequenceType(sequence, SequenceType::midiNote);
+      break;
+   } 
+ }
+
 
   int getCurrentSequence() const 
   {
@@ -340,7 +379,7 @@ class SequencerViewer{
         case SequencerEditorMode::selectingSeqAndStep:
          return getSequencerView(rows, cols, sequencer, editor);
         case SequencerEditorMode::configuringSequence:
-          return getSequenceConfigView(sequencer->getStepData(editor->getCurrentSequence(), 0)[Step::channelInd]);
+          return getSequenceConfigView(sequencer->getStepData(editor->getCurrentSequence(), 0)[Step::channelInd], sequencer->getSequenceType(editor->getCurrentSequence()));
         case SequencerEditorMode::editingStep:
           return getStepView(sequencer->getStepData(editor->getCurrentSequence(), editor->getCurrentStep()), sequencer->isStepActive(editor->getCurrentSequence(), editor->getCurrentStep()));
       }
@@ -364,16 +403,26 @@ class SequencerViewer{
      * Returns a view that shows the config for the sent sequence, i.e.
      * the channel, where the channel is based on the first step's channel data
      */
-    static std::string getSequenceConfigView(const unsigned int channel)
+    static std::string getSequenceConfigView(const unsigned int channel, SequenceType type)
     {
       std::string disp{""};
       disp += "c:" + std::to_string(channel);
-      //disp += " l:" + std::to_string((int)stepData[Step::lengthInd]);
-      //disp += " v:" + std::to_string((int)stepData[Step::velInd]);
+      disp += " t:"; 
+      
+      switch (type){
+        case SequenceType::midiNote:
+          disp += "midi";
+          break;
+        case SequenceType::transposer:
+          disp += "transpose";
+          break;
+        case SequenceType::samplePlayer:
+          disp += "sample";
+          break;
+      }
       return disp;
     }
   
-
     /** generate a 'rows' line string representation of the state of the editor
      * and sequencer. Examples:
      * Starting state - I is where the 

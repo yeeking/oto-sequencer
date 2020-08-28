@@ -683,7 +683,7 @@ bool testAddPrePro()
   StepDataTranspose t{2};
   // this is what eventually, a sequence would do to another sequence
   // but here we do it directly
-  seq.setStepProcessorTranspose(StepDataTranspose{4});
+  //seq.setStepProcessorTranspose(StepDataTranspose{4});
   // we pass if we get through the function!  
   return true;
 }
@@ -780,13 +780,47 @@ bool testTransposeViaSeq()
   return res;
 }
 
+bool testSeqTakesTransposeMode()
+{
+  Sequencer seqr{};
+  Sequence seq{&seqr};
+  seqr.setSequenceType(0, SequenceType::transposer);
+  return true;
+}
 
+bool viewSeqTypeMidi()
+{
+  bool res = false;
+  Sequencer seqr{};
+  Sequence seq{&seqr};
+  seqr.setSequenceType(0, SequenceType::midiNote);
+  std::string want {"c:0 t:midi"};
+  std::string got = SequencerViewer::getSequenceConfigView(seq.getStepData(0)[Step::channelInd], 
+                                                           seq.getType());
+  if (got == want) res = true;
+  else {
+    std::cout << "viewSeqTypeMidi want " << want << " got " << got << std::endl;
+  }
+  return res;
+}
+
+
+int global_pass_count = 0;
+int global_fail_count = 0;
 
 void log(std::string test, bool res)
 {
   std::string msg;
-  if (res) msg = " passed.";
-  if (!res) msg = " failed.";
+  if (res)
+  {
+    msg = " passed.";
+    global_pass_count ++;
+  } 
+  if (!res) 
+  {
+    msg = " failed.";
+    global_fail_count ++;
+  }
   std::cout << test << msg << std::endl;
 }
 
@@ -848,4 +882,7 @@ int main()
 //log("testTranspose", testTranspose());
 //log("testTransposeReturns", testTransposeReturns());
 log("testTransposeViaSeq", testTransposeViaSeq());
+ log("testSeqTakesTransposeMode", testSeqTakesTransposeMode());
+log("viewSeqTypeMidi", viewSeqTypeMidi());
+  std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

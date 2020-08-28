@@ -1,4 +1,3 @@
-
 #include <vector>
 #include <iostream>
 #include <string>
@@ -100,8 +99,19 @@ void Sequence::tick()
       triggerTransposeType();
       break;
   }
-  
+  if (currentStep == 0)
+  {
+   // now deactivate any processors as they will be   
+   // re-added automatically anyway
+   deactivateProcessors();
+  }
 }
+
+void Sequence::deactivateProcessors()
+{
+  sdpTranspose.deactivate();
+}
+
 unsigned int Sequence::getCurrentStep() const
 {
   return currentStep; 
@@ -184,6 +194,11 @@ void Sequence::setType(SequenceType type)
 {
   this->type = type;
 }
+SequenceType Sequence::getType() const
+{
+  return this->type;
+}
+
 void Sequence::setStepProcessorTranspose(StepDataTranspose transpose)
 {
   transpose.activate();
@@ -198,8 +213,11 @@ void Sequence::triggerMidiNoteType()
   if(sdpTranspose.isActive()) 
   {
     std::vector<double> data = s.getData();
-    sdpTranspose.processData(data);
-    s.setData(data);
+    if (data[Step::note1Ind] > 0 ) // only transpose non-zero steps
+    {
+      sdpTranspose.processData(data);
+      s.setData(data);
+    }
   }
   //steps[currentStep].trigger();
   s.trigger();
@@ -211,10 +229,18 @@ void Sequence::triggerMidiNoteType()
 void Sequence::triggerTransposeType()
 {
   std::vector<double> data = steps[currentStep].getData();
-  sequencer->getSequence(data[Step::channelInd])->setStepProcessorTranspose(
-    StepDataTranspose{data[Step::note1Ind]}
-  );
+  if (data[Step::note1Ind != 0]) // only do anything if they set a non-zero value
+  {
+  std::cout << "Sequence::triggerTransposeType adding transpose. \nseq: " << data[Step::channelInd] << " t: " << data[Step::note1Ind] << std::endl;
+    sequencer->getSequence(data[Step::channelInd])->setStepProcessorTranspose(
+      StepDataTranspose{data[Step::note1Ind]}
+    );
+  }
 } 
+
+
+/////////////////////// Sequencer 
+
 Sequencer::Sequencer(unsigned int seqCount, unsigned int seqLength) 
 {
   for (auto i=0;i<seqCount;++i)
@@ -235,6 +261,11 @@ unsigned int Sequencer::howManySteps(unsigned int sequence) const
 unsigned int Sequencer::getCurrentStep(unsigned int sequence) const
 {
   return sequences[sequence].getCurrentStep();
+}
+
+SequenceType Sequencer::getSequenceType(unsigned int sequence) const 
+{
+  return sequences[sequence].getType();
 }
 
 /** move the sequencer along by one tick */

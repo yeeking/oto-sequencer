@@ -72,8 +72,14 @@ private:
   double transposeAmount;
 };
 
+/** need this so can have a Sequencer data member in Sequence*/
 class Sequencer;
 
+/** use to define the type of a sequence. 
+ * midiNote sends midi notes out
+ * samplePlayer triggers internal samples
+ * transposer transposes another sequence 
+ **/
 enum class SequenceType {midiNote, samplePlayer, transposer};
 
 class Sequence{
@@ -82,27 +88,47 @@ class Sequence{
    
     /** go to the next step */
     void tick();
+    /** which step are you on? */
     unsigned int getCurrentStep() const;
+    /** is this step number valid? */
     bool assertStep(unsigned int step) const;
+    /** retrieve a copy of the step data for the sent step */
     std::vector<double> getStepData(int step) const;
-    std::vector<double> getCurrentStepData() const;
-    unsigned int getLength() const;
-    
-    void setLength(int length);
-    
+    /** set the data for the sent step */
     void setStepData(unsigned int step, std::vector<double> data);
+    /** retrieve a copy of the step data for the current step */
+    std::vector<double> getCurrentStepData() const;
+    /** what is the length of the sequence? Length is a temporary property used
+     * to define the playback length. There might be more steps than this
+    */
+    unsigned int getLength() const;
+    /** set the length of the sequence 
+     * If it is higher than the current max length, new steps will be created
+    */
+    void setLength(int length);
+    /** how many steps does this sequence have it total. This is independent of the length. Length can be lower than how many steps*/
+    unsigned int howManySteps() const ;
+    
     /** update a single data value in a given step*/
     void updateStepData(unsigned int step, unsigned int dataInd, double value);
+    /** set the callback for the sent step */
     void setStepCallback(unsigned int step, 
                   std::function<void (std::vector<double>)> callback);
-
     std::string stepToString(int step) const;
-    unsigned int howManySteps() const ;
+    /** activate/ deactive the sent step */
     void toggleActive(unsigned int step);
+    /** check if the sent step is active */
     bool isStepActive(unsigned int step) const;
+    /** set the sequence type */
     void setType(SequenceType type);
+    SequenceType getType() const;
+  /** add a transpose processor to this sequence. 
+     * Normally, a transposer type sequence will call this on a midiNote type seqience
+     * to apply a transpose to it 
+    */
     void setStepProcessorTranspose(StepDataTranspose transpose);
-  
+    /** deactivate all data processors, e.g. transposers. */
+    void deactivateProcessors();
   private:
     /** function called when the sequence ticks and it is a normal midi 
      * note type sequence
@@ -136,6 +162,7 @@ class Sequencer  {
       unsigned int howManySequences() const ;
       unsigned int howManySteps(unsigned int sequence) const ;
       unsigned int getCurrentStep(unsigned int sequence) const;
+      SequenceType getSequenceType(unsigned int sequence) const;
       /** move the sequencer along by one tick */
       void tick();
       Sequence* getSequence(unsigned int sequence);
