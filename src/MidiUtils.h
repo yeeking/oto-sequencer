@@ -160,7 +160,7 @@ class MidiUtils
 
       for (char channel = 0; channel < 16; ++channel)
       {
-        std::cout << std::to_string(channel) << std::endl;
+        std::cout << "Notes off on channel: " << std::to_string(channel) << std::endl;
         for (char note = 0; note < 127; ++note)
         {
           message[0] = 128 + channel;

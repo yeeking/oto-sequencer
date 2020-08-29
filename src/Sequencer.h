@@ -46,30 +46,30 @@ class Step{
     std::function<void(std::vector<double>)> stepCallback;
 };
 
-/**
- * Represents a pre-processor for a step's data, for example, allowing a step to be 
- * transposed. Normally these are stored per sequence and are activated when 
- * another sequence is a pre-preocessor sequence
- */
-class StepDataPreProcessor{
-  public:
-  StepDataPreProcessor();
-  void activate();
-  void deactivate();
-  bool isActive() const;
-private:
-  bool active; 
-};
+// /**
+//  * Represents a pre-processor for a step's data, for example, allowing a step to be 
+//  * transposed. Normally these are stored per sequence and are activated when 
+//  * another sequence is a pre-preocessor sequence
+//  */
+// class StepDataPreProcessor{
+//   public:
+//   StepDataPreProcessor();
+//   void activate();
+//   void deactivate();
+//   bool isActive() const;
+// private:
+//   bool active; 
+// };
 
-/** */
-class StepDataTranspose : public StepDataPreProcessor
-{
-  public:
-  StepDataTranspose(double transposeAmount);
-  void processData(std::vector<double>& data);
-private:
-  double transposeAmount;
-};
+// /** */
+// class StepDataTranspose : public StepDataPreProcessor
+// {
+//   public:
+//   StepDataTranspose(double transposeAmount);
+//   void processData(std::vector<double>& data);
+// private:
+//   double transposeAmount;
+// };
 
 /** need this so can have a Sequencer data member in Sequence*/
 class Sequencer;
@@ -79,7 +79,7 @@ class Sequencer;
  * samplePlayer triggers internal samples
  * transposer transposes another sequence 
  **/
-enum class SequenceType {midiNote, samplePlayer, transposer};
+enum class SequenceType {midiNote, samplePlayer, transposer, lengthChanger};
 
 class Sequence{
   public:
@@ -105,6 +105,16 @@ class Sequence{
      * If it is higher than the current max length, new steps will be created
     */
     void setLength(int length);
+    /** apply a transpose to the sequence, which is reset when the sequence
+     * hits step 0 again
+     */
+    void setTranspose(double transpose);
+    /** apply a length adjustment to the sequence. This immediately changes the length.
+     * It is reset when the sequence
+     * hits step 0 again
+     */
+    void setLengthAdjustment(int lengthAdjust);
+
     /** how many steps does this sequence have it total. This is independent of the length. Length can be lower than how many steps*/
     unsigned int howManySteps() const ;
     
@@ -125,19 +135,22 @@ class Sequence{
      * Normally, a transposer type sequence will call this on a midiNote type seqience
      * to apply a transpose to it 
     */
-    void setStepProcessorTranspose(StepDataTranspose transpose);
-    /** deactivate all data processors, e.g. transposers. */
+//    void setStepProcessorTranspose(StepDataTranspose transpose);
+    /** deactivate all data processors, e.g. transposers, length adjusters */
     void deactivateProcessors();
   private:
-    /** function called when the sequence ticks and it is a normal midi 
-     * note type sequence
+    /** function called when the sequence ticks and it is SequenceType::midiNote
+     * 
     */
-    void triggerMidiNoteType();
- 
+    void triggerMidiNoteType(); 
     /** 
-     * Called when the sequence ticks and it is a transpose type
+     * Called when the sequence ticks and it is a transpose type SequenceType::transposer
     */
     void triggerTransposeType();
+    /**
+     * Called when the sequence ticks and it is SequenceType::lengthChanger
+     */
+    void triggerLengthType();
  
     Sequencer* sequencer;
     unsigned int currentLength;
@@ -145,13 +158,9 @@ class Sequence{
     unsigned short midiChannel;
     std::vector<Step> steps;
     SequenceType type;
-    /** Step pre-processors are stored directly onto
-     * sequences so the sequence can apply them. This turned out to be
-     * neater than a polymorphic data structure approach as 
-     * it allows for a wider range of pre-processor functionality.
-    */
-    StepDataTranspose sdpTranspose;
-    
+    // temporary sequencer adjustment parameters that get reset at step 0
+    double transpose; 
+    int lengthAdjustment;
 };
 
 /** represents a sequencer which is used to store a grid of data and to step through it */

@@ -676,25 +676,14 @@ bool testChannelUp()
   return res;
 }
 
-bool testAddPrePro()
-{
-  Sequencer seqr{};
-  Sequence seq{&seqr};
-  StepDataTranspose t{2};
-  // this is what eventually, a sequence would do to another sequence
-  // but here we do it directly
-  //seq.setStepProcessorTranspose(StepDataTranspose{4});
-  // we pass if we get through the function!  
-  return true;
-}
-
 bool testTranspose()
 {
   bool res = false;
   std::string test{""};
   Sequencer seqr{};
   Sequence seq{&seqr};
-  seq.setStepProcessorTranspose(StepDataTranspose{2});
+  //seq.setStepProcessorTranspose(StepDataTranspose{2});
+  seq.setTranspose(2);
   // now we have added a transposer, verify that 
   // the sequences are being transposed
   // by setting a callback that checks the transposed data
@@ -723,7 +712,8 @@ bool testTransposeReturns()
   std::string test{""};
   Sequencer seqr{};
   Sequence seq{&seqr};
-  seq.setStepProcessorTranspose(StepDataTranspose{2});
+  //seq.setStepProcessorTranspose(StepDataTranspose{2});
+  seq.setTranspose(2);
   // now we have added a transposer, verify that 
   // the sequences are being transposed
   // by setting a callback that checks the transposed data
@@ -732,8 +722,8 @@ bool testTransposeReturns()
     [&test](std::vector<double> data){
       test = std::to_string((int)data[Step::note1Ind]);
     });
-  seq.setStepProcessorTranspose(StepDataTranspose{1});
-  
+  //seq.setStepProcessorTranspose(StepDataTranspose{1});
+  seq.setTranspose(1);
   seq.tick();  
 
   if (test == "1") // it went up from 0 to 2 as a result of the transpose
@@ -840,7 +830,8 @@ bool testIncStepTransWrap()
   std::vector<double> data {0, 0, 0, 0};
   data[Step::note1Ind] = 60;
   SequencerEditor::incrementStepData(data, SequenceType::transposer);
-  if (data[Step::note1Ind] == 13) res = true;
+  //std::cout << "data  is "
+  if (data[Step::note1Ind] == 61) res = true;
   return res;
 }
 
@@ -853,6 +844,25 @@ bool testIncStepTransWrapDown()
   SequencerEditor::decrementStepData(data, SequenceType::transposer);
   if (data[Step::note1Ind] == -1) res = true;
   return res;
+}
+
+bool testAdjLen()
+{
+  bool res = false; 
+  Sequencer seqr{};
+  //Sequence seq{&seqr};
+  seqr.setSequenceType(0, SequenceType::lengthChanger);
+  seqr.setSequenceType(1, SequenceType::midiNote);
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::channelInd] = 1; // affect seq 1
+  data[Step::note1Ind] = 2; // add 2 to the length
+  seqr.setStepData(0, 1, data); // put in the length adjsuter
+  int before = seqr.howManySteps(1);// length of the midi chan
+  seqr.tick();
+  int after = seqr.howManySteps(1);
+  if (after - before == 2) res =  true;
+  std::cout << "went from "<< before <<" to  " << after << std::endl;
+  return res; 
 }
 
 
@@ -940,5 +950,6 @@ int main()
 log("testIncStepTrans", testIncStepTrans());
 log("testIncStepTransWrap", testIncStepTransWrap());
 log("testIncStepTransWrapDown", testIncStepTransWrapDown());
+log("testAdjLen", testAdjLen());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

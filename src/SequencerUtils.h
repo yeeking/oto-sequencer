@@ -100,10 +100,13 @@ class SequencerEditor {
   }
 
 /**
- * Tell the editor the user entered note data
+ * Tell the editor the user entered note data. The incoming note 
+ * value is assumed to be in the range 0-127
+ * 
  */
   void enterNoteData(double note)
   {
+    if (note < 0 || note > 127) return;
       if (editMode == SequencerEditorMode::editingStep ||
           editMode == SequencerEditorMode::selectingSeqAndStep)
       {     
@@ -113,16 +116,22 @@ class SequencerEditor {
         if (data[Step::lengthInd] == 0) data[Step::lengthInd] = 1; // two ticks
         switch (sequencer->getSequenceType(currentSequence))
         {
-          case SequenceType::midiNote:
+          case SequenceType::midiNote: // midi note - 0-127
           {
-            data[Step::note1Ind] = note;
+            data[Step::note1Ind] = note; 
             break;
           }
-          case SequenceType::transposer:
+          case SequenceType::transposer: // transposition - 0-12
           {
             data[Step::note1Ind] = fmod(note, 12);
             break;    
           }
+          case SequenceType::lengthChanger:// length adjust - 0-12
+          {
+            data[Step::note1Ind] = fmod(note, 12);
+            break;    
+          }
+          
         }
         
         writeStepData(data);
@@ -241,14 +250,17 @@ static void decrementStepData(std::vector<double>& data, SequenceType seqType)
         if (data[Step::note1Ind] < 0) data[Step::note1Ind] += 12;      
         break;
     }
-    case SequenceType::transposer: // single step wrapped on 24
+    case SequenceType::transposer: // down 1
     {
         data[Step::note1Ind] -= 1;
-
-        //data[Step::note1Ind] = fmod(data[Step::note1Ind], 24);
-        //if (data[Step::note1Ind] < 0) data[Step::note1Ind] += 1;      
         break;
     }
+    case SequenceType::lengthChanger: // down 1
+    {
+        data[Step::note1Ind] -= 1;
+        break;
+    }
+    
   }
 }
 static void incrementStepData(std::vector<double>& data, SequenceType seqType)
@@ -261,11 +273,14 @@ static void incrementStepData(std::vector<double>& data, SequenceType seqType)
         if (data[Step::note1Ind] > 127) data[Step::note1Ind] -= 12;      
         break;
     }
-    case SequenceType::transposer: // single step wrapped on 24
+    case SequenceType::transposer: // up 1
     {
         data[Step::note1Ind] += 1;
-        //data[Step::note1Ind] = fmod(data[Step::note1Ind], 24);
-        //if (data[Step::note1Ind] < 0) data[Step::note1Ind] = 0;      
+        break;
+    }
+    case SequenceType::lengthChanger: // up 1
+    {
+        data[Step::note1Ind] += 1;
         break;
     }
   }
@@ -343,10 +358,11 @@ static void incrementStepData(std::vector<double>& data, SequenceType seqType)
      case SequenceType::midiNote:
       seqr->setSequenceType(sequence, SequenceType::transposer);
       break;
-     //case SequenceType::samplePlayer:
-     // break;
      case SequenceType::transposer:
-      seqr->setSequenceType(sequence, SequenceType::midiNote);
+      seqr->setSequenceType(sequence, SequenceType::lengthChanger);
+      break;
+     case SequenceType::lengthChanger:
+      seqr->setSequenceType(sequence, SequenceType::midiNote);   
       break;
    } 
  }
@@ -470,6 +486,9 @@ class SequencerViewer{
         case SequenceType::samplePlayer:
           disp += "sample";
           break;
+        case SequenceType::lengthChanger:
+          disp += "length";
+          break;
       }
       return disp;
     }
@@ -543,7 +562,8 @@ class SequencerViewer{
        
           // inactive/ shortened/ non-existent sequence   
           if ((sequencer->howManySteps(displaySeq) <= displayStep || 
-              sequencer->isStepActive(displaySeq, displayStep) == false)) state = ' ';
+              sequencer->isStepActive(displaySeq, displayStep) == false)) 
+              state = ' ';
 
           // sequence length mode
           if (editor->getEditMode() == SequencerEditorMode::settingSeqLength && 

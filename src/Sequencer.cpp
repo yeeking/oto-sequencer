@@ -48,32 +48,11 @@ bool Step::isActive() const
   return active; 
 }
 
-StepDataPreProcessor::StepDataPreProcessor() : active{false} {}
-void StepDataPreProcessor::activate()
-{
-  active = true;
-}
-void StepDataPreProcessor::deactivate()
-{
-  active = false; 
-}
-bool StepDataPreProcessor::isActive() const
-{
-  return active;
-}
-
-StepDataTranspose::StepDataTranspose(double transposeAmount) : transposeAmount{transposeAmount}
-{
-}
-void StepDataTranspose::processData(std::vector<double>& data) 
-{
-  data[Step::note1Ind] = fmod(data[Step::note1Ind] + transposeAmount, 127);
-}
 
 Sequence::Sequence(Sequencer* sequencer, 
                   unsigned int seqLength, 
                   unsigned short midiChannel) 
-: sequencer{sequencer}, currentStep{0}, currentLength{seqLength}, midiChannel{midiChannel}, type{SequenceType::midiNote}, sdpTranspose{0}
+: sequencer{sequencer}, currentStep{0}, currentLength{seqLength}, midiChannel{midiChannel}, type{SequenceType::midiNote}, transpose{0}, lengthAdjustment{0}
 {
   for (auto i=0;i<seqLength;i++)
   {
@@ -90,7 +69,7 @@ Sequence::Sequence(Sequencer* sequencer,
 /** go to the next step */
 void Sequence::tick()
 {
-  currentStep = (++currentStep) % currentLength;
+  currentStep = (++currentStep) % (currentLength + lengthAdjustment);
   switch (type){
     case SequenceType::midiNote:
       triggerMidiNoteType();
@@ -98,18 +77,79 @@ void Sequence::tick()
     case SequenceType::transposer:
       triggerTransposeType();
       break;
+    case SequenceType::lengthChanger:
+      triggerLengthType();
+      break;
   }
   if (currentStep == 0)
   {
-   // now deactivate any processors as they will be   
-   // re-added automatically anyway
-   deactivateProcessors();
+    // reset transpose at the start of each sequence
+    deactivateProcessors();
   }
 }
 
 void Sequence::deactivateProcessors()
 {
-  sdpTranspose.deactivate();
+    transpose = 0;
+    lengthAdjustment = 0;
+}
+
+void Sequence::triggerMidiNoteType()
+{
+  // make a local copy
+  Step s = steps[currentStep];
+  // apply changes to local copy if needed      
+  if(transpose > 0) 
+  {
+    std::vector<double> data = s.getData();
+    if (data[Step::note1Ind] > 0 ) // only transpose non-zero steps
+    {
+      //sdpTranspose.processData(data);
+      data[Step::note1Ind] = fmod(data[Step::note1Ind] + transpose, 127);
+      s.setData(data);
+    }
+  }
+  // trigger the local, adjusted copy of the step
+  //steps[currentStep].trigger();
+  s.trigger();
+}
+
+/** 
+ * Called when the sequence ticks and it is a transpose type
+ * Causes this sequence to apply a transpose to another sequence
+*/
+void Sequence::triggerTransposeType()
+{
+  std::vector<double> data = steps[currentStep].getData();
+  if (data[Step::note1Ind != 0]) // only do anything if they set a non-zero value
+  {
+    sequencer->getSequence(data[Step::channelInd])->setTranspose(data[Step::note1Ind]);
+  }
+} 
+
+void Sequence::triggerLengthType()
+{
+  std::vector<double> data = steps[currentStep].getData();  
+  if (data[Step::note1Ind] != 0) // only do anything if they set a non-zero value
+  { 
+    sequencer->getSequence(data[Step::channelInd])->setLengthAdjustment(data[Step::note1Ind]);
+  } 
+}
+
+void Sequence::setLengthAdjustment(int lenAdjust)
+{
+  lengthAdjustment = lenAdjust;
+  // this code makes sure we can accommodate the 
+  // length adjust, but without changing the real length now
+  // noting that the tick function decides
+  // when to go back to step 0
+  // this allows the length adjustment (which is caused by another sequence)
+  // to be separate from the current length
+  // and therefore easily removed (which prevents repeatedly extending 
+  // )
+  int original_length = currentLength;
+  setLength(original_length + lenAdjust);
+  setLength(original_length);
 }
 
 unsigned int Sequence::getCurrentStep() const
@@ -144,7 +184,8 @@ void Sequence::setLength(int length)
     {
       Step s;
       s.setCallback([i](std::vector<double> data){
-        //std::cout << "step " << i << " triggered " << std::endl;
+        // this is a problem - need a default callback
+        // 
       });
       steps.push_back(s);
     }
@@ -179,7 +220,7 @@ std::string Sequence::stepToString(int step) const
 unsigned int Sequence::howManySteps() const 
 {
   //return steps.size();
-  return currentLength;
+  return currentLength + lengthAdjustment;
 }
 
 void Sequence::toggleActive(unsigned int step)
@@ -199,44 +240,10 @@ SequenceType Sequence::getType() const
   return this->type;
 }
 
-void Sequence::setStepProcessorTranspose(StepDataTranspose transpose)
+void Sequence::setTranspose(double transpose)
 {
-  transpose.activate();
-  sdpTranspose = transpose; 
+  this->transpose = transpose;
 }
-
-void Sequence::triggerMidiNoteType()
-{
-  // make a local copy
-  Step s = steps[currentStep];
-  // apply changes to local copy if needed      
-  if(sdpTranspose.isActive()) 
-  {
-    std::vector<double> data = s.getData();
-    if (data[Step::note1Ind] > 0 ) // only transpose non-zero steps
-    {
-      sdpTranspose.processData(data);
-      s.setData(data);
-    }
-  }
-  //steps[currentStep].trigger();
-  s.trigger();
-}
-
-/** 
- * Called when the sequence ticks and it is a transpose type
-*/
-void Sequence::triggerTransposeType()
-{
-  std::vector<double> data = steps[currentStep].getData();
-  if (data[Step::note1Ind != 0]) // only do anything if they set a non-zero value
-  {
-  std::cout << "Sequence::triggerTransposeType adding transpose. \nseq: " << data[Step::channelInd] << " t: " << data[Step::note1Ind] << std::endl;
-    sequencer->getSequence(data[Step::channelInd])->setStepProcessorTranspose(
-      StepDataTranspose{data[Step::note1Ind]}
-    );
-  }
-} 
 
 
 /////////////////////// Sequencer 
@@ -271,7 +278,6 @@ SequenceType Sequencer::getSequenceType(unsigned int sequence) const
 /** move the sequencer along by one tick */
 void Sequencer::tick()
 {
-  //std::cout << "Sequencer.h: tick" << std::endl;
   for (Sequence& seq : sequences)
   {
       seq.tick();
