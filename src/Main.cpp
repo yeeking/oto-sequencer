@@ -63,7 +63,7 @@ int main()
     
     MidiUtils midiUtils;
     midiUtils.interactiveInitMidi();
-    midiUtils.allNotesOff();
+//    midiUtils.allNotesOff();
   
     SimpleClock clock{};
 

@@ -34,6 +34,8 @@ class Step{
     void updateData(unsigned int dataInd, double value);
     /** set the callback function called when this step is triggered*/
     void setCallback(std::function<void(std::vector<double>)> callback);
+    /** return the callback for this step*/
+    std::function<void(std::vector<double>)> getCallback();
     /** trigger this step, causing it to pass its data to its callback*/
     void trigger() const;
     /** toggle the activity status of this step*/
@@ -105,6 +107,12 @@ class Sequence{
      * If it is higher than the current max length, new steps will be created
     */
     void setLength(int length);
+    /**
+     * Clock ticks 4 times for every beat. 
+     * This is how many of those are needed to trigger this sequence
+     * to move along one step
+     */
+    void setTicksPerStep(int ticksPerStep);
     /** apply a transpose to the sequence, which is reset when the sequence
      * hits step 0 again
      */
@@ -161,6 +169,8 @@ class Sequence{
     // temporary sequencer adjustment parameters that get reset at step 0
     double transpose; 
     int lengthAdjustment;
+    int ticksPerStep;
+    int ticksElapsed;
 };
 
 /** represents a sequencer which is used to store a grid of data and to step through it */

@@ -6,9 +6,9 @@
 enum class SequencerEditorMode {settingSeqLength, configuringSequence, selectingSeqAndStep, editingStep};
 
 /**
- * Sub modes for moving between items in a sub menu (e.g. configuring midi channel)
- */
-enum class SequencerEditorSubMode {settingSeqMidiChannel, settingSeqSampleId};
+ * Dictates which item in a sub page we are editing
+ **/
+enum class SequencerEditorSubMode {editCol1, editCol2, editCol3};
 
 /** Represents an editor for a sequencer, which allows stateful edit operations to be applied 
  * to sequences. For example, select sequemce, select step, enter data
@@ -44,13 +44,13 @@ class SequencerEditor {
           editMode = SequencerEditorMode::settingSeqLength;
           currentStep = 0;
           return;
-        case SequencerEditorMode::editingStep:
-          editMode = SequencerEditorMode::selectingSeqAndStep;
-          return;  
-        case SequencerEditorMode::configuringSequence: 
-          editMode = SequencerEditorMode::settingSeqLength;
-          currentStep = 0; 
-          return;
+      //   case SequencerEditorMode::editingStep:
+      //     editMode = SequencerEditorMode::selectingSeqAndStep;
+      //     return;  
+      //   case SequencerEditorMode::configuringSequence: 
+      //     editMode = SequencerEditorMode::settingSeqLength;
+      //     currentStep = 0; 
+      //     return;
       }
     }
     /** 
@@ -85,17 +85,17 @@ class SequencerEditor {
     switch(editMode)
     {
       case SequencerEditorMode::settingSeqLength:
-      // go into configuring sequence mode
         editMode = SequencerEditorMode::configuringSequence;
-        return;
+        break;
+      case SequencerEditorMode::configuringSequence:
+        editMode = SequencerEditorMode::settingSeqLength;
+        break;
       case SequencerEditorMode::selectingSeqAndStep:
-        // go into edit step mode
         editMode = SequencerEditorMode::editingStep;
-        return;
+        break;
       case SequencerEditorMode::editingStep:
-      // go back out to the sequence view
         editMode = SequencerEditorMode::selectingSeqAndStep;
-        return;  
+        break;  
     }
   }
 
@@ -159,27 +159,26 @@ class SequencerEditor {
       switch(editMode)
       {
         case SequencerEditorMode::settingSeqLength:
+        {
           currentSequence -= 1;
           if (currentSequence < 0) currentSequence = 0;
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
           break;
+        }
         case SequencerEditorMode::selectingSeqAndStep:
+        {
           currentSequence -= 1;
           if (currentSequence < 0) currentSequence = 0;
           if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
           break;
-    
+        }
         case SequencerEditorMode::editingStep:
         {
           std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          //if (data[Step::note1Ind] > 0) // note is set
-          //{
-            SequencerEditor::incrementStepData(data, sequencer->getSequenceType(currentSequence));
-            writeStepData(data);
-          //}
+          SequencerEditor::incrementStepData(data, sequencer->getSequenceType(currentSequence));
+          writeStepData(data);
           break;  
         }
-  
         case SequencerEditorMode::configuringSequence:
         {
           // set the channel based on step 0
@@ -216,11 +215,8 @@ class SequencerEditor {
         case SequencerEditorMode::editingStep:
         {
           std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          //if (data[Step::note1Ind] > 0) // note is set
-          //{
-            SequencerEditor::decrementStepData(data, sequencer->getSequenceType(currentSequence));
-            writeStepData(data);
-          //}
+          SequencerEditor::decrementStepData(data, sequencer->getSequenceType(currentSequence));
+          writeStepData(data);
           break;  
         }
         case SequencerEditorMode::configuringSequence:
@@ -237,54 +233,6 @@ class SequencerEditor {
         }
       }
    }
-/** does an in place increment of the step data, as appropriate for the 
- * type of sequence
-*/
-static void decrementStepData(std::vector<double>& data, SequenceType seqType)
-{
-  switch(seqType)
-  {
-    case SequenceType::midiNote: // octave adjust
-    {
-        data[Step::note1Ind] -= 12;
-        if (data[Step::note1Ind] < 0) data[Step::note1Ind] += 12;      
-        break;
-    }
-    case SequenceType::transposer: // down 1
-    {
-        data[Step::note1Ind] -= 1;
-        break;
-    }
-    case SequenceType::lengthChanger: // down 1
-    {
-        data[Step::note1Ind] -= 1;
-        break;
-    }
-    
-  }
-}
-static void incrementStepData(std::vector<double>& data, SequenceType seqType)
-{
-    switch(seqType)
-  {
-    case SequenceType::midiNote: // octave adjust
-    {
-        data[Step::note1Ind] += 12;
-        if (data[Step::note1Ind] > 127) data[Step::note1Ind] -= 12;      
-        break;
-    }
-    case SequenceType::transposer: // up 1
-    {
-        data[Step::note1Ind] += 1;
-        break;
-    }
-    case SequenceType::lengthChanger: // up 1
-    {
-        data[Step::note1Ind] += 1;
-        break;
-    }
-  }
-}
 
   void moveCursorLeft()
   {
@@ -350,6 +298,56 @@ static void incrementStepData(std::vector<double>& data, SequenceType seqType)
         }
       }
   }
+
+/** does an in place increment of the step data, as appropriate for the 
+ * type of sequence
+*/
+static void decrementStepData(std::vector<double>& data, SequenceType seqType)
+{
+  switch(seqType)
+  {
+    case SequenceType::midiNote: // octave adjust
+    {
+        data[Step::note1Ind] -= 12;
+        if (data[Step::note1Ind] < 0) data[Step::note1Ind] += 12;      
+        break;
+    }
+    case SequenceType::transposer: // down 1
+    {
+        data[Step::note1Ind] -= 1;
+        break;
+    }
+    case SequenceType::lengthChanger: // down 1
+    {
+        data[Step::note1Ind] -= 1;
+        break;
+    }
+    
+  }
+}
+static void incrementStepData(std::vector<double>& data, SequenceType seqType)
+{
+    switch(seqType)
+  {
+    case SequenceType::midiNote: // octave adjust
+    {
+        data[Step::note1Ind] += 12;
+        if (data[Step::note1Ind] > 127) data[Step::note1Ind] -= 12;      
+        break;
+    }
+    case SequenceType::transposer: // up 1
+    {
+        data[Step::note1Ind] += 1;
+        break;
+    }
+    case SequenceType::lengthChanger: // up 1
+    {
+        data[Step::note1Ind] += 1;
+        break;
+    }
+  }
+}
+
 
  static void nextSequenceType(Sequencer* seqr, unsigned int sequence)
  {

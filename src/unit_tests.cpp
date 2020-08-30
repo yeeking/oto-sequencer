@@ -6,6 +6,16 @@
 #include "RapidLibUtils.h"
 #include "EventQueue.h"
 
+
+bool assertStrEqual(std::string want, std::string got)
+{
+  if (want == got) return true;
+  else {
+    std::cout << "assertStrEq want " << want << " got " << got << std::endl;
+    return false; 
+  }
+}
+
 bool testTick()
 {
   Sequencer seq{};
@@ -865,6 +875,115 @@ bool testAdjLen()
   return res; 
 }
 
+bool setTicksPerBeat()
+{
+  bool res = false; 
+  Sequencer seqr{};
+  Sequence seq{&seqr};
+  seq.setTicksPerStep(4);
+  std::string test{""};
+  seq.setStepCallback(1, 
+   [&test](std::vector<double> data){
+      test = "x";
+    }
+  );
+  seq.tick();
+  seq.tick();
+  seq.tick();
+  // test should still be '' not 'xxx'
+  std::string want = "";
+  if (test == want)
+  {
+    res = true;
+  }
+  return res;
+}
+
+bool setTicksPerBeatTick()
+{
+  bool res = false; 
+  Sequencer seqr{};
+  Sequence seq{&seqr};
+  seq.setTicksPerStep(1);
+  seq.setType(SequenceType::midiNote);
+  std::string test{""};
+  seq.setStepData(0, {2, 2, 2, 2});
+  seq.setStepCallback(0, 
+   [&test](std::vector<double> data){
+      test += "x";
+    }
+  );
+  seq.setStepData(1, {2, 2, 2, 2});
+  seq.setStepCallback(1, 
+   [&test](std::vector<double> data){
+      test += "x";
+    }
+  );
+
+  seq.tick();
+  seq.tick();
+  
+  // test should still be '' not 'xxx'
+  std::string want = "xx";
+  if (test == want)
+  {
+    res = true;
+  }
+  return res;
+}
+
+bool setTicksPerBeatTwoTick()
+{
+  bool res = false; 
+  Sequencer seqr{};
+  Sequence seq{&seqr};
+  seq.setType(SequenceType::midiNote);
+  std::string test{""};
+  seq.setStepData(0, {2, 2, 2, 2});
+  seq.setStepCallback(0, 
+   [&test](std::vector<double> data){
+      test += "x";
+    }
+  );
+  seq.setStepData(1, {2, 2, 2, 2});
+  seq.setStepCallback(1, 
+   [&test](std::vector<double> data){
+      test += "x";
+    }
+  );
+
+  seq.setTicksPerStep(2);
+  seq.tick();
+  seq.tick();
+  
+  // should only have triggered one step
+  std::string want = "x";
+  if (test == want)
+  {
+    res = true;
+  }
+  return res;
+}
+
+bool testExtraStepsRightCallback()
+{
+  bool res;
+  Sequencer seqr{1, 1};
+  std::string test {""};
+  seqr.setAllCallbacks([&test](std::vector<double>){
+    test += "x";
+  }); 
+// now extend
+  seqr.setSequenceLength(0, 2);
+  seqr.setStepData(0, 0, {1,1,1,1});// make sure steps will trigger by passing non-zero data
+  seqr.setStepData(0, 1, {1,1,1,1});// make sure steps will trigger by passing non-zero data
+// now tick it and see if the second step adds an x
+  seqr.tick();
+  seqr.tick();
+  res = assertStrEqual("xx", test);
+  return res;
+}
+
 
 int global_pass_count = 0;
 int global_fail_count = 0;
@@ -947,9 +1066,13 @@ int main()
 //log("viewSeqTypeMidi", viewSeqTypeMidi());
 //log("testIncStepMidi", testIncStepMidi());
 //log("testIncStepMidiWrap", testIncStepMidiWrap());
-log("testIncStepTrans", testIncStepTrans());
-log("testIncStepTransWrap", testIncStepTransWrap());
-log("testIncStepTransWrapDown", testIncStepTransWrapDown());
-log("testAdjLen", testAdjLen());
+// log("testIncStepTrans", testIncStepTrans());
+// log("testIncStepTransWrap", testIncStepTransWrap());
+// log("testIncStepTransWrapDown", testIncStepTransWrapDown());
+// log("testAdjLen", testAdjLen());
+//log("setTicksPerBeat", setTicksPerBeat());
+//log("setTicksPerBeatTick", setTicksPerBeatTick());
+//log("setTicksPerBeatTwpTick", setTicksPerBeatTwpTick());
+log("testExtraStepsRightCallback", testExtraStepsRightCallback());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }
