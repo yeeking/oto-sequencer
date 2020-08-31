@@ -699,8 +699,8 @@ bool testTranspose()
   // by setting a callback that checks the transposed data
   seq.setStepData(1, {0,0,0,0});
   seq.setStepCallback(1, 
-    [&test](std::vector<double> data){
-      test = std::to_string((int)data[Step::note1Ind]);
+    [&test](std::vector<double>* data){
+      test = std::to_string((int)data->at(Step::note1Ind));
     });
   seq.tick();  
 
@@ -729,8 +729,8 @@ bool testTransposeReturns()
   // by setting a callback that checks the transposed data
   seq.setStepData(1, {0,0,0,0});
   seq.setStepCallback(1, 
-    [&test](std::vector<double> data){
-      test = std::to_string((int)data[Step::note1Ind]);
+    [&test](std::vector<double>* data){
+      test = std::to_string((int)data->at(Step::note1Ind));
     });
   //seq.setStepProcessorTranspose(StepDataTranspose{1});
   seq.setTranspose(1);
@@ -762,8 +762,8 @@ bool testTransposeViaSeq()
   data2[Step::note1Ind] = 10; // should go up to 13
   seqr.setStepData(1, 1, data2);
   seqr.setStepCallback(1, 1, // seq 1, step 1
-    [&test](std::vector<double> data){
-      test = std::to_string((int)data[Step::note1Ind]);
+    [&test](std::vector<double>* data){
+      test = std::to_string((int)data->at(Step::note1Ind));
     });
   // calling tick should 
   // cause seq 0 to attach a transposer 
@@ -883,7 +883,7 @@ bool setTicksPerBeat()
   seq.setTicksPerStep(4);
   std::string test{""};
   seq.setStepCallback(1, 
-   [&test](std::vector<double> data){
+   [&test](std::vector<double>* data){
       test = "x";
     }
   );
@@ -909,13 +909,13 @@ bool setTicksPerBeatTick()
   std::string test{""};
   seq.setStepData(0, {2, 2, 2, 2});
   seq.setStepCallback(0, 
-   [&test](std::vector<double> data){
+   [&test](std::vector<double>* data){
       test += "x";
     }
   );
   seq.setStepData(1, {2, 2, 2, 2});
   seq.setStepCallback(1, 
-   [&test](std::vector<double> data){
+   [&test](std::vector<double>* data){
       test += "x";
     }
   );
@@ -941,13 +941,13 @@ bool setTicksPerBeatTwoTick()
   std::string test{""};
   seq.setStepData(0, {2, 2, 2, 2});
   seq.setStepCallback(0, 
-   [&test](std::vector<double> data){
+   [&test](std::vector<double>* data){
       test += "x";
     }
   );
   seq.setStepData(1, {2, 2, 2, 2});
   seq.setStepCallback(1, 
-   [&test](std::vector<double> data){
+   [&test](std::vector<double>* data){
       test += "x";
     }
   );
@@ -970,7 +970,7 @@ bool testExtraStepsRightCallback()
   bool res;
   Sequencer seqr{1, 1};
   std::string test {""};
-  seqr.setAllCallbacks([&test](std::vector<double>){
+  seqr.setAllCallbacks([&test](std::vector<double>* data){
     test += "x";
   }); 
 // now extend
