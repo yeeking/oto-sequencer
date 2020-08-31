@@ -135,6 +135,11 @@ class SequencerEditor {
             data[Step::note1Ind] = fmod(note, 12);
             break;    
           }
+          case SequenceType::tickChanger:// length adjust - 0-12
+          {
+            data[Step::note1Ind] = fmod(note, 12);
+            break;    
+          }
           
         }
         
@@ -359,6 +364,12 @@ void decrementStepData(std::vector<double>& data, SequenceType seqType)
       decrement = 1;
       break;
     }
+    case SequenceType::tickChanger: // up 1
+    {
+      decrement = 1;
+      break;
+    }
+    
   }
   // figure out the target of editing, as they are cycling 
   // through the items of data
@@ -414,6 +425,12 @@ void incrementStepData(std::vector<double>& data, SequenceType seqType)
       increment = 1;
       break;
     }
+    case SequenceType::tickChanger: // up 1
+    {
+      increment = 1;
+      break;
+    }
+  
   }
   // figure out the target of editing, as they are cycling 
   // through the items of data
@@ -453,8 +470,12 @@ void incrementStepData(std::vector<double>& data, SequenceType seqType)
       seqr->setSequenceType(sequence, SequenceType::lengthChanger);
       break;
      case SequenceType::lengthChanger:
+      seqr->setSequenceType(sequence, SequenceType::tickChanger);   
+      break;
+     case SequenceType::tickChanger:
       seqr->setSequenceType(sequence, SequenceType::midiNote);   
       break;
+      
    } 
  }
 
@@ -587,13 +608,16 @@ class SequencerViewer{
           disp += "midi";
           break;
         case SequenceType::transposer:
-          disp += "transpose";
+          disp += "transposer";
           break;
         case SequenceType::samplePlayer:
           disp += "sample";
           break;
         case SequenceType::lengthChanger:
-          disp += "length";
+          disp += "stretcher";
+          break;
+        case SequenceType::tickChanger:
+          disp += "speedo";
           break;
       }
       return disp;

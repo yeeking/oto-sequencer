@@ -89,16 +89,16 @@ Put a note in using the computer keyboard as a mini piano, mapped like this:
 ```
 { 'z', 60},
 { 's', 61},
-{ 'x', 63},
-{ 'd', 64},
-{ 'c', 65},
-{ 'f', 66},
-{ 'v', 67},
-{ 'b', 68},
-{ 'h', 69},
-{ 'n', 70},
-{ 'j', 71},
-{ 'm', 72}
+{ 'x', 62},
+{ 'd', 63},
+{ 'c', 64},
+{ 'f', 65},
+{ 'v', 66},
+{ 'b', 67},
+{ 'h', 68},
+{ 'n', 69},
+{ 'j', 70},
+{ 'm', 71}
 ```
 
 Press return and you can edit the note, length and velocity. 

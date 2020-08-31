@@ -115,6 +115,7 @@ void Sequence::deactivateProcessors()
 {
     transpose = 0;
     lengthAdjustment = 0;
+    ticksPerStep = 1;
 }
 
 void Sequence::triggerMidiNoteType()
