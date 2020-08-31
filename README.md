@@ -25,6 +25,7 @@ On normal linux or raspi linux without grove sensors:
 
 In all modes:
 
+* q: quit 
 * -: go slower
 * =: go faster
 
