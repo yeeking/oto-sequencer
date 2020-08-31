@@ -74,14 +74,14 @@ int main()
     // set up a midi note triggering callback 
     // on all steps
     seqr.setAllCallbacks(
-        [&midiUtils, &clock](std::vector<double> data){
-          if (data.size() >= 3)
+        [&midiUtils, &clock](std::vector<double>* data){
+          if (data->size() >= 3)
           {
-            double channel = data[Step::channelInd];
-            double offTick = clock.getCurrentTick() + data[Step::lengthInd];
+            double channel = data->at(Step::channelInd);
+            double offTick = clock.getCurrentTick() + data->at(Step::lengthInd);
             // make the length quantised by steps
-            double noteVolocity = data[Step::velInd];
-            double noteOne = data[Step::note1Ind];
+            double noteVolocity = data->at(Step::velInd);
+            double noteOne = data->at(Step::note1Ind);
             midiUtils.playSingleNote(channel, noteOne, noteVolocity, offTick);            
           }
         }

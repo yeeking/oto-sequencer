@@ -20,6 +20,7 @@
 class Step{
   
   public:
+  // these should be in an enum probably
     const static int channelInd{0};
     const static int lengthInd{1};
     const static int velInd{2};
@@ -28,16 +29,19 @@ class Step{
     Step();
     /** returns a copy of the data stored in this step*/
     std::vector<double> getData() const;
+    /** get the memory address of the data in this step for direct access*/
+    std::vector<double>* getDataDirect();
+  
     /** sets the data stored in this step */
     void setData(std::vector<double> data);
     /** update one value in the data vector for this step*/
     void updateData(unsigned int dataInd, double value);
     /** set the callback function called when this step is triggered*/
-    void setCallback(std::function<void(std::vector<double>)> callback);
+    void setCallback(std::function<void(std::vector<double>*)> callback);
     /** return the callback for this step*/
-    std::function<void(std::vector<double>)> getCallback();
+    std::function<void(std::vector<double>*)> getCallback();
     /** trigger this step, causing it to pass its data to its callback*/
-    void trigger() const;
+    void trigger();
     /** toggle the activity status of this step*/
     void toggleActive();
     /** returns the activity status of this step */
@@ -45,33 +49,8 @@ class Step{
   private: 
     std::vector<double> data;
     bool active;
-    std::function<void(std::vector<double>)> stepCallback;
+    std::function<void(std::vector<double>*)> stepCallback;
 };
-
-// /**
-//  * Represents a pre-processor for a step's data, for example, allowing a step to be 
-//  * transposed. Normally these are stored per sequence and are activated when 
-//  * another sequence is a pre-preocessor sequence
-//  */
-// class StepDataPreProcessor{
-//   public:
-//   StepDataPreProcessor();
-//   void activate();
-//   void deactivate();
-//   bool isActive() const;
-// private:
-//   bool active; 
-// };
-
-// /** */
-// class StepDataTranspose : public StepDataPreProcessor
-// {
-//   public:
-//   StepDataTranspose(double transposeAmount);
-//   void processData(std::vector<double>& data);
-// private:
-//   double transposeAmount;
-// };
 
 /** need this so can have a Sequencer data member in Sequence*/
 class Sequencer;
@@ -95,6 +74,8 @@ class Sequence{
     bool assertStep(unsigned int step) const;
     /** retrieve a copy of the step data for the sent step */
     std::vector<double> getStepData(int step) const;
+    /** get the momory address of the step data for the requested step*/
+    std::vector<double>* getStepDataDirect(int step);
     /** set the data for the sent step */
     void setStepData(unsigned int step, std::vector<double> data);
     /** retrieve a copy of the step data for the current step */
@@ -130,7 +111,7 @@ class Sequence{
     void updateStepData(unsigned int step, unsigned int dataInd, double value);
     /** set the callback for the sent step */
     void setStepCallback(unsigned int step, 
-                  std::function<void (std::vector<double>)> callback);
+                  std::function<void (std::vector<double>*)> callback);
     std::string stepToString(int step) const;
     /** activate/ deactive the sent step */
     void toggleActive(unsigned int step);
@@ -188,11 +169,11 @@ class Sequencer  {
       void setSequenceLength(unsigned int sequence, unsigned int length);
       void shrinkSequence(unsigned int sequence);
       void extendSequence(unsigned int sequence);
-      void setAllCallbacks(std::function<void (std::vector<double>)> callback);
+      void setAllCallbacks(std::function<void (std::vector<double>*)> callback);
       /** set a callback for all steps in a sequence*/
-      void setSequenceCallback(unsigned int sequence, std::function<void (std::vector<double>)> callback);
+      void setSequenceCallback(unsigned int sequence, std::function<void (std::vector<double>*)> callback);
       /** set a lambda to call when a particular step in a particular sequence happens */
-      void setStepCallback(unsigned int sequence, unsigned int step, std::function<void (std::vector<double>)> callback);
+      void setStepCallback(unsigned int sequence, unsigned int step, std::function<void (std::vector<double>*)> callback);
       /** update the data stored at a step in the sequencer */
       void setStepData(unsigned int sequence, unsigned int step, std::vector<double> data);
       /** update a single value in the  data 
@@ -203,6 +184,8 @@ class Sequencer  {
   
       /** retrieve the data for a specific step */
       std::vector<double> getStepData(int sequence, int step) const;
+      /** get the memory address of the data for this step for direct viewing/ editing*/
+      std::vector<double>* getStepDataDirect(int sequence, int step);
       void toggleActive(int sequence, int step);
       bool isStepActive(int sequence, int step) const;
       void addStepListener();

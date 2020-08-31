@@ -529,7 +529,7 @@ class SequencerViewer{
     SequencerViewer()
     {}
 
-    static std::string toTextDisplay(const int rows, const int cols, const Sequencer* sequencer, const SequencerEditor* editor)
+    static std::string toTextDisplay(const int rows, const int cols, Sequencer* sequencer, const SequencerEditor* editor)
     {
       switch(editor->getEditMode())
       {
@@ -609,7 +609,7 @@ class SequencerViewer{
      * and make two separate functions even if they are really similar
      */
    
-    static std::string getSequencerView(const int rows, int cols, const Sequencer* sequencer, const SequencerEditor* editor)
+    static std::string getSequencerView(const int rows, int cols, Sequencer* sequencer, const SequencerEditor* editor)
     {
 
     // fix to display key info at the end of the row 
@@ -661,7 +661,7 @@ class SequencerViewer{
           // that does not have data
           if (editor->getEditMode() == SequencerEditorMode::selectingSeqAndStep && 
               sequencer->howManySteps(displaySeq) > displayStep && 
-              sequencer->getStepData(displaySeq, displayStep)[Step::note1Ind] == 0)
+              sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind) == 0)
           {
             state = '.';
           } 
@@ -686,7 +686,7 @@ class SequencerViewer{
               sequencer->isStepActive(displaySeq, displayStep) 
               )
               {
-                preview = std::to_string((int)sequencer->getStepData(displaySeq, displayStep)[Step::note1Ind]);
+                preview = std::to_string((int)sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind));
                 state = cursor;          
               }
        

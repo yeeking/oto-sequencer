@@ -1,11 +1,17 @@
+cmake_minimum_required (VERSION 3.00)
+
 SET(GCC_COVERAGE_COMPILE_FLAGS "-Wno-psabi")
 
-cmake_minimum_required (VERSION 3.00)
+# enable gprof
+#SET(GCC_COVERAGE_LINK_FLAGS    "-pg")
+#SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
+
 
 # Define the project
 project(oto-sequencer C CXX)
 
 add_definitions(${GCC_COVERAGE_COMPILE_FLAGS})
+
 
 # this adds all h and cpp files from lib folder to the 
 # build

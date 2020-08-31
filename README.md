@@ -149,7 +149,7 @@ transpose and length changes are reset by the target sequence each time it hits 
 * ticks per beat per sequence
 * pre-processor for ticks per beat
 * pre-processor for repeats
-
+* Use pointers for getData functions to avoid copy operations
 
 
 

@@ -17,6 +17,12 @@ std::vector<double> Step::getData() const
 {
   return data; 
 }
+std::vector<double>* Step::getDataDirect()
+{
+  return &data; 
+}
+
+
 /** sets the data stored in this step */
 void Step::setData(std::vector<double> data)
 {
@@ -29,19 +35,20 @@ void Step::updateData(unsigned int dataInd, double value)
   if(dataInd < data.size()) data[dataInd] = value;
 }
 /** set the callback function called when this step is triggered*/
-void Step::setCallback(std::function<void(std::vector<double>)> callback)
+void Step::setCallback(std::function<void(std::vector<double>*)> callback)
 {
   this->stepCallback = callback;
 }
-std::function<void(std::vector<double>)> Step::getCallback()
+std::function<void(std::vector<double>*)> Step::getCallback()
 {
   return this->stepCallback;
 }
 
 /** trigger this step, causing it to pass its data to its callback*/
-void Step::trigger() const
+void Step::trigger() 
 {
-  if (active && data[Step::note1Ind] != 0) stepCallback(data);
+  //std::vector<double>* dataP = &data;// convert to a real pointer
+  if (active && data[Step::note1Ind] != 0) stepCallback(&data);
 }
 /** toggle the activity status of this step*/
 void Step::toggleActive()
@@ -64,8 +71,8 @@ Sequence::Sequence(Sequencer* sequencer,
   for (auto i=0;i<seqLength;i++)
   {
     Step s;
-    s.setCallback([i](std::vector<double> data){
-      if (data.size() > 0){
+    s.setCallback([i](std::vector<double>* data){
+      if (data->size() > 0){
         std::cout << "Sequence::Sequence default step callback " << i << " triggered " << std::endl;
       }
     });
@@ -189,6 +196,11 @@ std::vector<double> Sequence::getStepData(int step) const
 {
   return steps[step].getData();
 }
+std::vector<double>* Sequence::getStepDataDirect(int step)
+{
+  return steps[step].getDataDirect();
+}
+
 std::vector<double> Sequence::getCurrentStepData() const
 {
   return steps[currentStep].getData();
@@ -227,7 +239,7 @@ void Sequence::updateStepData(unsigned int step, unsigned int dataInd, double va
 }
 
 void Sequence::setStepCallback(unsigned int step, 
-                  std::function<void (std::vector<double>)> callback)
+                  std::function<void (std::vector<double>*)> callback)
 {
   steps[step].setCallback(callback);
 }
@@ -332,7 +344,7 @@ void Sequencer::extendSequence(unsigned int sequence)
 }
 
 
-void Sequencer::setAllCallbacks(std::function<void (std::vector<double>)> callback)
+void Sequencer::setAllCallbacks(std::function<void (std::vector<double>*)> callback)
 {
     for (int seq = 0; seq < sequences.size(); ++seq)
     {
@@ -341,7 +353,7 @@ void Sequencer::setAllCallbacks(std::function<void (std::vector<double>)> callba
 }
 
 /** set a callback for all steps in a sequence*/
-void Sequencer::setSequenceCallback(unsigned int sequence, std::function<void (std::vector<double>)> callback)
+void Sequencer::setSequenceCallback(unsigned int sequence, std::function<void (std::vector<double>*)> callback)
 {
   for (int step = 0; step<sequences[sequence].howManySteps(); ++step)
   {
@@ -350,7 +362,7 @@ void Sequencer::setSequenceCallback(unsigned int sequence, std::function<void (s
 }
 
 /** set a lambda to call when a particular step in a particular sequence happens */
-void Sequencer::setStepCallback(unsigned int sequence, unsigned int step, std::function<void (std::vector<double>)> callback)
+void Sequencer::setStepCallback(unsigned int sequence, unsigned int step, std::function<void (std::vector<double>*)> callback)
 {
     sequences[sequence].setStepCallback(step, callback); 
 }
@@ -382,6 +394,14 @@ std::vector<double> Sequencer::getStepData(int sequence, int step) const
   if (!assertSeqAndStep(sequence, step)) return std::vector<double>{};
   return sequences[sequence].getStepData(step);
 }
+/** retrieve the data for a specific step */
+std::vector<double>* Sequencer::getStepDataDirect(int sequence, int step)
+{
+  // TODO should throw an exception if they ask for an invalid step or sequence
+  //if (!assertSeqAndStep(sequence, step)) return std::vector<double>{};
+  return sequences[sequence].getStepDataDirect(step);
+}
+
 void Sequencer::toggleActive(int sequence, int step)
 {
   if (!assertSeqAndStep(sequence, step)) return;
