@@ -807,53 +807,53 @@ bool viewSeqTypeMidi()
 
 bool testIncStepMidi()
 {
-  bool res = false; 
-  std::vector<double> data {0, 0, 0, 0};
-  data[Step::note1Ind] = 60;
-  SequencerEditor::incrementStepData(data, SequenceType::midiNote);
-  if (data[Step::note1Ind] == 72) res = true;
-  return res;
+  // bool res = false; 
+  // std::vector<double> data {0, 0, 0, 0};
+  // data[Step::note1Ind] = 60;
+  // SequencerEditor::incrementStepData(data, SequenceType::midiNote);
+  // if (data[Step::note1Ind] == 72) res = true;
+  // return res;
 }
 bool testIncStepMidiWrap()
 {
-  bool res = false; 
-  std::vector<double> data {0, 0, 0, 0};
-  data[Step::note1Ind] = 120;
-  SequencerEditor::incrementStepData(data, SequenceType::midiNote);
-  if (data[Step::note1Ind] == 120) res = true;
-  return res;
+  // bool res = false; 
+  // std::vector<double> data {0, 0, 0, 0};
+  // data[Step::note1Ind] = 120;
+  // SequencerEditor::incrementStepData(data, SequenceType::midiNote);
+  // if (data[Step::note1Ind] == 120) res = true;
+  // return res;
 }
 
 bool testIncStepTrans()
 {
-  bool res = false; 
-  std::vector<double> data {0, 0, 0, 0};
-  data[Step::note1Ind] = 5;
-  SequencerEditor::incrementStepData(data, SequenceType::transposer);
-  if (data[Step::note1Ind] == 6) res = true;
-  return res;
+  // bool res = false; 
+  // std::vector<double> data {0, 0, 0, 0};
+  // data[Step::note1Ind] = 5;
+  // SequencerEditor::incrementStepData(data, SequenceType::transposer);
+  // if (data[Step::note1Ind] == 6) res = true;
+  // return res;
 }
 
 bool testIncStepTransWrap()
 {
-  bool res = false; 
-  std::vector<double> data {0, 0, 0, 0};
-  data[Step::note1Ind] = 60;
-  SequencerEditor::incrementStepData(data, SequenceType::transposer);
-  //std::cout << "data  is "
-  if (data[Step::note1Ind] == 61) res = true;
-  return res;
+  // bool res = false; 
+  // std::vector<double> data {0, 0, 0, 0};
+  // data[Step::note1Ind] = 60;
+  // SequencerEditor::incrementStepData(data, SequenceType::transposer);
+  // //std::cout << "data  is "
+  // if (data[Step::note1Ind] == 61) res = true;
+  // return res;
 }
 
 
 bool testIncStepTransWrapDown()
 {
-  bool res = false; 
-  std::vector<double> data {0, 0, 0, 0};
-  data[Step::note1Ind] = 0;
-  SequencerEditor::decrementStepData(data, SequenceType::transposer);
-  if (data[Step::note1Ind] == -1) res = true;
-  return res;
+  // bool res = false; 
+  // std::vector<double> data {0, 0, 0, 0};
+  // data[Step::note1Ind] = 0;
+  // SequencerEditor::decrementStepData(data, SequenceType::transposer);
+  // if (data[Step::note1Ind] == -1) res = true;
+  // return res;
 }
 
 bool testAdjLen()

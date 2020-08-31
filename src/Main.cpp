@@ -46,29 +46,28 @@ int main()
 {
     const std::map<char, double> key_to_note =
     {
-        { 'z', 60},
-        { 's', 61},
-        { 'x', 63},
-        { 'd', 64},
-        { 'c', 65},
-        { 'f', 66},
-        { 'v', 67},
-        { 'b', 68},
-        { 'h', 69},
-        { 'n', 70},
-        { 'j', 71},
-        { 'm', 72}
+      { 'z', 60},
+      { 's', 61},
+      { 'x', 63},
+      { 'd', 64},
+      { 'c', 65},
+      { 'f', 66},
+      { 'v', 67},
+      { 'b', 68},
+      { 'h', 69},
+      { 'n', 70},
+      { 'j', 71},
+      { 'm', 72}
     };
     std::map<char, double>::iterator it;
     
     MidiUtils midiUtils;
     midiUtils.interactiveInitMidi();
-//    midiUtils.allNotesOff();
+    midiUtils.allNotesOff();
   
     SimpleClock clock{};
 
     //NaiveStepDataReceiver midiStepReceiver;
-
     Sequencer seqr{};
     SequencerEditor seqEditor{&seqr};
    
@@ -98,8 +97,8 @@ int main()
 
     // this will map joystick x,y to 16 sequences
     rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
-  
-    clock.start(125);
+    int clockIntervalMs = 125;  
+    clock.start(clockIntervalMs);
     char input {1};
     bool escaped = false;
     while (input != 'q')
@@ -117,6 +116,16 @@ int main()
             continue;
           case ' ':
             seqEditor.cycleAtCursor();
+            continue;
+          case '-':
+            clockIntervalMs += 5;
+            clock.stop();
+            clock.start(clockIntervalMs);
+            continue;
+          case '=':
+            clockIntervalMs -= 5;
+            clock.stop();
+            clock.start(clockIntervalMs);
             continue;
           case '\n':
             //seqEditor.cycleMode();
@@ -178,31 +187,4 @@ int main()
   return 0;
 }
 
-
-// int main()
-// {
-//    MidiUtils midiUtils;
-//    midiUtils.interactiveInitMidi();
- 
-//   char x{'x'};
-//   std::vector<unsigned char> message = {0, 0, 0};
-  
-//   while(x != 'q')
-//   {
-//     std::cin >> x;
-//     if(x=='z'){
-//       midiUtils.playSingleNote(1, 64, 100, 10);
-//     } 
-//     if (x=='x'){
-//      message[0] = 128 + 1;
-//      message[1] = 64;
-//      message[2] = 0;  
-//      midiUtils.midiout->sendMessage(&message);
-
-//     //midiUtils.sendQueuedMessages(10);
-      
-//     }
-//   }
-  
-// }
 
