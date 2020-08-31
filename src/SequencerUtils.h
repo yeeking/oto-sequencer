@@ -232,8 +232,11 @@ class SequencerEditor {
         {
           // set the channel based on step 0
           std::vector<double> data2 = sequencer->getStepData(currentSequence, 0);
-          int channel = data2[Step::channelInd];
+          unsigned int channel = data2[Step::channelInd];
           channel = (channel - 1) % 16;
+          if (channel > 16) channel = 16;
+          if (channel < 0) channel = 0;
+          
           for (int step=0; step < sequencer->howManySteps(currentSequence); ++step)
           {
             sequencer->updateStepData(currentSequence, step, Step::channelInd, channel);
@@ -357,11 +360,13 @@ void decrementStepData(std::vector<double>& data, SequenceType seqType)
     case SequenceType::transposer: // up 1
     {
       decrement = 1;
+      min = -24;
       break;
     }
     case SequenceType::lengthChanger: // up 1
     {
       decrement = 1;
+      min = -8;
       break;
     }
     case SequenceType::tickChanger: // up 1
@@ -418,11 +423,13 @@ void incrementStepData(std::vector<double>& data, SequenceType seqType)
     case SequenceType::transposer: // up 1
     {
       increment = 1;
+      max = 24;
       break;
     }
     case SequenceType::lengthChanger: // up 1
     {
       increment = 1;
+      max = 8;
       break;
     }
     case SequenceType::tickChanger: // up 1

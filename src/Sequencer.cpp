@@ -116,6 +116,7 @@ void Sequence::deactivateProcessors()
     transpose = 0;
     lengthAdjustment = 0;
     ticksPerStep = 1;
+    ticksElapsed = 0;
 }
 
 void Sequence::triggerMidiNoteType()
@@ -200,6 +201,7 @@ void Sequence::setTicksPerStep(int tps)
 {
   this->ticksPerStep = tps;
   this->ticksElapsed = 0;
+  
 }
 
 int Sequence::getTicksPerStep() const
