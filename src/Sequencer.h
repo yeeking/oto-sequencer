@@ -60,7 +60,7 @@ class Sequencer;
  * samplePlayer triggers internal samples
  * transposer transposes another sequence 
  **/
-enum class SequenceType {midiNote, samplePlayer, transposer, lengthChanger};
+enum class SequenceType {midiNote, samplePlayer, transposer, lengthChanger, tickChanger};
 
 class Sequence{
   public:
@@ -94,6 +94,8 @@ class Sequence{
      * to move along one step
      */
     void setTicksPerStep(int ticksPerStep);
+    /** return current ticks per step */
+    int getTicksPerStep() const;
     /** apply a transpose to the sequence, which is reset when the sequence
      * hits step 0 again
      */
@@ -140,6 +142,10 @@ class Sequence{
      * Called when the sequence ticks and it is SequenceType::lengthChanger
      */
     void triggerLengthType();
+    /**
+     * Called when the sequence ticks and it is SequenceType::tickChanger
+     */
+    void triggerTickType();
  
     Sequencer* sequencer;
     unsigned int currentLength;

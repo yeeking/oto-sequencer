@@ -16,6 +16,17 @@ bool assertStrEqual(std::string want, std::string got)
   }
 }
 
+bool assertNumEqual(double want, double got)
+{
+  if (want == got) return true;
+  else {
+    std::cout << "assertNumEqual want " << want << " got " << got << std::endl;
+    return false; 
+  }
+}
+
+
+
 bool testTick()
 {
   Sequencer seq{};
@@ -985,6 +996,31 @@ bool testExtraStepsRightCallback()
 }
 
 
+bool testTPSSequence()
+{
+  Sequencer seqr{};
+  Sequence seq{&seqr};
+  seq.setType(SequenceType::tickChanger);
+  return true;
+}
+
+bool testTPSSeqChangesOther()
+{
+  bool res;
+  Sequencer seqr{};
+  seqr.getSequence(0)->setType(SequenceType::tickChanger);
+  std::vector<double>* data = seqr.getStepDataDirect(0, 0);
+  // target seq
+  data->at(Step::channelInd) =  1;// change seq 1
+  data->at(Step::note1Ind) =  10; // set ticks per beat to 2
+  // now tick it and verify that seq 1 has tbb == 2
+  seqr.tick();
+  int tps = seqr.getSequence(1)->getTicksPerStep();
+  res = assertNumEqual(tps, 10);  
+  return res;
+}
+
+
 int global_pass_count = 0;
 int global_fail_count = 0;
 
@@ -1073,6 +1109,8 @@ int main()
 //log("setTicksPerBeat", setTicksPerBeat());
 //log("setTicksPerBeatTick", setTicksPerBeatTick());
 //log("setTicksPerBeatTwpTick", setTicksPerBeatTwpTick());
-log("testExtraStepsRightCallback", testExtraStepsRightCallback());
+//log("testExtraStepsRightCallback", testExtraStepsRightCallback());
+//log("testTPSSequence", testTPSSequence());
+log("testTPSSeqChangesOther", testTPSSeqChangesOther());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

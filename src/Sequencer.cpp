@@ -97,6 +97,10 @@ void Sequence::tick()
         case SequenceType::lengthChanger:
           triggerLengthType();
           break;
+        case SequenceType::tickChanger:
+          triggerTickType();
+          break;
+          
     }
     currentStep = (++currentStep) % (currentLength + lengthAdjustment);
     if (currentStep == 0)
@@ -140,7 +144,7 @@ void Sequence::triggerTransposeType()
   if (steps[currentStep].isActive() )
   {
     std::vector<double> data = steps[currentStep].getData();
-    if (data[Step::note1Ind != 0]) // only do anything if they set a non-zero value
+    if (data[Step::note1Ind] != 0) // only do anything if they set a non-zero value
     {
       sequencer->getSequence(data[Step::channelInd])->setTranspose(data[Step::note1Ind]);
     }
@@ -158,6 +162,19 @@ void Sequence::triggerLengthType()
     }
   } 
 }
+
+void Sequence::triggerTickType()
+{
+  if (steps[currentStep].isActive() )
+  {
+    std::vector<double>* data = steps[currentStep].getDataDirect();
+    if (data->at(Step::note1Ind) != 0) // only do anything if they set a non-zero value
+    {
+      sequencer->getSequence(data->at(Step::channelInd))->setTicksPerStep(data->at(Step::note1Ind));
+    }
+  }
+} 
+
 
 void Sequence::setLengthAdjustment(int lenAdjust)
 {
@@ -181,6 +198,11 @@ void Sequence::setLengthAdjustment(int lenAdjust)
 void Sequence::setTicksPerStep(int tps)
 {
   this->ticksPerStep = tps;
+}
+
+int Sequence::getTicksPerStep() const
+{
+  return this->ticksPerStep;
 }
 
 unsigned int Sequence::getCurrentStep() const
