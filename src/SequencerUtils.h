@@ -16,13 +16,17 @@ enum class SequencerEditorSubMode {editCol1, editCol2, editCol3};
 */
 class SequencerEditor {
   public:
-    SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, currentSequence{0}, currentStep{0}, currentStepIndex{0}, editMode{SequencerEditorMode::selectingSeqAndStep}, stepIncrement{0.5f}
+    SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, currentSequence{0}, currentStep{0}, currentStepIndex{0}, editMode{SequencerEditorMode::selectingSeqAndStep}, editSubMode{SequencerEditorSubMode::editCol1}, stepIncrement{0.5f}
     {
 
     }
     SequencerEditorMode getEditMode() const
     {
       return this->editMode;
+    }
+    SequencerEditorSubMode getEditSubMode() const
+    {
+      return this->editSubMode;
     }
     void setEditMode(SequencerEditorMode mode)
     {
@@ -175,7 +179,7 @@ class SequencerEditor {
         case SequencerEditorMode::editingStep:
         {
           std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          SequencerEditor::incrementStepData(data, sequencer->getSequenceType(currentSequence));
+          incrementStepData(data, sequencer->getSequenceType(currentSequence));
           writeStepData(data);
           break;  
         }
@@ -215,7 +219,7 @@ class SequencerEditor {
         case SequencerEditorMode::editingStep:
         {
           std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          SequencerEditor::decrementStepData(data, sequencer->getSequenceType(currentSequence));
+          decrementStepData(data, sequencer->getSequenceType(currentSequence));
           writeStepData(data);
           break;  
         }
@@ -251,12 +255,14 @@ class SequencerEditor {
         }
         case SequencerEditorMode::editingStep:
         {
-        // left shortens the note
-          std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          data[Step::lengthInd] --;
-          if (data[Step::lengthInd] < 1) data[Step::lengthInd] = 1;
-          writeStepData(data);
-          break;  
+          // cycles which data field we are editing
+          this->editSubMode = SequencerEditor::cycleSubModeLeft(this->editSubMode);
+        // // left shortens the note
+        //   std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
+        //   data[Step::lengthInd] --;
+        //   if (data[Step::lengthInd] < 1) data[Step::lengthInd] = 1;
+        //   writeStepData(data);
+           break;  
         }
         case SequencerEditorMode::configuringSequence:
         {
@@ -283,11 +289,12 @@ class SequencerEditor {
          }
         case SequencerEditorMode::editingStep:
         {
-        // right lengthens the note
-          std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-          data[Step::lengthInd] ++;
-          if (data[Step::lengthInd] > 10) data[Step::lengthInd] = 10;
-          writeStepData(data);
+        // // right lengthens the note
+        //   std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
+        //   data[Step::lengthInd] ++;
+        //   if (data[Step::lengthInd] > 10) data[Step::lengthInd] = 10;
+        //   writeStepData(data);
+          this->editSubMode = SequencerEditor::cycleSubModeRight(this->editSubMode);
           break;  
         }
         case SequencerEditorMode::configuringSequence:
@@ -299,53 +306,139 @@ class SequencerEditor {
       }
   }
 
-/** does an in place increment of the step data, as appropriate for the 
- * type of sequence
-*/
-static void decrementStepData(std::vector<double>& data, SequenceType seqType)
+static SequencerEditorSubMode cycleSubModeLeft(SequencerEditorSubMode subMode)
 {
+  switch(subMode)
+  {
+    case SequencerEditorSubMode::editCol1:
+      return SequencerEditorSubMode::editCol3;
+    case SequencerEditorSubMode::editCol2:
+      return SequencerEditorSubMode::editCol1;
+    case SequencerEditorSubMode::editCol3:
+      return SequencerEditorSubMode::editCol2;
+  }
+}
+
+static SequencerEditorSubMode cycleSubModeRight(SequencerEditorSubMode subMode)
+{
+  switch(subMode)
+  {
+    case SequencerEditorSubMode::editCol1:
+      return SequencerEditorSubMode::editCol2;
+    case SequencerEditorSubMode::editCol2:
+      return SequencerEditorSubMode::editCol3;
+    case SequencerEditorSubMode::editCol3:
+      return SequencerEditorSubMode::editCol1;
+  }
+}
+
+/** decreas the sent step's data
+ * based on current edit mode and edit sub mode
+*/
+void decrementStepData(std::vector<double>& data, SequenceType seqType)
+{
+  double decrement{0};
+  double targetIndex{Step::note1Ind};
+  double min{0};
+
+  // figure out the increment
   switch(seqType)
   {
     case SequenceType::midiNote: // octave adjust
     {
-        data[Step::note1Ind] -= 12;
-        if (data[Step::note1Ind] < 0) data[Step::note1Ind] += 12;      
-        break;
-    }
-    case SequenceType::transposer: // down 1
-    {
-        data[Step::note1Ind] -= 1;
-        break;
-    }
-    case SequenceType::lengthChanger: // down 1
-    {
-        data[Step::note1Ind] -= 1;
-        break;
-    }
-    
-  }
-}
-static void incrementStepData(std::vector<double>& data, SequenceType seqType)
-{
-    switch(seqType)
-  {
-    case SequenceType::midiNote: // octave adjust
-    {
-        data[Step::note1Ind] += 12;
-        if (data[Step::note1Ind] > 127) data[Step::note1Ind] -= 12;      
-        break;
+      decrement = 1;
+      break;
     }
     case SequenceType::transposer: // up 1
     {
-        data[Step::note1Ind] += 1;
-        break;
+      decrement = 1;
+      break;
     }
     case SequenceType::lengthChanger: // up 1
     {
-        data[Step::note1Ind] += 1;
-        break;
+      decrement = 1;
+      break;
     }
   }
+  // figure out the target of editing, as they are cycling 
+  // through the items of data
+  switch(editSubMode)
+  {
+    case SequencerEditorSubMode::editCol1:
+    {
+      targetIndex = Step::note1Ind;
+      break;
+    }
+    case SequencerEditorSubMode::editCol2:
+    {
+      targetIndex = Step::lengthInd;
+      break;
+    }
+    case SequencerEditorSubMode::editCol3:
+    {
+      targetIndex = Step::velInd;
+      break;
+    }
+  }
+  double now = data[targetIndex];
+  data[targetIndex] -= decrement;
+  if (data[targetIndex] < min) data[targetIndex] = now;
+
+}
+
+
+/** increase the sent step's data
+ * based on current edit mode and edit sub mode
+*/
+void incrementStepData(std::vector<double>& data, SequenceType seqType)
+{
+  double increment{0};
+  double targetIndex{Step::note1Ind};
+  double max{127};
+
+  // figure out the increment
+  switch(seqType)
+  {
+    case SequenceType::midiNote: // octave adjust
+    {
+      increment = 1;
+      break;
+    }
+    case SequenceType::transposer: // up 1
+    {
+      increment = 1;
+      break;
+    }
+    case SequenceType::lengthChanger: // up 1
+    {
+      increment = 1;
+      break;
+    }
+  }
+  // figure out the target of editing, as they are cycling 
+  // through the items of data
+  switch(editSubMode)
+  {
+    case SequencerEditorSubMode::editCol1:
+    {
+      targetIndex = Step::note1Ind;
+      break;
+    }
+    case SequencerEditorSubMode::editCol2:
+    {
+      targetIndex = Step::lengthInd;
+      break;
+    }
+    case SequencerEditorSubMode::editCol3:
+    {
+      targetIndex = Step::velInd;
+      break;
+    }
+  }
+  double now = data[targetIndex];
+  data[targetIndex] += increment;
+  if (data[targetIndex] > max) data[targetIndex] = now;
+
 }
 
 
@@ -424,6 +517,7 @@ static void incrementStepData(std::vector<double>& data, SequenceType seqType)
     int currentStepIndex;
     
     SequencerEditorMode editMode;
+    SequencerEditorSubMode editSubMode;
     double stepIncrement;    
 };
 
@@ -446,7 +540,9 @@ class SequencerViewer{
         case SequencerEditorMode::configuringSequence:
           return getSequenceConfigView(sequencer->getStepData(editor->getCurrentSequence(), 0)[Step::channelInd], sequencer->getSequenceType(editor->getCurrentSequence()));
         case SequencerEditorMode::editingStep:
-          return getStepView(sequencer->getStepData(editor->getCurrentSequence(), editor->getCurrentStep()), sequencer->isStepActive(editor->getCurrentSequence(), editor->getCurrentStep()));
+          return getStepView(sequencer->getStepData(editor->getCurrentSequence(), editor->getCurrentStep()), 
+                             sequencer->isStepActive(editor->getCurrentSequence(), editor->getCurrentStep()),
+                             editor->getEditSubMode());
       }
       return "Nothing to draw...";
     }
@@ -454,14 +550,26 @@ class SequencerViewer{
     /**
      * Returns a view of an individual step based on the sent step data
      */
-    static std::string getStepView(const std::vector<double>& stepData, bool active)
+    static std::string getStepView(const std::vector<double>& stepData, bool active, SequencerEditorSubMode editField)
     {
       std::string disp{""};
       if (active) disp += "O";
       else disp += " ";
+      if (editField == SequencerEditorSubMode::editCol1) disp += "[";
+      else disp += " ";
       disp += "n:" + std::to_string((int)stepData[Step::note1Ind]);
-      disp += " l:" + std::to_string((int)stepData[Step::lengthInd]);
-      disp += " v:" + std::to_string((int)stepData[Step::velInd]);
+      if (editField == SequencerEditorSubMode::editCol1) disp += "]";
+      else disp += " ";
+      if (editField == SequencerEditorSubMode::editCol2) disp += "[";
+      else disp += " ";
+      disp += "l:" + std::to_string((int)stepData[Step::lengthInd]);
+      if (editField == SequencerEditorSubMode::editCol2) disp += "]";
+      else disp += " ";
+      if (editField == SequencerEditorSubMode::editCol3) disp += "[";
+      else disp += " ";
+      disp += "v:" + std::to_string((int)stepData[Step::velInd]);
+      if (editField == SequencerEditorSubMode::editCol3) disp += "]";
+      else disp += " ";
       return disp;
     }
     /**

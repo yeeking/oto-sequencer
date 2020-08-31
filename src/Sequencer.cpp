@@ -130,19 +130,25 @@ void Sequence::triggerMidiNoteType()
 */
 void Sequence::triggerTransposeType()
 {
-  std::vector<double> data = steps[currentStep].getData();
-  if (data[Step::note1Ind != 0]) // only do anything if they set a non-zero value
+  if (steps[currentStep].isActive() )
   {
-    sequencer->getSequence(data[Step::channelInd])->setTranspose(data[Step::note1Ind]);
+    std::vector<double> data = steps[currentStep].getData();
+    if (data[Step::note1Ind != 0]) // only do anything if they set a non-zero value
+    {
+      sequencer->getSequence(data[Step::channelInd])->setTranspose(data[Step::note1Ind]);
+    }
   }
 } 
 
 void Sequence::triggerLengthType()
 {
-  std::vector<double> data = steps[currentStep].getData();  
-  if (data[Step::note1Ind] != 0) // only do anything if they set a non-zero value
-  { 
-    sequencer->getSequence(data[Step::channelInd])->setLengthAdjustment(data[Step::note1Ind]);
+  if (steps[currentStep].isActive())
+  {
+    std::vector<double> data = steps[currentStep].getData();  
+    if (data[Step::note1Ind] != 0) // only do anything if they set a non-zero value
+    { 
+      sequencer->getSequence(data[Step::channelInd])->setLengthAdjustment(data[Step::note1Ind]);
+    }
   } 
 }
 
