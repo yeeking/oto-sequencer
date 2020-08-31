@@ -1020,6 +1020,36 @@ bool testTPSSeqChangesOther()
   return res;
 }
 
+bool testTPSTwoBreaks()
+{
+
+  bool res{false};
+  Sequencer seqr{2, 2};
+  seqr.getSequence(0)->setType(SequenceType::tickChanger);
+
+  seqr.setStepData(0, 0, {1, 0, 0, 2}) ; // step 0 change ch 1 speed to 2
+  seqr.setStepData(0, 1, {1, 0, 0, 4}) ; // step 1 change ch 1 speed to 4
+
+  // now tick it and verify that seq 1 has tbb == 2
+  
+  int tps{0};
+  for (int i=0;i<4;++i)
+  {
+    std::cout << "iter " << i << std::endl;
+    seqr.tick();
+    tps = seqr.getSequence(1)->getTicksPerStep();
+    if (!assertNumEqual(tps, 2)) return false;
+    seqr.tick();
+    tps = seqr.getSequence(1)->getTicksPerStep();
+    if (!assertNumEqual(tps, 4)) return false;  
+  }
+  
+
+
+
+  return true;
+}
+
 
 int global_pass_count = 0;
 int global_fail_count = 0;
@@ -1111,6 +1141,7 @@ int main()
 //log("setTicksPerBeatTwpTick", setTicksPerBeatTwpTick());
 //log("testExtraStepsRightCallback", testExtraStepsRightCallback());
 //log("testTPSSequence", testTPSSequence());
-log("testTPSSeqChangesOther", testTPSSeqChangesOther());
+//log("testTPSSeqChangesOther", testTPSSeqChangesOther());
+log("testTPSTwoBreaks", testTPSTwoBreaks());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

@@ -199,6 +199,7 @@ void Sequence::setLengthAdjustment(int lenAdjust)
 void Sequence::setTicksPerStep(int tps)
 {
   this->ticksPerStep = tps;
+  this->ticksElapsed = 0;
 }
 
 int Sequence::getTicksPerStep() const
