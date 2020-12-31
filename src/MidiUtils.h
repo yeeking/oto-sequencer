@@ -56,8 +56,9 @@ void MidiQueue::addMessage(const long timestamp, const MidiMessage& msg)
 MidiMessageVector MidiQueue::getAndClearMessages(long timestamp)
 {
     MidiMessageVector retMessages{};
-    std::list<TimeStampedMessages>::iterator it;
-    for (it=messageList.begin(); it!=messageList.end(); ++it)
+    std::list<TimeStampedMessages>::iterator it = messageList.begin();
+    while(it!=messageList.end())
+    //for (it=messageList.begin(); it!=messageList.end(); ++it)
     {            
         //TimestampedCallbacks item = *it;
         if (it->timestamp == timestamp)
@@ -69,11 +70,10 @@ MidiMessageVector MidiQueue::getAndClearMessages(long timestamp)
                 retMessages.push_back(msg);            
             }
             // erase it
-            messageList.erase(it);
-            // go back one so we can process the next one
-            it--;
+            it = messageList.erase(it);
            // break;
         }
+        else ++it;
     }
     return retMessages;
 }
