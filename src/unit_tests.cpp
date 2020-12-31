@@ -333,7 +333,7 @@ bool testStepMode()
   Sequencer seqr{4}; // 4 seqs
   SequencerEditor cursor{&seqr};
   cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
-  
+  return true;  
 }
 
 bool testIsStepActiveStep()
@@ -537,10 +537,12 @@ bool testEQTriggerRemove()
   q.addEvent(0, [](){std::cout << "0 1" << std::endl;});
   q.addEvent(0, [](){std::cout << "0 2" << std::endl;});
   q.addEvent(10, [](){std::cout << "10 1" << std::endl;});
-  
+;  
   // now ts 0 should have one event
   int sizeBefore =  q.getEventsAtTimestamp(0).size();
+  std::cout << "testEQTriggerRemove getting events before triugger " << std::endl;
   q.triggerAndClearEventsAtTimestamp(0);
+  std::cout << "testEQTriggerRemove getting events after triugger " << std::endl;
   int sizeAfter =  q.getEventsAtTimestamp(0).size();
   if (sizeBefore == 2 && sizeAfter == 0) return true;
   return false;
@@ -818,53 +820,53 @@ bool viewSeqTypeMidi()
 
 bool testIncStepMidi()
 {
-  // bool res = false; 
-  // std::vector<double> data {0, 0, 0, 0};
-  // data[Step::note1Ind] = 60;
-  // SequencerEditor::incrementStepData(data, SequenceType::midiNote);
-  // if (data[Step::note1Ind] == 72) res = true;
-  // return res;
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 60;
+  //SequencerEditor::incrementStepData(data, SequenceType::midiNote);
+  if (data[Step::note1Ind] == 72) res = true;
+  return res;
 }
 bool testIncStepMidiWrap()
 {
-  // bool res = false; 
-  // std::vector<double> data {0, 0, 0, 0};
-  // data[Step::note1Ind] = 120;
-  // SequencerEditor::incrementStepData(data, SequenceType::midiNote);
-  // if (data[Step::note1Ind] == 120) res = true;
-  // return res;
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 120;
+  //SequencerEditor::incrementStepData(data, SequenceType::midiNote);
+  if (data[Step::note1Ind] == 120) res = true;
+  return res;
 }
 
 bool testIncStepTrans()
 {
-  // bool res = false; 
-  // std::vector<double> data {0, 0, 0, 0};
-  // data[Step::note1Ind] = 5;
-  // SequencerEditor::incrementStepData(data, SequenceType::transposer);
-  // if (data[Step::note1Ind] == 6) res = true;
-  // return res;
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 5;
+  //SequencerEditor::incrementStepData(data, SequenceType::transposer);
+  if (data[Step::note1Ind] == 6) res = true;
+  return res;
 }
 
 bool testIncStepTransWrap()
 {
-  // bool res = false; 
-  // std::vector<double> data {0, 0, 0, 0};
-  // data[Step::note1Ind] = 60;
-  // SequencerEditor::incrementStepData(data, SequenceType::transposer);
-  // //std::cout << "data  is "
-  // if (data[Step::note1Ind] == 61) res = true;
-  // return res;
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 60;
+  //SequencerEditor::incrementStepData(data, SequenceType::transposer);
+  //std::cout << "data  is "
+  if (data[Step::note1Ind] == 61) res = true;
+  return res;
 }
 
 
 bool testIncStepTransWrapDown()
 {
-  // bool res = false; 
-  // std::vector<double> data {0, 0, 0, 0};
-  // data[Step::note1Ind] = 0;
-  // SequencerEditor::decrementStepData(data, SequenceType::transposer);
-  // if (data[Step::note1Ind] == -1) res = true;
-  // return res;
+  bool res = false; 
+  std::vector<double> data {0, 0, 0, 0};
+  data[Step::note1Ind] = 0;
+  //SequencerEditor::decrementStepData(data, SequenceType::transposer);
+  if (data[Step::note1Ind] == -1) res = true;
+  return res;
 }
 
 bool testAdjLen()
@@ -1095,53 +1097,55 @@ int main()
 // log("testFollowEditCursorRightLimitNearly", testFollowEditCursorRightLimitNearly());
 
 //   log("testNeuralNetwork", testNeuralNetwork());
-  //  log("testIsStepActiveStep", testIsStepActiveStep());
-  //  log("testIsStepActiveSeq", testIsStepActiveSeq());
-  //  log("testIsStepActiveSeqr", testIsStepActiveSeqr());
-  // log("testToggleStepActiveStep", testIsStepActiveStep());
-  //  log("testToggleStepActiveSeq", testIsStepActiveSeq());
-  //  log("testToggleStepActiveSeqr", testIsStepActiveSeqr());
-  // log("testCycleAtCursorTogglesActive", testCycleAtCursorTogglesActive());
-   //log("testCycleAtCursorTogglesActiveTwice", testCycleAtCursorTogglesActiveTwice());
-   //log("testShowInactiveSteps", testShowInactiveSteps());
-  //log("testStepEditModeLen", testStepEditModeLen());
+//    log("testIsStepActiveStep", testIsStepActiveStep());
+//    log("testIsStepActiveSeq", testIsStepActiveSeq());
+//    log("testIsStepActiveSeqr", testIsStepActiveSeqr());
+//   log("testToggleStepActiveStep", testIsStepActiveStep());
+//    log("testToggleStepActiveSeq", testIsStepActiveSeq());
+//    log("testToggleStepActiveSeqr", testIsStepActiveSeqr());
+//   log("testCycleAtCursorTogglesActive", testCycleAtCursorTogglesActive());
+//    log("testCycleAtCursorTogglesActiveTwice", testCycleAtCursorTogglesActiveTwice());
+//    log("testShowInactiveSteps", testShowInactiveSteps());
+//   log("testStepEditModeLen", testStepEditModeLen());
 //  log("testStepEditModeVel", testStepEditModeVel());
-//log("testStepEditModeVel2", testStepEditModeVel2());
+// log("testStepEditModeVel2", testStepEditModeVel2());
 
-//log("testEnterNoteData", testEnterNoteData());
-  // log("testEQAdd", testEQAdd());
+// log("testEnterNoteData", testEnterNoteData());
+//   log("testEQAdd", testEQAdd());
 
-  // log("testEQAddAtTs", testEQAddAtTs());
-  // log("testEQAddAtTs2", testEQAddAtTs2());
-  // log("testEQAddAtTs10", testEQAddAtTs10());
-//log("testEQTriggerRemove", testEQTriggerRemove());
-//log("testEQTriggerRemove10", testEQTriggerRemove10());
-//  log("testSequenceConfigMode", testSequenceConfigMode());
-//log("testSequenceConfigModeDirect", testSequenceConfigMode());
-  //log("testSetChannelDirect", testSetChannelDirect());
+//   log("testEQAddAtTs", testEQAddAtTs());
+//   log("testEQAddAtTs2", testEQAddAtTs2());
+
+
+ log("testEQAddAtTs10", testEQAddAtTs10());
+log("testEQTriggerRemove", testEQTriggerRemove());
+log("testEQTriggerRemove10", testEQTriggerRemove10());
+ log("testSequenceConfigMode", testSequenceConfigMode());
+// log("testSequenceConfigModeDirect", testSequenceConfigMode());
+//   log("testSetChannelDirect", testSetChannelDirect());
 //  log("testSetChannelEditor", testSetChannelEditor());
 
-//log("testDisplaySeqInfoPage", testDisplaySeqInfoPage());
-//log("testDisplaySeqInfoPageUpdates", testDisplaySeqInfoPageUpdates());
-//log("testChannelUp", testChannelUp());
-//log("testAddPrePro", testAddPrePro());
-//log("testTranspose", testTranspose());
-//log("testTransposeReturns", testTransposeReturns());
-//log("testTransposeViaSeq", testTransposeViaSeq());
+// log("testDisplaySeqInfoPage", testDisplaySeqInfoPage());
+// log("testDisplaySeqInfoPageUpdates", testDisplaySeqInfoPageUpdates());
+// log("testChannelUp", testChannelUp());
+// //log("testAddPrePro", testAddPrePro());
+// log("testTranspose", testTranspose());
+// log("testTransposeReturns", testTransposeReturns());
+// log("testTransposeViaSeq", testTransposeViaSeq());
 // log("testSeqTakesTransposeMode", testSeqTakesTransposeMode());
-//log("viewSeqTypeMidi", viewSeqTypeMidi());
-//log("testIncStepMidi", testIncStepMidi());
-//log("testIncStepMidiWrap", testIncStepMidiWrap());
+// log("viewSeqTypeMidi", viewSeqTypeMidi());
+// log("testIncStepMidi", testIncStepMidi());
+// log("testIncStepMidiWrap", testIncStepMidiWrap());
 // log("testIncStepTrans", testIncStepTrans());
 // log("testIncStepTransWrap", testIncStepTransWrap());
 // log("testIncStepTransWrapDown", testIncStepTransWrapDown());
 // log("testAdjLen", testAdjLen());
-//log("setTicksPerBeat", setTicksPerBeat());
-//log("setTicksPerBeatTick", setTicksPerBeatTick());
-//log("setTicksPerBeatTwpTick", setTicksPerBeatTwpTick());
-//log("testExtraStepsRightCallback", testExtraStepsRightCallback());
-//log("testTPSSequence", testTPSSequence());
-//log("testTPSSeqChangesOther", testTPSSeqChangesOther());
-log("testTPSTwoBreaks", testTPSTwoBreaks());
+// log("setTicksPerBeat", setTicksPerBeat());
+// log("setTicksPerBeatTick", setTicksPerBeatTick());
+// //log("setTicksPerBeatTwpTick", setTicksPerBeatTwpTick());
+// log("testExtraStepsRightCallback", testExtraStepsRightCallback());
+// log("testTPSSequence", testTPSSequence());
+// log("testTPSSeqChangesOther", testTPSSeqChangesOther());
+// log("testTPSTwoBreaks", testTPSTwoBreaks());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

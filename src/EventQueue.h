@@ -77,28 +77,25 @@ void EventQueue::addEvent(long timestamp, SequencerCallback callback)
         timesAndCallbacks.push_back(item);
     }
 }
-/** trigger events at the sent timestamp */
+/** trigger events at the sent timestamp, removing them from the list afterwards */
 void EventQueue::triggerAndClearEventsAtTimestamp(long timestamp)
 {
-    std::list<TimestampedCallbacks>::iterator it;
-    for (it=timesAndCallbacks.begin(); it!=timesAndCallbacks.end(); ++it)
+    std::list<TimestampedCallbacks>::iterator it = timesAndCallbacks.begin();
+    while (it != timesAndCallbacks.end())
     {
-        //TimestampedCallbacks item = *it;
         if (timestampCloseEnough(it->timestamp, timestamp))
-        //if (it->timestamp == timestamp) 
         {
             // trigger all the callbacks 
-            std::cout << "EventQueue::triggerAndClearEventsAtTimestamp callbacks : " << it->callbacks.size() << std::endl;
             for (SequencerCallback& callback : it->callbacks)
             {
                 callback();            
             }
-            // erase it
-            timesAndCallbacks.erase(it);
+            // erase it and assign the previous item
+            // to it: https://stackoverflow.com/questions/596162/can-you-remove-elements-from-a-stdlist-while-iterating-through-it
+            it = timesAndCallbacks.erase(it);
             // go back one so we can process the next one
-            it--;
-           // break;
         }
+        else  ++it;
     }  
 }
 /** trigger events now - it will internally work out what the current time is */

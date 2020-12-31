@@ -325,7 +325,11 @@ static SequencerEditorSubMode cycleSubModeLeft(SequencerEditorSubMode subMode)
     case SequencerEditorSubMode::editCol3:
       return SequencerEditorSubMode::editCol2;
   }
+  throw -1;
+  return SequencerEditorSubMode::editCol2;
+
 }
+
 
 static SequencerEditorSubMode cycleSubModeRight(SequencerEditorSubMode subMode)
 {
@@ -338,6 +342,8 @@ static SequencerEditorSubMode cycleSubModeRight(SequencerEditorSubMode subMode)
     case SequencerEditorSubMode::editCol3:
       return SequencerEditorSubMode::editCol1;
   }
+  throw -1;
+  return SequencerEditorSubMode::editCol1;
 }
 
 /** decreas the sent step's data
