@@ -68,7 +68,7 @@ int main()
     SimpleClock clock{};
 
     //NaiveStepDataReceiver midiStepReceiver;
-    Sequencer seqr{};
+    Sequencer seqr{16};
     SequencerEditor seqEditor{&seqr};
    
     // set up a midi note triggering callback 
@@ -132,7 +132,7 @@ int main()
             seqEditor.enterAtCursor();
             continue;
           case (wchar_t)(127):
-            //seqEditor.deleteAtCursor();
+            seqEditor.enterNoteData(0);
             continue;
         }// send switch on key
         // now check all the piano keys
@@ -141,7 +141,7 @@ int main()
         {
           if (input == key_note.first) 
           { 
-            std::cout << "match" << key_note.second << std::endl;
+           // std::cout << "match" << key_note.second << std::endl;
             key_note_match = true;
             seqEditor.enterNoteData(key_note.second);
             redraw(seqr, seqEditor);

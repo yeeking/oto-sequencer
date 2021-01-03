@@ -71,7 +71,11 @@ class SequencerEditor {
           return;
         case SequencerEditorMode::selectingSeqAndStep:
           // toggle the step on or off
-          sequencer->toggleActive(currentSequence, currentStep);
+          // toggle all steps in current sequence to off
+          for (auto i=0;i<sequencer->getSequence(currentSequence)->getLength(); ++i)
+          {
+            sequencer->toggleActive(currentSequence, i);
+          }
           return;
         case SequencerEditorMode::editingStep:
           //std::vector<double> data = {0, 0, 0};
@@ -141,11 +145,16 @@ class SequencerEditor {
             break;    
           }
           
-        }
-        
+        }        
         writeStepData(data);
-        return;
       }
+      // after note update in this mode, 
+      // move to the next note
+      if (editMode == SequencerEditorMode::selectingSeqAndStep)
+      {
+        moveCursorRight();
+      }
+      
       if (editMode == SequencerEditorMode::configuringSequence)
       {
         // set channel on all notes for this sequence
@@ -719,8 +728,8 @@ class SequencerViewer{
           
           // cursor is at this position
           if (editor->getCurrentSequence() == displaySeq &&
-              editor->getCurrentStep() == displayStep &&
-              sequencer->isStepActive(displaySeq, displayStep) 
+              editor->getCurrentStep() == displayStep 
+              //&& sequencer->isStepActive(displaySeq, displayStep 
               )
               {
                 preview = std::to_string((int)sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind));

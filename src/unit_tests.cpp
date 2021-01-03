@@ -1045,11 +1045,13 @@ bool testTPSTwoBreaks()
     tps = seqr.getSequence(1)->getTicksPerStep();
     if (!assertNumEqual(tps, 4)) return false;  
   }
-  
-
-
-
   return true;
+}
+
+
+bool testCursorRightOnNoteEntry()
+{
+  return false; 
 }
 
 
@@ -1111,41 +1113,42 @@ int main()
 // log("testStepEditModeVel2", testStepEditModeVel2());
 
 // log("testEnterNoteData", testEnterNoteData());
-  log("testEQAdd", testEQAdd());
+  // log("testEQAdd", testEQAdd());
 
-  log("testEQAddAtTs", testEQAddAtTs());
-  log("testEQAddAtTs2", testEQAddAtTs2());
+  // log("testEQAddAtTs", testEQAddAtTs());
+  // log("testEQAddAtTs2", testEQAddAtTs2());
 
 
- log("testEQAddAtTs10", testEQAddAtTs10());
-log("testEQTriggerRemove", testEQTriggerRemove());
-log("testEQTriggerRemove10", testEQTriggerRemove10());
- log("testSequenceConfigMode", testSequenceConfigMode());
-log("testSequenceConfigModeDirect", testSequenceConfigMode());
-  log("testSetChannelDirect", testSetChannelDirect());
- log("testSetChannelEditor", testSetChannelEditor());
+//  log("testEQAddAtTs10", testEQAddAtTs10());
+// log("testEQTriggerRemove", testEQTriggerRemove());
+// log("testEQTriggerRemove10", testEQTriggerRemove10());
+//  log("testSequenceConfigMode", testSequenceConfigMode());
+// log("testSequenceConfigModeDirect", testSequenceConfigMode());
+//   log("testSetChannelDirect", testSetChannelDirect());
+//  log("testSetChannelEditor", testSetChannelEditor());
 
-log("testDisplaySeqInfoPage", testDisplaySeqInfoPage());
-log("testDisplaySeqInfoPageUpdates", testDisplaySeqInfoPageUpdates());
-log("testChannelUp", testChannelUp());
-//log("testAddPrePro", testAddPrePro());
-log("testTranspose", testTranspose());
-log("testTransposeReturns", testTransposeReturns());
-log("testTransposeViaSeq", testTransposeViaSeq());
-log("testSeqTakesTransposeMode", testSeqTakesTransposeMode());
-log("viewSeqTypeMidi", viewSeqTypeMidi());
-log("testIncStepMidi", testIncStepMidi());
-log("testIncStepMidiWrap", testIncStepMidiWrap());
-log("testIncStepTrans", testIncStepTrans());
-log("testIncStepTransWrap", testIncStepTransWrap());
-log("testIncStepTransWrapDown", testIncStepTransWrapDown());
-log("testAdjLen", testAdjLen());
-log("setTicksPerBeat", setTicksPerBeat());
-log("setTicksPerBeatTick", setTicksPerBeatTick());
-//log("setTicksPerBeatTwpTick", setTicksPerBeatTwpTick());
-log("testExtraStepsRightCallback", testExtraStepsRightCallback());
-log("testTPSSequence", testTPSSequence());
-log("testTPSSeqChangesOther", testTPSSeqChangesOther());
-log("testTPSTwoBreaks", testTPSTwoBreaks());
+// log("testDisplaySeqInfoPage", testDisplaySeqInfoPage());
+// log("testDisplaySeqInfoPageUpdates", testDisplaySeqInfoPageUpdates());
+// log("testChannelUp", testChannelUp());
+// //log("testAddPrePro", testAddPrePro());
+// log("testTranspose", testTranspose());
+// log("testTransposeReturns", testTransposeReturns());
+// log("testTransposeViaSeq", testTransposeViaSeq());
+// log("testSeqTakesTransposeMode", testSeqTakesTransposeMode());
+// log("viewSeqTypeMidi", viewSeqTypeMidi());
+// log("testIncStepMidi", testIncStepMidi());
+// log("testIncStepMidiWrap", testIncStepMidiWrap());
+// log("testIncStepTrans", testIncStepTrans());
+// log("testIncStepTransWrap", testIncStepTransWrap());
+// log("testIncStepTransWrapDown", testIncStepTransWrapDown());
+// log("testAdjLen", testAdjLen());
+// log("setTicksPerBeat", setTicksPerBeat());
+// log("setTicksPerBeatTick", setTicksPerBeatTick());
+// //log("setTicksPerBeatTwpTick", setTicksPerBeatTwpTick());
+// log("testExtraStepsRightCallback", testExtraStepsRightCallback());
+// log("testTPSSequence", testTPSSequence());
+// log("testTPSSeqChangesOther", testTPSSeqChangesOther());
+// log("testTPSTwoBreaks", testTPSTwoBreaks());
+  
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }
