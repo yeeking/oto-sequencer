@@ -1,6 +1,6 @@
 # Oto-sequencer
 
-A sound sequencer. Runs on raspberry pi. 
+A sound sequencer. Runs on raspberry pi and regular linux computers.  
 
 To build, first set up the cmake stuff:
 ```
