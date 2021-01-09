@@ -1,6 +1,8 @@
 #include <functional>
 #include <iostream>
 #include <stdio.h>  
+#include <fstream>
+#include <string>
 
 #include "../lib/ml/rapidLib.h"
 
@@ -35,11 +37,24 @@ char getch() {
   return (buf);
 }
 
+bool drawing = false;
 void redraw(Sequencer& seqr, SequencerEditor& seqEditor)
 { 
+  if (drawing)
+  {
+    return;
+  }
+  drawing = true;
     std::cout << "\x1B[2J\x1B[H";
-    std::string disp = SequencerViewer::toTextDisplay(16, 32, &seqr, &seqEditor);
+    std::string disp = SequencerViewer::toTextDisplay(6, 16, &seqr, &seqEditor);
     std::cout << disp << std::endl;
+
+    std::string port{"/dev/ttyACM0"};
+    ofstream serial_bus;
+    serial_bus.open (port);
+    serial_bus << disp << "\t"; // last character triggers the redraw
+    serial_bus.close();
+    drawing = false; 
 }
 
 int main()
