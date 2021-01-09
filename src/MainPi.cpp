@@ -1,13 +1,17 @@
 #include <functional>
 #include <iostream>
+#include <fstream>
 #include <stdio.h>  
 
 #include "../lib/ml/rapidLib.h"
 
+
 #include "SimpleClock.h"
 #include "Sequencer.h"
+#include "SequencerUtils.h"
 #include "RapidLibUtils.h"
 #include "MidiUtils.h"
+
 #include "GroveUtils.h"
 #include "KeyUtils.h"
 
@@ -50,6 +54,18 @@ void redrawGroveLCD(Sequencer& seqr, SequencerEditor& seqEditor, GrovePi::LCD& l
     std::cout << disp << std::endl;
     
     lcd.setText(disp.c_str());
+}
+
+void redrawWioSerial(Sequencer& seqr, SequencerEditor& seqEditor)
+{
+    std::string port{"/dev/ttyACM0"};
+    ofstream serial_bus;
+//    std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
+    std::string disp = SequencerViewer::toTextDisplay(6, 16, &seqr, &seqEditor);
+    serial_bus.open (port);
+    serial_bus << disp << "\t"; // last character triggers the redraw
+    serial_bus.close();
+    
 }
 
 void updateLCDColour(SequencerEditor& editor, GrovePi::LCD& lcd)
@@ -142,22 +158,25 @@ int main()
 
     // this constructor will trigger midi initialisation
     MidiUtils midiUtils;
+    //midiUtils.interactiveInitMidi();
+    //midiUtils.allNotesOff();
     setupMidi(midiUtils, keyReader, lcd);
-    Sequencer seqr{};
+    Sequencer seqr{16, 16};
     SequencerEditor seqEditor{&seqr};
     SimpleClock clock{};
     // this will map joystick x,y to 16 sequences
     rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
 
     seqr.setAllCallbacks(
-        [&midiUtils, &clock](std::vector<double> data){
-          if (data.size() >= 3)
+        [&midiUtils, &clock](std::vector<double>* data){
+          if (data->size() >= 3)
           {
-            double offTick = clock.getCurrentTick() + data[Step::lengthInd];
+            double channel = data->at(Step::channelInd);
+            double offTick = clock.getCurrentTick() + data->at(Step::lengthInd);
             // make the length quantised by steps
-            double noteVolocity = data[Step::velInd];
-            double noteOne = data[Step::note1Ind];
-            midiUtils.playSingleNote(0, noteOne, noteVolocity, offTick);            
+            double noteVolocity = data->at(Step::velInd);
+            double noteOne = data->at(Step::note1Ind);
+            midiUtils.playSingleNote(channel, noteOne, noteVolocity, offTick);            
           }
         }
     );
@@ -165,6 +184,7 @@ int main()
     clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock](){
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
       seqr.tick();
+      redrawWioSerial(seqr, seqEditor);
     });
 
 
@@ -174,6 +194,8 @@ int main()
     while (input != 16) // q for quit
     {
         redrawGroveLCD(seqr, seqEditor, lcd);
+        redrawWioSerial(seqr, seqEditor);
+
         input = keyReader.getChar();
         switch(input)
         {

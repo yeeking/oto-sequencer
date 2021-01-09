@@ -163,6 +163,7 @@ class Sequence{
 /** represents a sequencer which is used to store a grid of data and to step through it */
 class Sequencer  {
     public:
+    /** create a sequencer: channels,stepsPerChannel*/
       Sequencer(unsigned int seqCount = 4, unsigned int seqLength = 16);
       unsigned int howManySequences() const ;
       unsigned int howManySteps(unsigned int sequence) const ;

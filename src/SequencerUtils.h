@@ -655,12 +655,20 @@ class SequencerViewer{
      * and make two separate functions even if they are really similar
      */
    
-    static std::string getSequencerView(const int rows, int cols, Sequencer* sequencer, const SequencerEditor* editor)
+    static std::string getSequencerView(const int max_rows, const int cols, Sequencer* sequencer, const SequencerEditor* editor)
     {
 
     // fix to display key info at the end of the row 
     //cols = cols - 3;
-
+    // only display as many sequences as we have
+    int rows;
+    if (max_rows > sequencer->howManySequences()) 
+    {
+      rows = sequencer->howManySequences();
+    }
+    else {
+      rows = max_rows;
+    }
     // the editor cursor dictates which bit we show
       std::string disp{""};
       // we display the bit of the sequences
@@ -681,6 +689,7 @@ class SequencerViewer{
       for (int seq=0;seq<rows;++seq)
       {
         displaySeq = seq + seqOffset;
+        if (displaySeq > sequencer->howManySequences()) break;
         // the first thing is the channel number
         disp += std::to_string(displaySeq + 1);
         // space pad it
@@ -688,8 +697,8 @@ class SequencerViewer{
         // the second thing is a '-' if this is the start of the 
         // sequence or a ' ' if it is not, based on the 
         // position of the cursor
-        if (editor->getCurrentStep() == 0) disp += "-";
-        else disp += " ";
+        //if (editor->getCurrentStep() == 0) disp += "-";
+        //else disp += " ";
         for (int step=0;step<cols - 3;++step) // -3 as we we used 3 chars already
        
         {

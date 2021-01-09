@@ -46,7 +46,7 @@ void redraw(Sequencer& seqr, SequencerEditor& seqEditor)
   }
   drawing = true;
     std::cout << "\x1B[2J\x1B[H";
-    std::string disp = SequencerViewer::toTextDisplay(6, 16, &seqr, &seqEditor);
+    std::string disp = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
     std::cout << disp << std::endl;
 
     std::string port{"/dev/ttyACM0"};
@@ -83,7 +83,7 @@ int main()
     SimpleClock clock{};
 
     //NaiveStepDataReceiver midiStepReceiver;
-    Sequencer seqr{16};
+    Sequencer seqr{16, 8};
     SequencerEditor seqEditor{&seqr};
    
     // set up a midi note triggering callback 
