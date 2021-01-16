@@ -11,85 +11,11 @@
 #include "SequencerUtils.h"
 #include "RapidLibUtils.h"
 #include "MidiUtils.h"
-
-#include <unistd.h>
-#include <termios.h>
-
-// getch with no echo and instant response
-// https://stackoverflow.com/a/912796/1240660
-char getch() {
-  char buf = 0;
-  struct termios old = {0};
-  if (tcgetattr(0, &old) < 0)
-          perror("tcsetattr()");
-  old.c_lflag &= ~ICANON;
-  old.c_lflag &= ~ECHO;
-  old.c_cc[VMIN] = 1;
-  old.c_cc[VTIME] = 0;
-  if (tcsetattr(0, TCSANOW, &old) < 0)
-          perror("tcsetattr ICANON");
-  if (read(0, &buf, 1) < 0)
-          perror ("read()");
-  old.c_lflag |= ICANON;
-  old.c_lflag |= ECHO;
-  if (tcsetattr(0, TCSADRAIN, &old) < 0)
-          perror ("tcsetattr ~ICANON");
-  return (buf);
-}
-
-/** attempts to get the serial device filename 
- * if it fails, returns ""
-*/
-std::string getSerialDevice(std::string devPrefix = "/dev/ttyACM", bool debug = true)
-{
-    bool open = false;
-    for (auto i=0;i<10;i++)
-    {
-      ofstream serial_bus;
-      std::string port = devPrefix + std::to_string(i);
-      if (debug)
-        std::cout << "main.cpp::getSerialDevice trying to open " << port << std::endl;
-      try{
-        serial_bus.open (port);
-        if (serial_bus.is_open()){
-          serial_bus.close();
-          // got one
-          if (debug)
-            std::cout << "main.cpp::getSerialDevice opened " << port << std::endl;
-          return port; 
-          break;
-        }
-        else {
-          if (debug)
-            std::cout << "main.cpp::getSerialDevice could not open " << port << std::endl;
-        }
-      }
-      catch(int exception){
-        if (debug)
-          std::cout << "main.cpp::getSerialDevice open " << port << " failed " << std::endl;
-      }
-    }
-    // fail condition
-    return "";
-}
-
-void redrawToConsole(const std::string& output)
-{ 
-  std::cout << "\x1B[2J\x1B[H";
-  std::cout << output << std::endl;
-}
-
-void redrawToWio(const std::string& device, const std::string& output)
-{    
-    ofstream serial_bus;
-    serial_bus.open (device);
-    serial_bus << output << "\t"; // last character triggers the redraw
-    serial_bus.close();
-}
+#include "IOUtils.h"
 
 int main()
 {
-    std::string serialDev = getSerialDevice();
+    std::string serialDev = Display::getSerialDevice();
     const std::map<char, double> key_to_note =
     {
       { 'z', 48},
@@ -139,9 +65,9 @@ int main()
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
       seqr.tick();
       std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
-      redrawToConsole(output);
+      Display::redrawToConsole(output);
       if (serialDev != "")
-        redrawToWio(serialDev, output);    
+        Display::redrawToWio(serialDev, output);    
     });
 
     // this will map joystick x,y to 16 sequences
@@ -153,7 +79,7 @@ int main()
     bool redraw = false; 
     while (input != 'q')
     {
-      input = getch();
+      input = KeyReader::getCharNoEcho();
       if (!escaped)
       {
         switch(input)
@@ -227,15 +153,14 @@ int main()
             seqEditor.moveCursorDown();
             escaped = false;
             redraw = true;   
-            redraw = true;   
         }
       }
       if (redraw)
       {
         std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
-        redrawToConsole(output);
+        Display::redrawToConsole(output);
         if (serialDev != "")
-          redrawToWio(serialDev, output);
+          Display::redrawToWio(serialDev, output);
       }
     }// end of key input loop
   clock.stop();
