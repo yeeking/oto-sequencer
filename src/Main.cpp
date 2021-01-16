@@ -15,23 +15,10 @@
 
 int main()
 {
+  // wio terminal serial display device if available
     std::string serialDev = Display::getSerialDevice();
-    const std::map<char, double> key_to_note =
-    {
-      { 'z', 48},
-      { 's', 49},
-      { 'x', 50},
-      { 'd', 51},
-      { 'c', 52},
-      { 'f', 53},
-      { 'v', 54},
-      { 'b', 55},
-      { 'h', 56},
-      { 'n', 57},
-      { 'j', 59},
-      { 'm', 60}
-    };
-    std::map<char, double>::iterator it;
+  // maps computer keyboard to midi notes
+    std::map<char, double> key_to_note = MidiUtils::getKeyboardToMidiNotes();
     
     MidiUtils midiUtils;
     midiUtils.interactiveInitMidi();
@@ -39,7 +26,6 @@ int main()
   
     SimpleClock clock{};
 
-    //NaiveStepDataReceiver midiStepReceiver;
     Sequencer seqr{16, 8};
     SequencerEditor seqEditor{&seqr};
    
@@ -71,7 +57,7 @@ int main()
     });
 
     // this will map joystick x,y to 16 sequences
-    rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
+    //rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
     int clockIntervalMs = 125;  
     clock.start(clockIntervalMs);
     char input {1};

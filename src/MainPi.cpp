@@ -5,67 +5,21 @@
 
 #include "../lib/ml/rapidLib.h"
 
-
 #include "SimpleClock.h"
 #include "Sequencer.h"
 #include "SequencerUtils.h"
 #include "RapidLibUtils.h"
 #include "MidiUtils.h"
-
 #include "GroveUtils.h"
-#include "KeyUtils.h"
-
+#include "IOUtils.h"
 #include <unistd.h>
 #include <termios.h>
-
-
-// getch with no echo and instant response
-// https://stackoverflow.com/a/912796/1240660
-char getch() {
-  char buf = 0;
-  struct termios old = {0};
-  if (tcgetattr(0, &old) < 0)
-          perror("tcsetattr()");
-  old.c_lflag &= ~ICANON;
-  old.c_lflag &= ~ECHO;
-  old.c_cc[VMIN] = 1;
-  old.c_cc[VTIME] = 0;
-  if (tcsetattr(0, TCSANOW, &old) < 0)
-          perror("tcsetattr ICANON");
-  if (read(0, &buf, 1) < 0)
-          perror ("read()");
-  old.c_lflag |= ICANON;
-  old.c_lflag |= ECHO;
-  if (tcsetattr(0, TCSADRAIN, &old) < 0)
-          perror ("tcsetattr ~ICANON");
-  return (buf);
-}
-
-void redrawConsole(Sequencer& seqr, SequencerEditor& seqEditor)
-{ 
-   // std::cout << "\x1B[2J\x1B[H";
-    std::string disp = SequencerViewer::toTextDisplay(16, 32, &seqr, &seqEditor);
-    std::cout << disp << std::endl;
-}
 
 void redrawGroveLCD(Sequencer& seqr, SequencerEditor& seqEditor, GrovePi::LCD& lcd)
 { 
     std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
     std::cout << disp << std::endl;
-    
     lcd.setText(disp.c_str());
-}
-
-void redrawWioSerial(Sequencer& seqr, SequencerEditor& seqEditor)
-{
-    std::string port{"/dev/ttyACM0"};
-    ofstream serial_bus;
-//    std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
-    std::string disp = SequencerViewer::toTextDisplay(6, 16, &seqr, &seqEditor);
-    serial_bus.open (port);
-    serial_bus << disp << "\t"; // last character triggers the redraw
-    serial_bus.close();
-    
 }
 
 void updateLCDColour(SequencerEditor& editor, GrovePi::LCD& lcd)
@@ -81,11 +35,10 @@ void updateLCDColour(SequencerEditor& editor, GrovePi::LCD& lcd)
         case SequencerEditorMode::settingSeqLength:
             lcd.setRGB(0, 50, 0);
             break;
-
     }
 }
 
-void setupMidi(MidiUtils& midiUtils, KeyReader& keyReader, GrovePi::LCD& lcd)
+void setupMidiViaLCD(MidiUtils& midiUtils, KeyReader& keyReader, GrovePi::LCD& lcd)
 {
     int midiDev = -1;
     std::vector<std::string> midiOuts = midiUtils.getOutputDeviceList();
@@ -107,9 +60,6 @@ void setupMidi(MidiUtils& midiUtils, KeyReader& keyReader, GrovePi::LCD& lcd)
         lcd.setText(msg.c_str());
         midiDev = keyReader.getChar() - 2;
         std::cout << "You chose " << midiDev << std::endl;
-        // it is zero indexed.
- //       midiDev --; 
-
         if (midiDev > midiOuts.size() || midiDev < 0) midiDev = -1;
     }
     std::cout << "selecting a device " << midiDev << std::endl;
@@ -123,25 +73,14 @@ int main()
     KeyReader keyReader;
     // maps from raw event input keycodes
     // to midi notes
-    const std::map<int, double> key_to_note =
-    {
-        { 44, 60},
-        { 31, 61},
-        { 45, 63},
-        { 32, 64},
-        { 46, 65},
-        { 47, 66},
-        { 34, 67},
-        { 48, 68},
-        { 35, 69},
-        { 49, 70},
-        { 36, 71},
-        { 50, 72}
-    };
+    const std::map<char, double> key_to_note = MidiUtils::getKeyboardToMidiNotes();
 
+    // access to the wio
+    std::string wioSerial = Display::getSerialDevice();
+    
     // access to the rgb lcd
     GrovePi::LCD lcd{};
-
+    bool useLCD = false;
     try
 	{
 		// connect to the i2c-line
@@ -149,23 +88,24 @@ int main()
 		// set text and RGB color on the LCD
 		lcd.setText("Loading sequencer....");
 		lcd.setRGB(255, 0, 0);
+        useLCD = true; 
     }
     catch(GrovePi::I2CError &error)
 	{
 		printf(error.detail());
-		return -1;
+		//return -1;
 	}
 
     // this constructor will trigger midi initialisation
     MidiUtils midiUtils;
     //midiUtils.interactiveInitMidi();
     //midiUtils.allNotesOff();
-    setupMidi(midiUtils, keyReader, lcd);
+    setupMidiViaLCD(midiUtils, keyReader, lcd);
     Sequencer seqr{16, 16};
     SequencerEditor seqEditor{&seqr};
     SimpleClock clock{};
     // this will map joystick x,y to 16 sequences
-    rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
+    //rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
 
     seqr.setAllCallbacks(
         [&midiUtils, &clock](std::vector<double>* data){
@@ -181,21 +121,28 @@ int main()
         }
     );
 
-    clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock](){
+    clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
       seqr.tick();
-      redrawWioSerial(seqr, seqEditor);
+  
+      if (wioSerial != "")
+      {
+        std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
+        Display::redrawToWio(wioSerial, output);    
+      }
     });
-
 
     clock.start(125);
     char input {1};
     
     while (input != 16) // q for quit
     {
-        redrawGroveLCD(seqr, seqEditor, lcd);
-        redrawWioSerial(seqr, seqEditor);
-
+        if (useLCD) redrawGroveLCD(seqr, seqEditor, lcd);
+        if (wioSerial != "")
+        {
+            std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
+            Display::redrawToWio(wioSerial, output);    
+        }
         input = keyReader.getChar();
         switch(input)
         {
