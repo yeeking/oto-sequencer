@@ -142,13 +142,4 @@ Other types:
 transpose and length changes are reset by the target sequence each time it hits its first step.
 
 
-## TODO
-
-* probability per step
-* chord type sequences
-* ticks per beat per sequence
-* pre-processor for ticks per beat
-* pre-processor for repeats
-* change Sequence::trigger functions to use data pointers
-
 

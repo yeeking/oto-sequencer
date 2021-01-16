@@ -1,6 +1,8 @@
 #include <functional>
 #include <iostream>
 #include <stdio.h>  
+#include <fstream>
+#include <string>
 
 #include "../lib/ml/rapidLib.h"
 
@@ -9,57 +11,14 @@
 #include "SequencerUtils.h"
 #include "RapidLibUtils.h"
 #include "MidiUtils.h"
-
-#include <unistd.h>
-#include <termios.h>
-
-// getch with no echo and instant response
-// https://stackoverflow.com/a/912796/1240660
-char getch() {
-  char buf = 0;
-  struct termios old = {0};
-  if (tcgetattr(0, &old) < 0)
-          perror("tcsetattr()");
-  old.c_lflag &= ~ICANON;
-  old.c_lflag &= ~ECHO;
-  old.c_cc[VMIN] = 1;
-  old.c_cc[VTIME] = 0;
-  if (tcsetattr(0, TCSANOW, &old) < 0)
-          perror("tcsetattr ICANON");
-  if (read(0, &buf, 1) < 0)
-          perror ("read()");
-  old.c_lflag |= ICANON;
-  old.c_lflag |= ECHO;
-  if (tcsetattr(0, TCSADRAIN, &old) < 0)
-          perror ("tcsetattr ~ICANON");
-  return (buf);
-}
-
-void redraw(Sequencer& seqr, SequencerEditor& seqEditor)
-{ 
-    std::cout << "\x1B[2J\x1B[H";
-    std::string disp = SequencerViewer::toTextDisplay(16, 32, &seqr, &seqEditor);
-    std::cout << disp << std::endl;
-}
+#include "IOUtils.h"
 
 int main()
 {
-    const std::map<char, double> key_to_note =
-    {
-      { 'z', 48},
-      { 's', 49},
-      { 'x', 50},
-      { 'd', 51},
-      { 'c', 52},
-      { 'f', 53},
-      { 'v', 54},
-      { 'b', 55},
-      { 'h', 56},
-      { 'n', 57},
-      { 'j', 59},
-      { 'm', 60}
-    };
-    std::map<char, double>::iterator it;
+  // wio terminal serial display device if available
+    std::string serialDev = Display::getSerialDevice();
+  // maps computer keyboard to midi notes
+    std::map<char, double> key_to_note = MidiUtils::getKeyboardToMidiNotes();
     
     MidiUtils midiUtils;
     midiUtils.interactiveInitMidi();
@@ -67,8 +26,7 @@ int main()
   
     SimpleClock clock{};
 
-    //NaiveStepDataReceiver midiStepReceiver;
-    Sequencer seqr{16};
+    Sequencer seqr{16, 8};
     SequencerEditor seqEditor{&seqr};
    
     // set up a midi note triggering callback 
@@ -88,22 +46,26 @@ int main()
     );
 
   // tick the sequencer and send any queued notes
-    clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock](){
+    clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock, &serialDev](){
       //std::cout << "main.cpp clock callback " << clock.getCurrentTick() << std::endl;
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
       seqr.tick();
-      redraw(seqr, seqEditor);    
+      std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
+      Display::redrawToConsole(output);
+      if (serialDev != "")
+        Display::redrawToWio(serialDev, output);    
     });
 
     // this will map joystick x,y to 16 sequences
-    rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
+    //rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
     int clockIntervalMs = 125;  
     clock.start(clockIntervalMs);
     char input {1};
     bool escaped = false;
+    bool redraw = false; 
     while (input != 'q')
     {
-      input = getch();
+      input = KeyReader::getCharNoEcho();
       if (!escaped)
       {
         switch(input)
@@ -143,8 +105,8 @@ int main()
           { 
            // std::cout << "match" << key_note.second << std::endl;
             key_note_match = true;
-            seqEditor.enterNoteData(key_note.second);
-            redraw(seqr, seqEditor);
+            seqEditor.enterNoteData(key_note.second); 
+            redraw = true;   
             break;// break the for loop
           }
         }
@@ -158,29 +120,35 @@ int main()
             // up
             seqEditor.moveCursorUp();
             escaped = false;
-            redraw(seqr, seqEditor);
+            redraw = true;   
             continue;
           case 'D':
             // left
             seqEditor.moveCursorLeft();
             escaped = false;
-            redraw(seqr, seqEditor);
+            redraw = true;   
             continue;
           case 'C':
             // right
             seqEditor.moveCursorRight();
             escaped = false;
-            redraw(seqr, seqEditor);
+            redraw = true;   
             continue;
           case 'B':
             // down
             seqEditor.moveCursorDown();
             escaped = false;
-            redraw(seqr, seqEditor);
-            continue;     
+            redraw = true;   
         }
       }
-    }
+      if (redraw)
+      {
+        std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
+        Display::redrawToConsole(output);
+        if (serialDev != "")
+          Display::redrawToWio(serialDev, output);
+      }
+    }// end of key input loop
   clock.stop();
 
   midiUtils.allNotesOff();

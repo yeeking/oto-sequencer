@@ -5,6 +5,7 @@
 #include "MidiUtils.h"
 #include "RapidLibUtils.h"
 #include "EventQueue.h"
+#include <fstream>
 
 
 bool assertStrEqual(std::string want, std::string got)
@@ -1053,6 +1054,54 @@ bool testCursorRightOnNoteEntry()
 {
   return false; 
 }
+/** not really a unit test but lets me check what comes out on WIO*/
+bool testWioDisplay2Line()
+{
+  Sequencer seqr{};
+  SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
+  std::string want = "1 -Ioooo\n2 --oooo";
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  std::string port{"/dev/ttyACM0"};
+  ofstream serial_bus;
+  serial_bus.open (port);
+  serial_bus << got << "\t"; // last character triggers the redraw
+  serial_bus.close();
+  return true;
+}
+
+bool testWioDisplay9Line()
+{
+  Sequencer seqr{10, 16};
+  SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
+  std::string got = SequencerViewer::toTextDisplay(9, 14, &seqr, &cursor);
+  std::string port{"/dev/ttyACM0"};
+  ofstream serial_bus;
+  serial_bus.open (port);
+  serial_bus << got << "\t"; // last character triggers the redraw
+  serial_bus.close();
+  std::cout << got << std::endl;
+  
+  return true;
+}
+bool testWioDisplayLine()
+{
+  Sequencer seqr{10, 16};
+  SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
+  std::string got = SequencerViewer::toTextDisplay(9, 14, &seqr, &cursor);
+  std::string port{"/dev/ttyACM0"};
+  ofstream serial_bus;
+  serial_bus.open (port);
+  serial_bus << got << "\t"; // last character triggers the redraw
+  serial_bus.close();
+  std::cout << got << std::endl;
+  
+  return true;
+}
+
+
 
 
 int global_pass_count = 0;
@@ -1150,5 +1199,8 @@ int main()
 // log("testTPSSeqChangesOther", testTPSSeqChangesOther());
 // log("testTPSTwoBreaks", testTPSTwoBreaks());
   
+//  log("testWioDisplay1Line", testWioDisplay1Line());
+  log("testWioDispla81Line", testWioDisplay8Line());
+
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

@@ -99,6 +99,27 @@ class MidiUtils
       delete midiout;
     }
 
+    static std::map<char, double> getKeyboardToMidiNotes(int transpose = 0)
+    {
+      const std::map<char, double> key_to_note =
+      {
+        { 'z', 48+transpose},
+        { 's', 49+transpose},
+        { 'x', 50+transpose},
+        { 'd', 51+transpose},
+        { 'c', 52+transpose},
+        { 'v', 53+transpose},
+        { 'g', 54+transpose},
+        { 'b', 55+transpose},
+        { 'h', 56+transpose},
+        { 'n', 57+transpose},
+        { 'j', 58+transpose},
+        { 'm', 59+transpose}
+      };
+      return key_to_note;
+      
+    }
+
 /** 
  * Presents command line promots to the user to allow them to initiate MIDI output
 */
