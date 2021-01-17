@@ -48,9 +48,9 @@ class SequencerEditor {
           editMode = SequencerEditorMode::settingSeqLength;
           currentStep = 0;
           return;
-      //   case SequencerEditorMode::editingStep:
-      //     editMode = SequencerEditorMode::selectingSeqAndStep;
-      //     return;  
+        case SequencerEditorMode::editingStep: // go to next data item
+          this->editSubMode = SequencerEditor::cycleSubModeRight(this->editSubMode);
+          return;  
       //   case SequencerEditorMode::configuringSequence: 
       //     editMode = SequencerEditorMode::settingSeqLength;
       //     currentStep = 0; 
@@ -273,13 +273,11 @@ class SequencerEditor {
         case SequencerEditorMode::editingStep:
         {
           // cycles which data field we are editing
-          this->editSubMode = SequencerEditor::cycleSubModeLeft(this->editSubMode);
-        // // left shortens the note
-        //   std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-        //   data[Step::lengthInd] --;
-        //   if (data[Step::lengthInd] < 1) data[Step::lengthInd] = 1;
-        //   writeStepData(data);
-           break;  
+          //this->editSubMode = SequencerEditor::cycleSubModeLeft(this->editSubMode);
+          currentStep -= 1;
+          if (currentStep < 0) currentStep = 0;
+          
+          break;  
         }
         case SequencerEditorMode::configuringSequence:
         {
@@ -301,17 +299,13 @@ class SequencerEditor {
         case SequencerEditorMode::selectingSeqAndStep:
          {
             currentStep += 1;
-          if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
-          break;
+            if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1;
+            break;
          }
         case SequencerEditorMode::editingStep:
         {
-        // // right lengthens the note
-        //   std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-        //   data[Step::lengthInd] ++;
-        //   if (data[Step::lengthInd] > 10) data[Step::lengthInd] = 10;
-        //   writeStepData(data);
-          this->editSubMode = SequencerEditor::cycleSubModeRight(this->editSubMode);
+            currentStep += 1;
+            if (currentStep >= sequencer->howManySteps(currentSequence)) currentStep = sequencer->howManySteps(currentSequence) - 1; 
           break;  
         }
         case SequencerEditorMode::configuringSequence:
@@ -585,15 +579,22 @@ class SequencerViewer{
         case SequencerEditorMode::editingStep:
           return getStepView(sequencer->getStepData(editor->getCurrentSequence(), editor->getCurrentStep()), 
                              sequencer->isStepActive(editor->getCurrentSequence(), editor->getCurrentStep()),
-                             editor->getEditSubMode());
+                             editor->getEditSubMode(), 
+                             editor->getCurrentStep(), 
+                             sequencer->getCurrentStep(editor->getCurrentSequence()));
       }
       return "Nothing to draw...";
     }
 
     /**
      * Returns a view of an individual step based on the sent step data
+     * stepData is the data for te step
+     * active is if the step is active or note
+     * editField is the field they are currently using
+     * stepInd is the index of this step
+     * clockInd is the index of the clock (so should we highlight it somehow)
      */
-    static std::string getStepView(const std::vector<double>& stepData, bool active, SequencerEditorSubMode editField)
+    static std::string getStepView(const std::vector<double>& stepData, bool active, SequencerEditorSubMode editField, int stepInd, int clockInd)
     {
       std::string disp{""};
       if (active) disp += "O";
@@ -613,6 +614,9 @@ class SequencerViewer{
       disp += "v:" + std::to_string((int)stepData[Step::velInd]);
       if (editField == SequencerEditorSubMode::editCol3) disp += "]";
       else disp += " ";
+      // add info about the step number
+      disp += "\n" + std::to_string(stepInd);
+      if (stepInd == clockInd) disp += " X";
       return disp;
     }
     /**
@@ -691,7 +695,7 @@ class SequencerViewer{
         displaySeq = seq + seqOffset;
         if (displaySeq > sequencer->howManySequences()) break;
         // the first thing is the channel number
-        disp += std::to_string(displaySeq + 1);
+        disp += std::to_string(displaySeq);
         // space pad it
         if (displaySeq < 9) disp += " ";
         // the second thing is a '-' if this is the start of the 

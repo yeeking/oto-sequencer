@@ -16,7 +16,7 @@
 int main()
 {
   // wio terminal serial display device if available
-    std::string serialDev = Display::getSerialDevice();
+    std::string wioSerial = Display::getSerialDevice();
   // maps computer keyboard to midi notes
     std::map<char, double> key_to_note = MidiUtils::getKeyboardToMidiNotes();
     
@@ -46,14 +46,14 @@ int main()
     );
 
   // tick the sequencer and send any queued notes
-    clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock, &serialDev](){
+    clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
       //std::cout << "main.cpp clock callback " << clock.getCurrentTick() << std::endl;
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
       seqr.tick();
       std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
       Display::redrawToConsole(output);
-      if (serialDev != "")
-        Display::redrawToWio(serialDev, output);    
+      if (wioSerial != "")
+        Display::redrawToWio(wioSerial, output);    
     });
 
     // this will map joystick x,y to 16 sequences
@@ -63,6 +63,7 @@ int main()
     char input {1};
     bool escaped = false;
     bool redraw = false; 
+
     while (input != 'q')
     {
       input = KeyReader::getCharNoEcho();
@@ -73,27 +74,27 @@ int main()
           case '\033': // first escape character cursor key?
             escaped = true;
             continue;
-          case '\t': 
+          case '\t':  // next 'mode'
             seqEditor.cycleEditMode();
             continue;
-          case ' ':
+          case ' ': // mute
             seqEditor.cycleAtCursor();
             continue;
-          case '-':
+          case '-': // slower
             clockIntervalMs += 5;
             clock.stop();
             clock.start(clockIntervalMs);
             continue;
-          case '=':
+          case '=': // faster
             clockIntervalMs -= 5;
             clock.stop();
             clock.start(clockIntervalMs);
             continue;
-          case '\n':
+          case '\n': // enter
             //seqEditor.cycleMode();
             seqEditor.enterAtCursor();
             continue;
-          case (wchar_t)(127):
+          case (wchar_t)(127): // delete
             seqEditor.enterNoteData(0);
             continue;
         }// send switch on key
@@ -145,8 +146,8 @@ int main()
       {
         std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
         Display::redrawToConsole(output);
-        if (serialDev != "")
-          Display::redrawToWio(serialDev, output);
+        if (wioSerial != "")
+          Display::redrawToWio(wioSerial, output);
       }
     }// end of key input loop
   clock.stop();

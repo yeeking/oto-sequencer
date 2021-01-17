@@ -130,6 +130,11 @@ int main()
         std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
         Display::redrawToWio(wioSerial, output);    
       }
+      else 
+      {
+        std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
+        Display::redrawToConsole(output);
+      }
     });
 
     clock.start(125);
@@ -142,6 +147,11 @@ int main()
         {
             std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
             Display::redrawToWio(wioSerial, output);    
+        }
+        else 
+        {
+            std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
+            Display::redrawToConsole(output);
         }
         input = keyReader.getChar();
         switch(input)
