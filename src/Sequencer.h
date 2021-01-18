@@ -129,6 +129,9 @@ class Sequence{
 //    void setStepProcessorTranspose(StepDataTranspose transpose);
     /** deactivate all data processors, e.g. transposers, length adjusters */
     void deactivateProcessors();
+    /** clear the data from this sequence. Does not clear step event functions*/
+    void reset();
+
   private:
     /** function called when the sequence ticks and it is SequenceType::midiNote
      * 
@@ -196,17 +199,18 @@ class Sequencer  {
       void toggleActive(int sequence, int step);
       bool isStepActive(int sequence, int step) const;
       void addStepListener();
-
+      /** wipe the data from the sent sequence*/
+      void resetSequence(int sequence);
   /** print out a tracker style view of the sequence */
-    std::string toString();
+      std::string toString();
 
     private:
-    bool assertSeqAndStep(unsigned int sequence, unsigned int step) const;
+      bool assertSeqAndStep(unsigned int sequence, unsigned int step) const;
+        
+      bool assertSequence(unsigned int sequence) const;
       
-    bool assertSequence(unsigned int sequence) const;
-    
-    /// class data members  
-    std::vector<Sequence> sequences;;
+      /// class data members  
+      std::vector<Sequence> sequences;;
 };
 
 

@@ -306,6 +306,20 @@ void Sequence::setTranspose(double transpose)
   this->transpose = transpose;
 }
 
+void Sequence::reset()
+{
+  for (Step& step : steps)
+  {
+    // activate the step
+    if (!step.isActive()) step.toggleActive();
+    // reset the data
+    int dSize = step.getDataDirect()->size();
+    for (auto i = 0; i < dSize; i++)
+    {
+      step.updateData(i, 0.0);
+    }
+  }
+}
 
 /////////////////////// Sequencer 
 
@@ -457,6 +471,15 @@ for (int step = 0; step < 32; ++step)
   s += "\n";
 }
 return s;
+}
+
+void Sequencer::resetSequence(int sequence)
+{
+  //sequences[sequence]
+  for (auto i=0;i<sequences.size();i++)
+  {
+    sequences[i].reset();
+  }
 }
 
 

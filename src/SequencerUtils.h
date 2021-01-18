@@ -84,6 +84,25 @@ class SequencerEditor {
           return;  
       }
     }
+    /** mode dependent reset function. Might reset */
+    void resetAtCursor()
+    {
+      switch(editMode)
+      {
+      case SequencerEditorMode::selectingSeqAndStep:
+      // reset the whole sequence
+        sequencer->resetSequence(currentSequence);
+        break;
+      case SequencerEditorMode::editingStep:
+        enterNoteData(0);
+        break;  
+      case SequencerEditorMode::settingSeqLength:
+        // 
+        break;
+      case SequencerEditorMode::configuringSequence:
+        break;
+      }
+    }
     
     /**
      *  Go into edit mode for either the sequence or step
@@ -616,7 +635,7 @@ class SequencerViewer{
       else disp += " ";
       // add info about the step number
       disp += "\n" + std::to_string(stepInd);
-      if (stepInd == clockInd) disp += " X";
+      if (stepInd == clockInd) disp += " X"; // todo write a unit test...
       return disp;
     }
     /**

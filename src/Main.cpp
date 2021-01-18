@@ -94,6 +94,10 @@ int main()
             //seqEditor.cycleMode();
             seqEditor.enterAtCursor();
             continue;
+          case 'r':
+            //seqEditor
+            seqEditor.resetAtCursor();
+            continue;
           case (wchar_t)(127): // delete
             seqEditor.enterNoteData(0);
             continue;
