@@ -99,9 +99,49 @@ class MidiUtils
       delete midiout;
     }
 
+    static std::map<int,char> getIntToDrumMap()
+    {
+    std::map<int, char> intToDrum = 
+      {
+        {0, 'B'}, 
+        {1, 's'},
+        {2, 'S'},
+        {3, 'r'},
+        {4, 'H'},
+        {5, 'h'},
+        {6, 't'},
+        {7, 'T'},
+        {8, 'c'},
+        {9, 'R'},
+        {10, 'C'},
+        {11, 'p'}    
+      };
+      return intToDrum;
+    }
+
+    static std::map<char,int> getDrumToMidiNoteMap()
+    {
+     std::map<char,int> drumToInt = 
+      {
+        {'B', 36}, 
+        {'s', 38},
+        {'S', 40},
+        {'r', 37},
+        {'H', 42},
+        {'h', 46},
+        {'t', 50},
+        {'T', 45},
+        {'c', 39},
+        {'R', 51},
+        {'C', 57},
+        {'p', 75}    
+      };
+      return drumToInt;
+    }
+
     static std::map<char, double> getKeyboardToMidiNotes(int transpose = 0)
     {
-      const std::map<char, double> key_to_note =
+      std::map<char, double> key_to_note =
       {
         { 'z', 48+transpose},
         { 's', 49+transpose},

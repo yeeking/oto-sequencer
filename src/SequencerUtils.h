@@ -499,6 +499,9 @@ void incrementStepData(std::vector<double>& data, SequenceType seqType)
    SequenceType type = seqr->getSequenceType(sequence);
    switch (type){
      case SequenceType::midiNote:
+      seqr->setSequenceType(sequence, SequenceType::drumMidi);
+      break;
+     case SequenceType::drumMidi:
       seqr->setSequenceType(sequence, SequenceType::transposer);
       break;
      case SequenceType::transposer:
@@ -651,6 +654,9 @@ class SequencerViewer{
       switch (type){
         case SequenceType::midiNote:
           disp += "midi";
+          break;
+        case SequenceType::drumMidi:
+          disp += "drum";
           break;
         case SequenceType::transposer:
           disp += "transposer";

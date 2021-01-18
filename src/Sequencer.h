@@ -60,7 +60,7 @@ class Sequencer;
  * samplePlayer triggers internal samples
  * transposer transposes another sequence 
  **/
-enum class SequenceType {midiNote, samplePlayer, transposer, lengthChanger, tickChanger};
+enum class SequenceType {midiNote, drumMidi, samplePlayer, transposer, lengthChanger, tickChanger};
 
 class Sequence{
   public:

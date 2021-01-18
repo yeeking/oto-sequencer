@@ -1101,7 +1101,48 @@ bool testWioDisplayLine()
   return true;
 }
 
+bool testSetDrumSequenceType()
+{
+  Sequencer seqr{10, 16};
+  seqr.setSequenceType(0, SequenceType::drumMidi);
+  return true; 
+}
 
+bool testSetDrumSequenceTypeEditor()
+{
+  Sequencer seqr{10, 16};
+  SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::configuringSequence);
+  // verify it starts as midiNote
+  if (seqr.getSequenceType(0) != SequenceType::midiNote) return false;
+  cursor.moveCursorRight();// should move from midi to drum midi
+  if (seqr.getSequenceType(0) == SequenceType::drumMidi)
+    return true;
+  else
+    return false;
+}
+
+bool testDrumMap()
+{
+  std::map<int,char> intToDrum = MidiUtils::getIntToDrumMap();
+  if (intToDrum[0] == 'B') return true;
+  else return false; 
+}
+
+bool testIntToBD()
+{
+  std::map<int,char> intToDrum = MidiUtils::getIntToDrumMap();
+  int ind = intToDrum.size() * 2;
+  if (intToDrum[ind % intToDrum.size()] == 'B') return true;
+  else return false; 
+}
+
+bool testDrumToMidiNote()
+{
+  std::map<char, int> drumToMidiNote = MidiUtils::getDrumToMidiNoteMap(); 
+  if (drumToMidiNote['B'] == 36) return true;
+  else return false; 
+}
 
 
 int global_pass_count = 0;
@@ -1200,7 +1241,13 @@ int main()
 // log("testTPSTwoBreaks", testTPSTwoBreaks());
   
 //  log("testWioDisplay1Line", testWioDisplay1Line());
-  log("testWioDispla81Line", testWioDisplay8Line());
+ // log("testWioDispla81Line", testWioDisplay8Line());
 
+
+  log("testSetDrumSequenceType", testSetDrumSequenceType());
+  log("testSetDrumSequenceTypeEditor", testSetDrumSequenceTypeEditor());
+  log("testDrumMap", testDrumMap());
+  log("testIntToBD", testIntToBD());
+  log("testDrumToMidiNote", testDrumToMidiNote());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

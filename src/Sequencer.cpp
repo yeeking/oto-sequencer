@@ -475,11 +475,8 @@ return s;
 
 void Sequencer::resetSequence(int sequence)
 {
-  //sequences[sequence]
-  for (auto i=0;i<sequences.size();i++)
-  {
-    sequences[i].reset();
-  }
+  if (!assertSequence(sequence)) return;
+  sequences[sequence].reset();
 }
 
 

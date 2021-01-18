@@ -98,9 +98,12 @@ int main()
             //seqEditor
             seqEditor.resetAtCursor();
             continue;
-          case (wchar_t)(127): // delete
-            seqEditor.enterNoteData(0);
+          case 'p':
+            midiUtils.allNotesOff();
             continue;
+//          case (wchar_t)(127): // delete
+//            seqEditor.enterNoteData(0);
+//            continue;
         }// send switch on key
         // now check all the piano keys
         bool key_note_match{false};
