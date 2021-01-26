@@ -36,6 +36,8 @@ add_library(grove-libs ${GROVE_LIB_DIR})
 
 # build the sequencer library
 add_library(seq-lib src/Sequencer.cpp)
+# build the midi utils
+add_library(midi-lib src/MidiUtils.cpp)
 
 # build the executable
 # raspi version with i2c
@@ -46,7 +48,7 @@ add_executable(testit src/unit_tests.cpp)
 add_executable(oto-sequencer src/Main.cpp)
 
 # link the main executable to the rapidlib library and pthreads
-target_link_libraries(oto-sequencer-pi seq-lib ml-libs grove-libs ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(oto-sequencer seq-lib -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(testit seq-lib ml-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(oto-sequencer-pi seq-lib midi-lib ml-libs grove-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(oto-sequencer seq-lib midi-lib  -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(testit seq-lib midi-lib ml-libs ${CMAKE_THREAD_LIBS_INIT})
 

@@ -1144,6 +1144,78 @@ bool testDrumToMidiNote()
   else return false; 
 }
 
+bool testKeyBoardToDrumNote()
+{
+  // maps qwerty keyboard to midi
+  std::map<char, double> key_to_note = MidiUtils::getKeyboardToMidiNotes();
+  // need qwerty to drum??
+  std::map<char, int> drumToMidiNote = MidiUtils::getDrumToMidiNoteMap(); 
+  std::map<int,char> intToDrum = MidiUtils::getIntToDrumMap();
+  char keyIn = 'z';// should eventually end up as a kick drim
+  // can we get to note 36 from here? 
+  double note = key_to_note[keyIn];
+  char drum = intToDrum[(int)note % intToDrum.size()];
+  if (drumToMidiNote[drum] == 36) return true;
+  else return false; 
+}
+bool testSetStepDataV2()
+{
+  bool res = false; 
+  Sequencer seqr{};
+  //Sequence seq{&seqr};
+  std::vector<double> dataIn {0, 0, 0, 0, 0};
+  dataIn[Step::note1Ind] = 48;
+  seqr.setStepData(0, 1, dataIn);// note A/48 maps to bassdrum 36  
+  std::vector<double>* data = seqr.getStepDataDirect(0, 1); 
+  if (data->at(Step::note1Ind) == 48)
+  {
+    return true;
+  }
+  else {
+    std::cout << "testSetStepDataV2 data should be 48 but is " << data->at(Step::note1Ind) << std::endl;
+    return false; 
+  }
+}
+
+
+bool testDrumChannelCorrectNotes()
+{
+  bool res = false; 
+  Sequencer seqr{};
+  Sequence* seq = seqr.getSequence(0);
+  //Sequence seq{&seqr};
+  std::vector<double> dataIn {0, 0, 0, 0, 0};
+  dataIn[Step::note1Ind] = 48;
+  seqr.setStepData(0, 1, dataIn);// note A/48 maps to bassdrum 36  
+  //seq.setType(SequenceType::drumMidi);
+  std::string test{""};
+  seq->setType(SequenceType::drumMidi);
+
+  std::cout << "setting callback" << std::endl;
+  seq->setStepCallback(1, 
+   [&test](std::vector<double>* data){
+     std::cout << "callback::note:" << data->at(Step::note1Ind) << std::endl;
+     if (data->at(Step::note1Ind) == 36)
+     {
+       test.append("yes");
+     }
+    }
+  );
+  seq->tick();
+  seq->tick();
+  
+  // test should still be '' not 'xxx'
+  std::string want = "yes";
+  if (test == want)
+  {
+    res = true;
+  }
+  else
+  {
+    std::cout << "Want " << want << " got " << test << std::endl; 
+  }
+  return res;
+}
 
 int global_pass_count = 0;
 int global_fail_count = 0;
@@ -1244,10 +1316,14 @@ int main()
  // log("testWioDispla81Line", testWioDisplay8Line());
 
 
-  log("testSetDrumSequenceType", testSetDrumSequenceType());
-  log("testSetDrumSequenceTypeEditor", testSetDrumSequenceTypeEditor());
-  log("testDrumMap", testDrumMap());
-  log("testIntToBD", testIntToBD());
-  log("testDrumToMidiNote", testDrumToMidiNote());
+  // log("testSetDrumSequenceType", testSetDrumSequenceType());
+  // log("testSetDrumSequenceTypeEditor", testSetDrumSequenceTypeEditor());
+  // log("testDrumMap", testDrumMap());
+  // log("testIntToBD", testIntToBD());
+  // log("testDrumToMidiNote", testDrumToMidiNote());
+
+ // log("testKeyBoardToDrumNote", testKeyBoardToDrumNote());
+ log("testDrumChannelCorrectNotes", testDrumChannelCorrectNotes());
+  log("testSetStepDataV2", testSetStepDataV2());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

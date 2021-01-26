@@ -47,7 +47,6 @@ std::function<void(std::vector<double>*)> Step::getCallback()
 /** trigger this step, causing it to pass its data to its callback*/
 void Step::trigger() 
 {
-  //std::vector<double>* dataP = &data;// convert to a real pointer
   if (active && data[Step::note1Ind] != 0) stepCallback(&data);
 }
 /** toggle the activity status of this step*/
@@ -66,14 +65,15 @@ Sequence::Sequence(Sequencer* sequencer,
                   unsigned short midiChannel) 
 : sequencer{sequencer}, currentStep{0}, currentLength{seqLength}, 
   midiChannel{midiChannel}, type{SequenceType::midiNote}, 
-  transpose{0}, lengthAdjustment{0}, ticksPerStep{1}, ticksElapsed{0}
+  transpose{0}, lengthAdjustment{0}, ticksPerStep{1}, ticksElapsed{0}, 
+  midiScaleToDrum{MidiUtils::getScaleMidiToDrumMidi()}
 {
   for (auto i=0;i<seqLength;i++)
   {
     Step s;
     s.setCallback([i](std::vector<double>* data){
       if (data->size() > 0){
-        std::cout << "Sequence::Sequence default step callback " << i << " triggered " << std::endl;
+        //std::cout << "Sequence::Sequence default step callback " << i << " triggered " << std::endl;
       }
     });
     steps.push_back(s);
@@ -91,6 +91,9 @@ void Sequence::tick()
         case SequenceType::midiNote:
           triggerMidiNoteType();
           break;
+        case SequenceType::drumMidi:
+          triggerMidiDrumType();
+          break;
         case SequenceType::transposer:
           triggerTransposeType();
           break;
@@ -100,7 +103,9 @@ void Sequence::tick()
         case SequenceType::tickChanger:
           triggerTickType();
           break;
-          
+        default:
+          std::cout << "Sequnce::tick warning unkown seq type" << std::endl;
+          break;
     }
     currentStep = (++currentStep) % (currentLength + lengthAdjustment);
     if (currentStep == 0)
@@ -126,16 +131,34 @@ void Sequence::triggerMidiNoteType()
   // apply changes to local copy if needed      
   if(transpose > 0) 
   {
-    std::vector<double> data = s.getData();
-    if (data[Step::note1Ind] > 0 ) // only transpose non-zero steps
+    std::vector<double>* data = s.getDataDirect();//  s.getData();
+    if (data->at(Step::note1Ind) > 0 ) // only transpose non-zero steps
     {
-      data[Step::note1Ind] = fmod(data[Step::note1Ind] + transpose, 127);
-      s.setData(data);
+      data->at(Step::note1Ind) = fmod(data->at(Step::note1Ind) + transpose, 127);
     }
   }
   // trigger the local, adjusted copy of the step
   s.trigger();
 }
+
+void Sequence::triggerMidiDrumType()
+{
+  // make a local copy
+  Step s = steps[currentStep];
+  // transpose the midi note into the drum domain
+  std::vector<double>* data = s.getDataDirect();//  s.getData();
+  data->at(Step::note1Ind) = midiScaleToDrum[(int) data->at(Step::note1Ind)];
+  // apply changes to local copy if needed      
+  if(transpose > 0) 
+  {
+    if (data->at(Step::note1Ind) > 0 ) // only transpose non-zero steps
+    {
+      data->at(Step::note1Ind) = fmod(data->at(Step::note1Ind) + transpose, 127);
+    }
+  }
+  s.trigger();
+}
+
 
 /** 
  * Called when the sequence ticks and it is a transpose type
@@ -190,8 +213,7 @@ void Sequence::setLengthAdjustment(int lenAdjust)
   // when to go back to step 0
   // this allows the length adjustment (which is caused by another sequence)
   // to be separate from the current length
-  // and therefore easily removed (which prevents repeatedly extending 
-  // )
+  // and therefore easily removed (which prevents repeatedly extending)
   int original_length = currentLength;
   setLength(original_length + lenAdjust);
   setLength(original_length);

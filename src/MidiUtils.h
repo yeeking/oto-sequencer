@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <list>
 #include "/usr/include/rtmidi/RtMidi.h"
 #include <thread>         // std::this_thread::sleep_for
@@ -28,56 +29,6 @@ class MidiQueue
         std::list<TimeStampedMessages> messageList;
 };
 
-MidiQueue::MidiQueue()
-{
-
-}
-void MidiQueue::addMessage(const long timestamp, const MidiMessage& msg)
-{
-   // iterate over the list and insert the event 
-    // at a point where the ts ==  or < 
-    bool done = false;
-    for ( TimeStampedMessages& item : messageList)
-    {
-        if (item.timestamp == timestamp)
-        {
-            item.messages.push_back(msg);// now we pass by value
-            done = true;
-            break;
-        } 
-    }
-    if (!done)
-    {
-       // std::cout << "EventQueue::addEvent no timestapm match for " << timestamp << std::endl;        
-        TimeStampedMessages item {timestamp, MidiMessageVector{msg}};
-        messageList.push_back(item);
-    }
-}
-MidiMessageVector MidiQueue::getAndClearMessages(long timestamp)
-{
-    MidiMessageVector retMessages{};
-    std::list<TimeStampedMessages>::iterator it = messageList.begin();
-    while(it!=messageList.end())
-    //for (it=messageList.begin(); it!=messageList.end(); ++it)
-    {            
-        //TimestampedCallbacks item = *it;
-        if (it->timestamp == timestamp)
-        //if (it->timestamp == timestamp) 
-        {
-            // trigger all the callbacks 
-            for (MidiMessage& msg : it->messages)
-            {
-                retMessages.push_back(msg);            
-            }
-            // erase it
-            it = messageList.erase(it);
-           // break;
-        }
-        else ++it;
-    }
-    return retMessages;
-}
-
 /**
  * 
 */
@@ -98,7 +49,10 @@ class MidiUtils
     {
       delete midiout;
     }
-
+    /** maps from integer values, i.e. midi notes modded on 12 or 24 to drum 
+     * names, e.g. 0->B for bassdrum. Can be used to display one character drum 
+     * names 
+    */
     static std::map<int,char> getIntToDrumMap()
     {
     std::map<int, char> intToDrum = 
@@ -118,7 +72,35 @@ class MidiUtils
       };
       return intToDrum;
     }
+    /**
+     * returns a mapping from a scale starting at note 48 ... 59
+     * mapped to midi notes for drums remapped to get the most useful drums 
+     */
+    static std::map<int,int> getScaleMidiToDrumMidi()
+    {
 
+      std::map<int,int> scaleToDrum = 
+      {
+        {48, 36}, 
+        {49, 38},
+        {50, 40},
+        {51, 37},
+        {52, 42},
+        {53, 46},
+        {54, 50},
+        {55, 45},
+        {56, 39},
+        {57, 51},
+        {58, 57},
+        {59, 75}    
+      };
+      return scaleToDrum;
+    
+    }
+
+    /** maps from drum names (e.g. B, s) to general midi notes 
+     * e.g. B(bass drum) -> 36. 
+    */
     static std::map<char,int> getDrumToMidiNoteMap()
     {
      std::map<char,int> drumToInt = 

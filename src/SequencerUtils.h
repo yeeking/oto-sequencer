@@ -148,6 +148,12 @@ class SequencerEditor {
             data[Step::note1Ind] = note; 
             break;
           }
+          case SequenceType::drumMidi: // midi note - 0-127
+          {
+            data[Step::note1Ind] = note; 
+            break;
+          }
+          
           case SequenceType::transposer: // transposition - 0-12
           {
             data[Step::note1Ind] = fmod(note, 12);

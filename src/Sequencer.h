@@ -10,6 +10,8 @@
 #include <iostream>
 #include <string>
 #include <functional>
+#include <map>
+#include "MidiUtils.h"
 
 /** default spec for a Step's data, 
  * so data[0] specifies length, 
@@ -137,6 +139,8 @@ class Sequence{
      * 
     */
     void triggerMidiNoteType(); 
+    /** functoin called when the sequence ticks and it is SequenceType::midiDrum*/
+    void triggerMidiDrumType(); 
     /** 
      * Called when the sequence ticks and it is a transpose type SequenceType::transposer
     */
@@ -161,6 +165,9 @@ class Sequence{
     int lengthAdjustment;
     int ticksPerStep;
     int ticksElapsed;
+    /** maps from linear midi scale to general midi drum notes*/
+    std::map<int,int> midiScaleToDrum;
+
 };
 
 /** represents a sequencer which is used to store a grid of data and to step through it */
