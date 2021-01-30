@@ -1232,14 +1232,12 @@ bool testExtendSeq()
   seqr.setSequenceLength(0, 3); // should create a new step and copy the callback
   // now add data to all steps
   seqr.setStepData(0, 0, std::vector<double> {1, 1, 1, 1});
-  seqr.setStepData(1, 0, std::vector<double> {1, 1, 1, 1});
-  seqr.setStepData(2, 0, std::vector<double> {1, 1, 1, 1});
+  seqr.setStepData(0, 1, std::vector<double> {1, 1, 1, 1});
+  seqr.setStepData(0, 2, std::vector<double> {1, 1, 1, 1});
   //seqr.getSequence(0)->setTicksPerStep(1);
   seqr.tick();
   seqr.tick();
   seqr.tick();
-  seqr.tick();
-  
   
   
   // test should still be '' not 'xxx'

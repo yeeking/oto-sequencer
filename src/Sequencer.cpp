@@ -73,7 +73,7 @@ Sequence::Sequence(Sequencer* sequencer,
     Step s;
     s.setCallback([i](std::vector<double>* data){
       if (data->size() > 0){
-        //std::cout << "Sequence::Sequence default step callback " << i << " triggered " << std::endl;
+        std::cout << "Sequence::Sequence default step callback " << i << " triggered " << std::endl;
       }
     });
     steps.push_back(s);
@@ -85,12 +85,9 @@ void Sequence::tick()
 {
   ++ticksElapsed;
 
-  std::cout << "Sequence::tick t: " << ticksElapsed << "/" << ticksPerStep << "c: "<< currentStep << " / " << currentLength << std::endl;
   if (ticksElapsed == ticksPerStep)
     {
       ticksElapsed = 0;
-      std::cout << "Sequence::tick triggering" << std::endl;
-
       switch (type){
         case SequenceType::midiNote:
           triggerMidiNoteType();
@@ -118,7 +115,6 @@ void Sequence::tick()
       deactivateProcessors();
     }
   }
-
 }
 
 void Sequence::deactivateProcessors()
@@ -228,7 +224,6 @@ void Sequence::setTicksPerStep(int tps)
 {
   this->ticksPerStep = tps;
   this->ticksElapsed = 0;
-  
 }
 
 int Sequence::getTicksPerStep() const
@@ -518,7 +513,6 @@ bool Sequencer::assertSequence(unsigned int sequence) const
 {
 if (sequence >= sequences.size() || sequence < 0)
   {
-    //std::cout << "Sequence " << sequence << " out of range. use 0 - " << (sequences.size()-1) << std::endl;
     return false;
   } 
 return true;
