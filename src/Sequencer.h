@@ -181,13 +181,22 @@ class Sequencer  {
       SequenceType getSequenceType(unsigned int sequence) const;
       /** move the sequencer along by one tick */
       void tick();
+      /** return a pointer to the sequence with sent id*/
       Sequence* getSequence(unsigned int sequence);
       void setSequenceType(unsigned int sequence, SequenceType type);
+       /** set the length of the sequence 
+       * If it is higher than the current max length, new steps will be created
+       * using callbacks that are copies of the one at the last, previously existant
+       * step
+       */
       void setSequenceLength(unsigned int sequence, unsigned int length);
+      /** reduce the playback (as opposed to total possible) length of the sequence by 1 */
       void shrinkSequence(unsigned int sequence);
+      /** increase the length of the sequence by 1, adding new steps in memory if needed, as per setSequenceLength*/
       void extendSequence(unsigned int sequence);
+      /** set all callbacks on all sequences to the sent lambda*/
       void setAllCallbacks(std::function<void (std::vector<double>*)> callback);
-      /** set a callback for all steps in a sequence*/
+      /** set a callback lambda for all steps in a sequence*/
       void setSequenceCallback(unsigned int sequence, std::function<void (std::vector<double>*)> callback);
       /** set a lambda to call when a particular step in a particular sequence happens */
       void setStepCallback(unsigned int sequence, unsigned int step, std::function<void (std::vector<double>*)> callback);

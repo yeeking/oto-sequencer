@@ -131,8 +131,15 @@ void MidiUtils::allNotesOff()
     // clear the queue: 
     midiQ.clearAllMessages();
     //std::cout << "MidiUtils:: All notes off " << std::endl;
-    std::vector<unsigned char> message = {0x7b, 0}; // 123, 0
-    midiout->sendMessage( &message );
+    // send 16 all notes off messages
+    std::vector<unsigned char> message = {0, 0, 0}; // 0x7b = 123, 0
+    for (int chan = 0; chan < 16; ++chan)
+    {
+        message[0] = 176 + chan;
+        message[1] = 0x7b; //123
+        message[2] = 0; 
+        midiout->sendMessage( &message );
+    }
     panicMode = false;
 }
 

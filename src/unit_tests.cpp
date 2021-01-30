@@ -1217,6 +1217,44 @@ bool testDrumChannelCorrectNotes()
   return res;
 }
 
+bool testExtendSeq()
+{
+  bool res = false; 
+  Sequencer seqr{1, 2};// seq length = 2
+  std::string test{""};
+  seqr.setAllCallbacks(
+   [&test](std::vector<double>* data){
+     std::cout << "seq callback '" << test << "'" << std::endl;
+      test.append("yes");
+    }
+  );
+  // now extend
+  seqr.setSequenceLength(0, 3); // should create a new step and copy the callback
+  // now add data to all steps
+  seqr.setStepData(0, 0, std::vector<double> {1, 1, 1, 1});
+  seqr.setStepData(1, 0, std::vector<double> {1, 1, 1, 1});
+  seqr.setStepData(2, 0, std::vector<double> {1, 1, 1, 1});
+  //seqr.getSequence(0)->setTicksPerStep(1);
+  seqr.tick();
+  seqr.tick();
+  seqr.tick();
+  seqr.tick();
+  
+  
+  
+  // test should still be '' not 'xxx'
+  std::string want = "yesyesyes";
+  if (test == want)
+  {
+    res = true;
+  }
+  else
+  {
+    std::cout << "Want " << want << " got " << test << std::endl; 
+  }
+  return res;
+}
+
 int global_pass_count = 0;
 int global_fail_count = 0;
 
@@ -1323,7 +1361,8 @@ int main()
   // log("testDrumToMidiNote", testDrumToMidiNote());
 
  // log("testKeyBoardToDrumNote", testKeyBoardToDrumNote());
- log("testDrumChannelCorrectNotes", testDrumChannelCorrectNotes());
-  log("testSetStepDataV2", testSetStepDataV2());
+ //log("testDrumChannelCorrectNotes", testDrumChannelCorrectNotes());
+ // log("testSetStepDataV2", testSetStepDataV2());
+ log("testExtendSeq", testExtendSeq());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

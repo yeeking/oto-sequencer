@@ -46,7 +46,7 @@ std::function<void(std::vector<double>*)> Step::getCallback()
 
 /** trigger this step, causing it to pass its data to its callback*/
 void Step::trigger() 
-{
+{ 
   if (active && data[Step::note1Ind] != 0) stepCallback(&data);
 }
 /** toggle the activity status of this step*/
@@ -84,9 +84,13 @@ Sequence::Sequence(Sequencer* sequencer,
 void Sequence::tick()
 {
   ++ticksElapsed;
+
+  std::cout << "Sequence::tick t: " << ticksElapsed << "/" << ticksPerStep << "c: "<< currentStep << " / " << currentLength << std::endl;
   if (ticksElapsed == ticksPerStep)
     {
       ticksElapsed = 0;
+      std::cout << "Sequence::tick triggering" << std::endl;
+
       switch (type){
         case SequenceType::midiNote:
           triggerMidiNoteType();
@@ -114,6 +118,7 @@ void Sequence::tick()
       deactivateProcessors();
     }
   }
+
 }
 
 void Sequence::deactivateProcessors()
