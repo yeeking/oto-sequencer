@@ -25,6 +25,8 @@ class MidiQueue
         void addMessage(const long timestamp, const MidiMessage& msg);
         /** get all q's messages for the specified time point and remove them from the linked likst */
         MidiMessageVector getAndClearMessages(long timestamp);
+        /** removes all the messages form the q*/
+        void clearAllMessages();
     private:    
         std::list<TimeStampedMessages> messageList;
 };
@@ -35,20 +37,11 @@ class MidiQueue
 class MidiUtils 
 {
   public:
-    MidiUtils() 
-    {
-      try {
-        midiout = new RtMidiOut();
-      }
-      catch ( RtMidiError &error ) {
-        std::cout << "MidiStepDataReceiver::initMidi problem creating RTNidiOut. Error message: " << error.getMessage() << std::endl; 
+    MidiUtils();
+    ~MidiUtils();
+  /** stores the midi out port */
+  RtMidiOut *midiout;
 
-      }  
-    }
-    ~MidiUtils()
-    {
-      delete midiout;
-    }
     /** maps from integer values, i.e. midi notes modded on 12 or 24 to drum 
      * names, e.g. 0->B for bassdrum. Can be used to display one character drum 
      * names 
@@ -78,7 +71,6 @@ class MidiUtils
      */
     static std::map<int,int> getScaleMidiToDrumMidi()
     {
-
       std::map<int,int> scaleToDrum = 
       {
         {48, 36}, 
@@ -95,7 +87,6 @@ class MidiUtils
         {59, 75}    
       };
       return scaleToDrum;
-    
     }
 
     /** maps from drum names (e.g. B, s) to general midi notes 
@@ -139,126 +130,34 @@ class MidiUtils
         { 'm', 59+transpose}
       };
       return key_to_note;
-      
     }
 
 /** 
  * Presents command line promots to the user to allow them to initiate MIDI output
 */
-  void interactiveInitMidi()
-    {
-   
-      std::string portName;
-      unsigned int i = 0, nPorts = midiout->getPortCount();
-      if ( nPorts == 0 ) {
-        std::cout << "No output ports available!" << std::endl;
-      }
-
-      if ( nPorts == 1 ) {
-        std::cout << "\nOpening " << midiout->getPortName() << std::endl;
-      }
-      else {
-        for ( i=0; i<nPorts; i++ ) {
-          portName = midiout->getPortName(i);
-          std::cout << "  Output port #" << i << ": " << portName << '\n';
-        }
-
-        do {
-          std::cout << "\nChoose a port number: ";
-          std::cin >> i;
-        } while ( i >= nPorts );
-      }
-
-      std::cout << "\n";
-      std::cout << "Preparing to open the port... " << std::endl;
-      midiout->openPort( i );
-      std::cout << "Port opened... " << std::endl;
-    }
-
-
+  void interactiveInitMidi();
+  
 /** returns a list of midi output devices */
-    std::vector<std::string> getOutputDeviceList()
-    {
-      std::vector<std::string> deviceList;
-
-      std::string portName;
-      unsigned int i = 0, nPorts = midiout->getPortCount();
-        for ( i=0; i<nPorts; i++ ) {
-          deviceList.push_back(midiout->getPortName(i));
-        }
-      return deviceList;
-    }
-    /** opens the sent output device, ready for use 
-     * Should be in the range 0->(number of ports-1) inclusive
-    */
-    void selectOutputDevice(int deviceId)
-    {
-      midiout->openPort( deviceId );
-    }
-    /** send note off messages on all channels to all notes */
-    void allNotesOff()
-    {
-      std::cout << "MidiUtils:: All notes off " << std::endl;
-      std::vector<unsigned char> message = {0, 0, 0};
-
-      for (char channel = 0; channel < 16; ++channel)
-      {
-        std::cout << "Notes off on channel: " << std::to_string(channel) << std::endl;
-        for (char note = 0; note < 127; ++note)
-        {
-          message[0] = 128 + channel;
-          message[1] = note;
-          message[2] = 0;
-          std::this_thread::sleep_for (std::chrono::milliseconds(1));
-          midiout->sendMessage( &message );
-        }
-      }
-    }
-
-
+  std::vector<std::string> getOutputDeviceList();
+    
+  /** opens the sent output device, ready for use 
+   * Should be in the range 0->(number of ports-1) inclusive
+  */
+  void selectOutputDevice(int deviceId);
+  /** send note off messages on all channels to all notes */
+  void allNotesOff();
+  
   /** play a note */
-    void playSingleNote(int channel, int note, int velocity, long offTick)
-    {
-      //std::cout << "MidiStepDataReceiver:: playSingleNote "<< std::endl;
-      std::vector<unsigned char> message = {0, 0, 0};
-
-      message[0] = 144 + channel; // 128 + channel
-      message[1] = note; // note value
-      message[2] = velocity; // velocity value
-     // std::cout << "playSingleNote " << message[1] << "off "<< offTick << std::endl;
-
-      midiout->sendMessage( &message );
-      queueNoteOff(channel, note, offTick);
-    }
-    /** send any messages that are due to be sent at the sent tick
-     * generally this means note offs.
-    */
-    void sendQueuedMessages(long tick)
-    {
-      int msgind = 0;
-      for (MidiMessage& msg : midiQ.getAndClearMessages(tick))
-      {
-        midiout->sendMessage(&msg);
-        msgind ++;
-      }
-    }
-    /** stores the midi out port */
-    RtMidiOut *midiout;
-
+  void playSingleNote(int channel, int note, int velocity, long offTick);
+  /** send any messages that are due to be sent at the sent tick
+   * generally this means note offs.
+  */
+  void sendQueuedMessages(long tick);
 
   private:
-    /** stores the queue of events*/
-    //EventQueue eventQ;
     MidiQueue midiQ;
-    
-    void queueNoteOff(int channel, int note, long offTick)
-    {
-      std::vector<unsigned char> message = {0, 0, 0};
-      message[0] = 128 + channel;
-      message[1] = note;
-      message[2] = 0;
-      midiQ.addMessage(offTick, message);
-    }
+    bool panicMode;
+    void queueNoteOff(int channel, int note, long offTick);
 };
 
 
