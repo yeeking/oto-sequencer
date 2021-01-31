@@ -42,6 +42,30 @@ class MidiUtils
   /** stores the midi out port */
   RtMidiOut *midiout;
 
+
+/** maps from integer values, i.e. midi notes modded on 12 
+     * to note names, getIntToDrumMap()[0] == 'c' as c is note 0/12/24 etc.
+    */
+    static std::map<int,char> getIntToNoteMap()
+    {
+    std::map<int, char> intToNote = 
+      {
+        {0, 'c'}, 
+        {1, 'C'},
+        {2, 'd'},
+        {3, 'D'},
+        {4, 'e'},
+        {5, 'f'},
+        {6, 'F'},
+        {7, 'g'},
+        {8, 'G'},
+        {9, 'a'},
+        {10, 'A'},
+        {11, 'b'}    
+      };
+      return intToNote;
+    }
+    
     /** maps from integer values, i.e. midi notes modded on 12 or 24 to drum 
      * names, e.g. 0->B for bassdrum. Can be used to display one character drum 
      * names 
@@ -131,6 +155,14 @@ class MidiUtils
       };
       return key_to_note;
     }
+    // /** from midi note as stored in the seq to a drum name
+    //  * used to display drum mode sequences
+    // */
+    // static std::map<int,char> getNoteToDrum()
+    // {
+
+    // }
+
 
 /** 
  * Presents command line promots to the user to allow them to initiate MIDI output

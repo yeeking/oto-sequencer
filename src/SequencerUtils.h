@@ -596,6 +596,9 @@ class SequencerViewer{
 
     static std::string toTextDisplay(const int rows, const int cols, Sequencer* sequencer, const SequencerEditor* editor)
     {
+
+      
+    
       switch(editor->getEditMode())
       {
         case SequencerEditorMode::settingSeqLength:
@@ -692,6 +695,10 @@ class SequencerViewer{
    
     static std::string getSequencerView(const int max_rows, const int cols, Sequencer* sequencer, const SequencerEditor* editor)
     {
+      std::map<int,char> noteToDrum = MidiUtils::getIntToDrumMap();
+      std::map<int,char> noteToNote = MidiUtils::getIntToNoteMap();
+      
+
 
     // fix to display key info at the end of the row 
     //cols = cols - 3;
@@ -734,19 +741,52 @@ class SequencerViewer{
         // position of the cursor
         //if (editor->getCurrentStep() == 0) disp += "-";
         //else disp += " ";
+
+        char state{'o'};// default
+
         for (int step=0;step<cols - 3;++step) // -3 as we we used 3 chars already
        
         {
           displayStep = step + stepOffset;
+          if (step>0) disp += state;
           
           // three choices, in order of priority as two can be true:
           // I : the editor is at this step
           // - : the sequencer is at this step 
           // o : neither the editor or sequencer are at step
           //   : gone past the end of the sequence
-          char state{'o'};// default
-          char cursor{'I'};
+          state = 'o';    
+          // get note name
+          if (sequencer->howManySteps(displaySeq) > displayStep  && 
+              sequencer->getSequenceType(displaySeq) == SequenceType::midiNote)
+          {
+            state = noteToNote[
+              ((int) sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind))
+              % 12
+            ];
+          }
+          if (sequencer->howManySteps(displaySeq) > displayStep  && 
+              sequencer->getSequenceType(displaySeq) == SequenceType::drumMidi)
+          {
+            state = noteToDrum[
+              ((int) sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind))
+              % 12
+            ];
+          }
+          if (sequencer->howManySteps(displaySeq) > displayStep  && 
+              (sequencer->getSequenceType(displaySeq) == SequenceType::transposer ||
+              sequencer->getSequenceType(displaySeq) == SequenceType::lengthChanger
+              )
+              )
+          {
+            if (sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind)
+                < 0)
+                state = '_'; // down
+            else 
+                state = '^'; // up         
+          }
           
+         
           // in step edit mode, printing a particular step
           // that does not have data
           if (editor->getEditMode() == SequencerEditorMode::selectingSeqAndStep && 
@@ -759,32 +799,40 @@ class SequencerViewer{
           // inactive/ shortened/ non-existent sequence   
           if ((sequencer->howManySteps(displaySeq) <= displayStep || 
               sequencer->isStepActive(displaySeq, displayStep) == false)) 
-              state = ' ';
-
+          {
+            state = ' ';
+          }
           // sequence length mode
           if (editor->getEditMode() == SequencerEditorMode::settingSeqLength && 
-              sequencer->howManySteps(displaySeq) > displayStep) state = '>';
+              sequencer->howManySteps(displaySeq) > displayStep) 
+          {
+            state = '>';
+          }
 
           // override inactive ' ' for 
           // sequencer playback is at this position
-          if (sequencer->getCurrentStep(displaySeq) == displayStep) state = '-';
-          
+          if (sequencer->getCurrentStep(displaySeq) == displayStep) 
+          {
+            state = '-';
+          }
           
           // cursor is at this position
           if (editor->getCurrentSequence() == displaySeq &&
               editor->getCurrentStep() == displayStep 
               //&& sequencer->isStepActive(displaySeq, displayStep 
-              )
-              {
-                preview = std::to_string((int)sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind));
-                state = cursor;          
-              }
-       
-          disp += state;
+              ) 
+          {
+            state = 'I';  
+          }          
         }
+
+        disp += state;
+
         if (seq < rows - 1)
+        {
           disp += preview + "\n";
           preview = "";
+        }
       }  
       return disp;
     }   

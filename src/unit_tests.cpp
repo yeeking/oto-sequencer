@@ -1239,7 +1239,6 @@ bool testExtendSeq()
   seqr.tick();
   seqr.tick();
   
-  
   // test should still be '' not 'xxx'
   std::string want = "yesyesyes";
   if (test == want)
@@ -1250,6 +1249,45 @@ bool testExtendSeq()
   {
     std::cout << "Want " << want << " got " << test << std::endl; 
   }
+  return res;
+}
+
+bool testNoteDisplay()
+{
+  bool res = false;
+  Sequencer seqr{1, 4};
+  SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
+  cursor.moveCursorRight();
+  std::vector<double> data {1, 1, 1, 1, 1};
+  data[Step::note1Ind] = 48; // that's a c
+  seqr.setStepData(0, 0, data);
+  seqr.tick();
+  std::string want = "0 cI.. ";
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (got == want) res = true; 
+  else std::cout << "Want '" << want << "' got '" << got << "'"<< std::endl; 
+
+  return res;
+}
+
+bool testDrumDisplay()
+{
+  bool res = false;
+  Sequencer seqr{1, 4};
+  SequencerEditor cursor{&seqr};
+  cursor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
+  cursor.moveCursorRight();
+  seqr.setSequenceType(0, SequenceType::drumMidi);
+  std::vector<double> data {1, 1, 1, 1, 1};
+  data[Step::note1Ind] = 48; // that's a c
+  seqr.setStepData(0, 0, data);
+  seqr.tick();
+  std::string want = "0 BI.. ";
+  std::string got = SequencerViewer::toTextDisplay(2, 8, &seqr, &cursor);
+  if (got == want) res = true; 
+  else std::cout << "Want '" << want << "' got '" << got << "'"<< std::endl; 
+
   return res;
 }
 
@@ -1361,6 +1399,8 @@ int main()
  // log("testKeyBoardToDrumNote", testKeyBoardToDrumNote());
  //log("testDrumChannelCorrectNotes", testDrumChannelCorrectNotes());
  // log("testSetStepDataV2", testSetStepDataV2());
- log("testExtendSeq", testExtendSeq());
+// log("testExtendSeq", testExtendSeq());
+//log("testNoteDisplay", testNoteDisplay());
+log("testDrumDisplay", testDrumDisplay());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }
