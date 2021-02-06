@@ -260,6 +260,7 @@ unsigned int Sequence::getLength() const
 
 void Sequence::setLength(int length)
 {
+
   if (length < 1) return;
   if (length > steps.size()) // bad need more steps
   {
@@ -270,6 +271,8 @@ void Sequence::setLength(int length)
       s.setCallback(
         steps[0].getCallback()
       );
+      // set the channel
+      s.getDataDirect()[Step::channelInd] = steps[0].getDataDirect()[Step::channelInd];
       steps.push_back(s);
     }
   }

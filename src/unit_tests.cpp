@@ -1291,6 +1291,32 @@ bool testDrumDisplay()
   return res;
 }
 
+
+bool testExtendSeqCorrectStepChannel()
+{
+  bool res = false;
+  Sequencer seqr{1, 1};
+  SequencerEditor cursor{&seqr};
+  seqr.getStepDataDirect(0, 0)->at(Step::channelInd) = 10;
+  seqr.setSequenceLength(0, 2);
+  // now verify the channel on the step
+  int channel1 =  seqr.getStepDataDirect(0, 0)->at(Step::channelInd);
+  int channel2 =  seqr.getStepDataDirect(0, 1)->at(Step::channelInd);
+  if (channel1 == channel2) res = true;
+  else {
+    std::cout << "want " << channel1 << " got " << channel2 << std::endl;
+  }
+  return res;
+}
+
+bool testExtendSeqCorrectStepType()
+{
+  return false; 
+}
+
+
+
+
 int global_pass_count = 0;
 int global_fail_count = 0;
 
@@ -1401,6 +1427,7 @@ int main()
  // log("testSetStepDataV2", testSetStepDataV2());
 // log("testExtendSeq", testExtendSeq());
 //log("testNoteDisplay", testNoteDisplay());
-log("testDrumDisplay", testDrumDisplay());
+//log("testDrumDisplay", testDrumDisplay());
+log("testExtendSeqCorrectStepChannel", testExtendSeqCorrectStepChannel());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

@@ -26,7 +26,8 @@ int main()
   
     SimpleClock clock{};
 
-    Sequencer seqr{16, 8};
+    //Sequencer seqr{16, 8};
+    Sequencer seqr{4, 8};
     SequencerEditor seqEditor{&seqr};
    
     // set up a midi note triggering callback 

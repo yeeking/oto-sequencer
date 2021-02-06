@@ -627,6 +627,9 @@ class SequencerViewer{
      */
     static std::string getStepView(const std::vector<double>& stepData, bool active, SequencerEditorSubMode editField, int stepInd, int clockInd)
     {
+      // std::map<int,char> noteToDrum = MidiUtils::getIntToDrumMap();
+      // std::map<int,char> noteToNote = MidiUtils::getIntToNoteMap();
+      
       std::string disp{""};
       if (active) disp += "O";
       else disp += " ";
