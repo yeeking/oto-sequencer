@@ -91,12 +91,13 @@ class Sequence{
     */
     void setLength(int length);
     /**
-     * Clock ticks 4 times for every beat. 
-     * This is how many of those are needed to trigger this sequence
-     * to move along one step
+     * Set the permanent tick per step. To apply a temporary
+     * change, call setTicksPerStepAdjustment
      */
     void setTicksPerStep(int ticksPerStep);
-    /** return current ticks per step */
+    /** set a new ticks per step until the sequence hits step 0*/
+    void setTicksPerStepAdjustment(int ticksPerStep);
+    /** return my permanent ticks per step (not the adjusted one)*/
     int getTicksPerStep() const;
     /** apply a transpose to the sequence, which is reset when the sequence
      * hits step 0 again
@@ -153,7 +154,7 @@ class Sequence{
      * Called when the sequence ticks and it is SequenceType::tickChanger
      */
     void triggerTickType();
- 
+    /** provides access to the sequencer so this sequence can change things*/
     Sequencer* sequencer;
     unsigned int currentLength;
     unsigned int currentStep;
@@ -164,6 +165,10 @@ class Sequence{
     double transpose; 
     int lengthAdjustment;
     int ticksPerStep;
+    /** stores the current default for this sequence, whereas ticksperstep 
+     * is the temporarily adjusted one 
+     */
+    int originalTicksPerStep;
     int ticksElapsed;
     /** maps from linear midi scale to general midi drum notes*/
     std::map<int,int> midiScaleToDrum;
@@ -179,6 +184,8 @@ class Sequencer  {
       unsigned int howManySteps(unsigned int sequence) const ;
       unsigned int getCurrentStep(unsigned int sequence) const;
       SequenceType getSequenceType(unsigned int sequence) const;
+      unsigned int getSequenceTicksPerStep(unsigned int sequence) const;
+
       /** move the sequencer along by one tick */
       void tick();
       /** return a pointer to the sequence with sent id*/

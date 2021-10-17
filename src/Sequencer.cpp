@@ -65,7 +65,7 @@ Sequence::Sequence(Sequencer* sequencer,
                   unsigned short midiChannel) 
 : sequencer{sequencer}, currentStep{0}, currentLength{seqLength}, 
   midiChannel{midiChannel}, type{SequenceType::midiNote}, 
-  transpose{0}, lengthAdjustment{0}, ticksPerStep{1}, ticksElapsed{0}, 
+  transpose{0}, lengthAdjustment{0}, ticksPerStep{4}, originalTicksPerStep{4}, ticksElapsed{0}, 
   midiScaleToDrum{MidiUtils::getScaleMidiToDrumMidi()}
 {
   for (auto i=0;i<seqLength;i++)
@@ -121,7 +121,7 @@ void Sequence::deactivateProcessors()
 {
     transpose = 0;
     lengthAdjustment = 0;
-    ticksPerStep = 1;
+    ticksPerStep = originalTicksPerStep; 
     ticksElapsed = 0;
 }
 
@@ -222,13 +222,18 @@ void Sequence::setLengthAdjustment(int lenAdjust)
 
 void Sequence::setTicksPerStep(int tps)
 {
-  this->ticksPerStep = tps;
+  this->originalTicksPerStep = tps;
   this->ticksElapsed = 0;
+}
+
+void Sequence::setTicksPerStepAdjustment(int tps)
+{
+  this->ticksPerStep = tps;
 }
 
 int Sequence::getTicksPerStep() const
 {
-  return this->ticksPerStep;
+  return this->originalTicksPerStep;
 }
 
 unsigned int Sequence::getCurrentStep() const
@@ -373,6 +378,11 @@ unsigned int Sequencer::getCurrentStep(unsigned int sequence) const
 SequenceType Sequencer::getSequenceType(unsigned int sequence) const 
 {
   return sequences[sequence].getType();
+}
+
+unsigned int Sequencer::getSequenceTicksPerStep(unsigned int sequence) const
+{
+  return sequences[sequence].getTicksPerStep();
 }
 
 /** move the sequencer along by one tick */

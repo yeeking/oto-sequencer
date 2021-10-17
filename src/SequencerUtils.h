@@ -1,3 +1,4 @@
+/** TODO: split this to h and cpp */
 #include "Sequencer.h"
 
 /**
@@ -51,10 +52,9 @@ class SequencerEditor {
         case SequencerEditorMode::editingStep: // go to next data item
           this->editSubMode = SequencerEditor::cycleSubModeRight(this->editSubMode);
           return;  
-      //   case SequencerEditorMode::configuringSequence: 
-      //     editMode = SequencerEditorMode::settingSeqLength;
-      //     currentStep = 0; 
-      //     return;
+        case SequencerEditorMode::configuringSequence: 
+          this->editSubMode = SequencerEditor::cycleSubModeRight(this->editSubMode);
+          return;
       }
     }
     /** 
@@ -224,14 +224,9 @@ class SequencerEditor {
         }
         case SequencerEditorMode::configuringSequence:
         {
-          // set the channel based on step 0
-          std::vector<double> data2 = sequencer->getStepData(currentSequence, 0);
-          int channel = data2[Step::channelInd];
-          channel = (channel + 1) % 16;
-          for (int step=0; step < sequencer->howManySteps(currentSequence); ++step)
-          {
-            sequencer->updateStepData(currentSequence, step, Step::channelInd, channel);
-          }
+          // increment the value of the currently selected 
+          // parameter (channel, sequence type,ticks per second)
+          incrementSeqConfigParam();
           break;
         }
       }
@@ -264,17 +259,7 @@ class SequencerEditor {
         }
         case SequencerEditorMode::configuringSequence:
         {
-          // set the channel based on step 0
-          std::vector<double> data2 = sequencer->getStepData(currentSequence, 0);
-          unsigned int channel = data2[Step::channelInd];
-          channel = (channel - 1) % 16;
-          if (channel > 16) channel = 16;
-          if (channel < 0) channel = 0;
-          
-          for (int step=0; step < sequencer->howManySteps(currentSequence); ++step)
-          {
-            sequencer->updateStepData(currentSequence, step, Step::channelInd, channel);
-          }
+          decrementSeqConfigParam();
           break;
         }
       }
@@ -388,9 +373,15 @@ void decrementStepData(std::vector<double>& data, SequenceType seqType)
   {
     case SequenceType::midiNote: // octave adjust
     {
+      decrement = 12;
+      break;
+    }
+    case SequenceType::drumMidi: 
+    {
       decrement = 1;
       break;
     }
+    
     case SequenceType::transposer: // up 1
     {
       decrement = 1;
@@ -422,17 +413,19 @@ void decrementStepData(std::vector<double>& data, SequenceType seqType)
     case SequencerEditorSubMode::editCol2:
     {
       targetIndex = Step::lengthInd;
+      decrement = 1;// 1 for length
       break;
     }
     case SequencerEditorSubMode::editCol3:
     {
       targetIndex = Step::velInd;
+      decrement = 10;// 10 for vel
       break;
     }
   }
   double now = data[targetIndex];
   data[targetIndex] -= decrement;
-  if (data[targetIndex] < min) data[targetIndex] = now;
+  if (data[targetIndex] < min) data[targetIndex] = min;
 
 }
 
@@ -450,6 +443,11 @@ void incrementStepData(std::vector<double>& data, SequenceType seqType)
   switch(seqType)
   {
     case SequenceType::midiNote: // octave adjust
+    {
+      increment = 12;
+      break;
+    }
+    case SequenceType::drumMidi: // octave adjust
     {
       increment = 1;
       break;
@@ -485,18 +483,96 @@ void incrementStepData(std::vector<double>& data, SequenceType seqType)
     case SequencerEditorSubMode::editCol2:
     {
       targetIndex = Step::lengthInd;
+      increment = 1;// reset the increment if it is editing the length
       break;
     }
     case SequencerEditorSubMode::editCol3:
     {
       targetIndex = Step::velInd;
+      increment = 10; // vel goes up 10 at a time
       break;
     }
   }
   double now = data[targetIndex];
   data[targetIndex] += increment;
-  if (data[targetIndex] > max) data[targetIndex] = now;
+  if (data[targetIndex] > max) data[targetIndex] = max;
 
+}
+/** increase the value of the seq param relating to the 
+ * current subMode
+*/
+void incrementSeqConfigParam()
+{
+  switch (editSubMode)
+  {
+    case SequencerEditorSubMode::editCol1: // channel
+      incrementChannel(); 
+      break;
+    case SequencerEditorSubMode::editCol2: // type
+      SequencerEditor::nextSequenceType(sequencer, currentSequence);
+      break;
+    case SequencerEditorSubMode::editCol3: // ticks per step
+      incrementTicksPerStep();
+      break;     
+  } 
+}
+
+/** decrease the value of the seq param relating to the 
+ * current subMode
+*/
+void decrementSeqConfigParam()
+{
+  switch (editSubMode)
+  {
+    case SequencerEditorSubMode::editCol1: // channel
+      decrementChannel();
+      break;
+    case SequencerEditorSubMode::editCol2: // type
+      break;
+    case SequencerEditorSubMode::editCol3: // ticks per step
+      decrementTicksPerStep();
+      break;     
+  } 
+}
+
+void incrementChannel()
+{
+    std::vector<double> data2 = sequencer->getStepData(currentSequence, 0);
+    int channel = data2[Step::channelInd];
+    channel = (channel + 1) % 16;
+    for (int step=0; step < sequencer->howManySteps(currentSequence); ++step)
+    {
+      sequencer->updateStepData(currentSequence, step, Step::channelInd, channel);
+    }
+}
+void decrementChannel()
+{
+    // set the channel based on step 0
+    std::vector<double> data2 = sequencer->getStepData(currentSequence, 0);
+    unsigned int channel = data2[Step::channelInd];
+    channel = (channel - 1) % 16;
+    if (channel > 16) channel = 16;
+    if (channel < 0) channel = 0;    
+    for (int step=0; step < sequencer->howManySteps(currentSequence); ++step)
+    {
+      sequencer->updateStepData(currentSequence, step, Step::channelInd, channel);
+    }
+}
+
+void incrementTicksPerStep()
+{
+  int tps = sequencer->getSequence(currentSequence)->getTicksPerStep();
+  tps ++;
+  if (tps > 8) tps = 1; 
+  sequencer->getSequence(currentSequence)->setTicksPerStep(tps) ;
+}
+void decrementTicksPerStep()
+{
+  int tps = sequencer->getSequence(currentSequence)->getTicksPerStep();
+  tps --;
+  if (tps == 0) tps = 1; 
+  sequencer->getSequence(currentSequence)->setTicksPerStep(tps) ;
+  
 }
 
 
@@ -586,7 +662,7 @@ void incrementStepData(std::vector<double>& data, SequenceType seqType)
     double stepIncrement;    
 };
 
-/** Provides functions to 
+/** Provides functions to generate string-based views of the sequencer
  * 
 */
 class SequencerViewer{
@@ -606,7 +682,10 @@ class SequencerViewer{
         case SequencerEditorMode::selectingSeqAndStep:
          return getSequencerView(rows, cols, sequencer, editor);
         case SequencerEditorMode::configuringSequence:
-          return getSequenceConfigView(sequencer->getStepData(editor->getCurrentSequence(), 0)[Step::channelInd], sequencer->getSequenceType(editor->getCurrentSequence()));
+          return getSequenceConfigView((unsigned int) sequencer->getStepData(editor->getCurrentSequence(), 0)[Step::channelInd], 
+                                       sequencer->getSequenceType(editor->getCurrentSequence()), 
+                                       sequencer->getSequenceTicksPerStep(editor->getCurrentSequence()), 
+                                       editor->getEditSubMode());
         case SequencerEditorMode::editingStep:
           return getStepView(sequencer->getStepData(editor->getCurrentSequence(), editor->getCurrentStep()), 
                              sequencer->isStepActive(editor->getCurrentSequence(), editor->getCurrentStep()),
@@ -657,11 +736,23 @@ class SequencerViewer{
      * Returns a view that shows the config for the sent sequence, i.e.
      * the channel, where the channel is based on the first step's channel data
      */
-    static std::string getSequenceConfigView(const unsigned int channel, SequenceType type)
+    static std::string getSequenceConfigView(const unsigned int channel, const SequenceType type, const unsigned int ticksPerStep,  const SequencerEditorSubMode editField)
     {
       std::string disp{""};
+
+      // else disp += " ";
+      // if (editField == SequencerEditorSubMode::editCol1) disp += "[";
+      // else disp += " ";
+     
+      if (editField == SequencerEditorSubMode::editCol1) disp += "[";
+      else disp += " ";
       disp += "c:" + std::to_string(channel);
-      disp += " t:"; 
+      if (editField == SequencerEditorSubMode::editCol1) disp += "]";
+      else disp += " ";
+      
+      if (editField == SequencerEditorSubMode::editCol2) disp += "[";
+      else disp += " ";
+      disp += "t:"; 
       
       switch (type){
         case SequenceType::midiNote:
@@ -683,6 +774,15 @@ class SequencerViewer{
           disp += "speedo";
           break;
       }
+      if (editField == SequencerEditorSubMode::editCol2) disp += "]";
+      else disp += " ";
+
+      if (editField == SequencerEditorSubMode::editCol3) disp += "[";
+      else disp += " ";
+      disp += "tps:" + std::to_string(ticksPerStep);
+      if (editField == SequencerEditorSubMode::editCol3) disp += "]";
+      else disp += " ";
+      
       return disp;
     }
   

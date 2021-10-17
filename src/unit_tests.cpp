@@ -214,6 +214,8 @@ bool testTwoLinesWrapSeq()
   else return true;
 }
 
+
+
 bool testFollowEditCursorRight()
 {
   Sequencer seqr{};
@@ -808,9 +810,10 @@ bool viewSeqTypeMidi()
   Sequencer seqr{};
   Sequence seq{&seqr};
   seqr.setSequenceType(0, SequenceType::midiNote);
-  std::string want {"c:0 t:midi"};
+  std::string want {"c:0 t:midi tps:4"};
   std::string got = SequencerViewer::getSequenceConfigView(seq.getStepData(0)[Step::channelInd], 
-                                                           seq.getType());
+                                                           seq.getType(), 
+                                                           seq.getTicksPerStep());
   if (got == want) res = true;
   else {
     std::cout << "viewSeqTypeMidi want " << want << " got " << got << std::endl;
@@ -1122,6 +1125,20 @@ bool testSetDrumSequenceTypeEditor()
     return false;
 }
 
+bool testVelEdit()
+{
+  Sequencer seqr{10, 16};
+  SequencerEditor cursor{&seqr};
+  cursor.enterAtCursor();
+  cursor.cycleEditMode(); // to len
+  cursor.cycleEditMode(); // to vel 
+  cursor.moveCursorUp(); // vel > 0
+  double vel = seqr.getStepData(0, 0)[Step::velInd];
+  if (vel > 0)  return true;
+  else return false;
+}
+
+
 bool testDrumMap()
 {
   std::map<int,char> intToDrum = MidiUtils::getIntToDrumMap();
@@ -1397,7 +1414,7 @@ int main()
 // log("testTransposeReturns", testTransposeReturns());
 // log("testTransposeViaSeq", testTransposeViaSeq());
 // log("testSeqTakesTransposeMode", testSeqTakesTransposeMode());
-// log("viewSeqTypeMidi", viewSeqTypeMidi());
+//log("viewSeqTypeMidi", viewSeqTypeMidi());
 // log("testIncStepMidi", testIncStepMidi());
 // log("testIncStepMidiWrap", testIncStepMidiWrap());
 // log("testIncStepTrans", testIncStepTrans());
@@ -1428,6 +1445,8 @@ int main()
 // log("testExtendSeq", testExtendSeq());
 //log("testNoteDisplay", testNoteDisplay());
 //log("testDrumDisplay", testDrumDisplay());
-log("testExtendSeqCorrectStepChannel", testExtendSeqCorrectStepChannel());
+//log("testExtendSeqCorrectStepChannel", testExtendSeqCorrectStepChannel());
+log("testVelEdit", testVelEdit());
+
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }
