@@ -208,33 +208,22 @@ void Sequence::setLengthAdjustment(int lenAdjust)
 {
   // do not allow 0 len
   if (currentLength + lenAdjust < 1) return;
-  // do not allow excess len
+  // do not allow len to go over available steps len
   if (! (currentLength + lenAdjust < this->steps.size())) return;
- 
   lengthAdjustment = lenAdjust;
-
-  assert (currentLength + lenAdjust < this->steps.size() );
-  
-  // this code makes sure we can accommodate the 
-  // length adjust, but without changing the real length now
-  // noting that the tick function decides
-  // when to go back to step 0
-  // this allows the length adjustment (which is caused by another sequence)
-  // to be separate from the current length
-  // and therefore easily removed (which prevents repeatedly extending)
-  //int original_length = currentLength;
   setLength(currentLength + lenAdjust);
- // setLength(original_length);
 }
 
 void Sequence::setTicksPerStep(int tps)
 {
+  if (tps < 1 || tps > 16) return; 
   this->originalTicksPerStep = tps;
   this->ticksElapsed = 0;
 }
 
 void Sequence::setTicksPerStepAdjustment(int tps)
 {
+    if (tps < 1 || tps > 16) return; 
   this->ticksPerStep = tps;
 }
 
@@ -368,8 +357,14 @@ Sequencer::Sequencer(unsigned int seqCount, unsigned int seqLength)
   }
 }
 
+Sequencer::~Sequencer()
+{
+  std::cout << "dest" << std::endl;
+}
+
 unsigned int Sequencer::howManySequences() const 
 {
+  assert(sequences.size() < 128);
   return sequences.size();
 }
 unsigned int Sequencer::howManySteps(unsigned int sequence) const 

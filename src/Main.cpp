@@ -3,7 +3,7 @@
 #include <stdio.h>  
 #include <fstream>
 #include <string>
-
+#include <assert.h>
 #include "../lib/ml/rapidLib.h"
 
 #include "SimpleClock.h"
@@ -20,7 +20,6 @@ void updateClockCallback(SimpleClock& clock,
                     std::string& wioSerial)
 {
   clock.setCallback([currentSeqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
-      //std::cout << "main.cpp clock callback " << clock.getCurrentTick() << std::endl;
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
       currentSeqr->tick();
       std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
@@ -44,17 +43,16 @@ int main()
     SimpleClock clock{};
 
     // create a vector of sequences
-    std::vector<Sequencer> seqrs{};
-    for (int i=0;i<4;i++) seqrs.push_back(Sequencer{2,4});
-    Sequencer* currentSeqr = &seqrs[0];
-
+    std::vector<Sequencer*> seqrs{};
+    for (int i=0;i<4;i++) seqrs.push_back(new Sequencer{2,4});
+    Sequencer* currentSeqr = seqrs[0];
     SequencerEditor seqEditor{currentSeqr};
    
-    for (Sequencer& seqr : seqrs)
+    for (Sequencer* seqr : seqrs)
     {
       // set up a midi note triggering callback 
       // on all steps
-      seqr.setAllCallbacks(
+      seqr->setAllCallbacks(
           [&midiUtils, &clock](std::vector<double>* data){
             if (data->size() >= 3)
             {
@@ -69,13 +67,12 @@ int main()
       );
     }
 
-
     updateClockCallback(clock, 
                         currentSeqr, 
                         seqEditor, 
                         midiUtils, 
                         wioSerial);
-
+    
     // this will map joystick x,y to 16 sequences
     //rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
     int clockIntervalMs = 125;  
@@ -135,15 +132,19 @@ int main()
           if (input == 49 + i) // ascii 1 == 49
           //if (false)
           {
-            std::cout << "Changing seq to " << i << std::endl;
-            currentSeqr = &seqrs[i];
+            assert (i < seqrs.size());
+            midiUtils.allNotesOff();
+            currentSeqr = seqrs[i];
             // clock needs to know it is calling 
             // tick on a different sequencer
-            // updateClockCallback(clock, 
-            //         currentSeqr, 
-            //         seqEditor, 
-            //         midiUtils, 
-            //         wioSerial);
+            updateClockCallback(clock, 
+                    currentSeqr, 
+                    seqEditor, 
+                    midiUtils, 
+                    wioSerial);
+            seqEditor.setSequencer(currentSeqr);
+            seqEditor.resetCursor();
+            
           }
         }
         // now check all the piano keys
@@ -152,7 +153,6 @@ int main()
         {
           if (input == key_note.first) 
           { 
-           // std::cout << "match" << key_note.second << std::endl;
             key_note_match = true;
             seqEditor.enterNoteData(key_note.second); 
             redraw = true;   
@@ -201,6 +201,7 @@ int main()
   clock.stop();
 
   midiUtils.allNotesOff();
+  for (Sequencer* s : seqrs) delete s;
   return 0;
 }
 

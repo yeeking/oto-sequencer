@@ -67,7 +67,6 @@ enum class SequenceType {midiNote, drumMidi, samplePlayer, transposer, lengthCha
 class Sequence{
   public:
     Sequence(Sequencer* sequencer, unsigned int seqLength = 16, unsigned short midiChannel = 1);
-   
     /** go to the next step */
     void tick();
     /** which step are you on? */
@@ -180,6 +179,8 @@ class Sequencer  {
     public:
     /** create a sequencer: channels,stepsPerChannel*/
       Sequencer(unsigned int seqCount = 4, unsigned int seqLength = 16);
+      ~Sequencer();
+
       unsigned int howManySequences() const ;
       unsigned int howManySteps(unsigned int sequence) const ;
       unsigned int getCurrentStep(unsigned int sequence) const;

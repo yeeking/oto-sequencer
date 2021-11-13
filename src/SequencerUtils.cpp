@@ -1,6 +1,7 @@
 /** TODO: split this to h and cpp */
 #include "SequencerUtils.h"
 #include <cmath> // fmod
+#include <assert.h>
 
 
 SequencerEditor::SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, currentSequence{0}, currentStep{0}, currentStepIndex{0}, editMode{SequencerEditorMode::selectingSeqAndStep}, editSubMode{SequencerEditorSubMode::editCol1}, stepIncrement{0.5f}
@@ -11,6 +12,22 @@ SequencerEditor::SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, c
 void SequencerEditor::setSequencer(Sequencer* sequencer)
 {
     this->sequencer = sequencer;
+}
+Sequencer* SequencerEditor::getSequencer()
+{
+  return this->sequencer;
+}
+
+void SequencerEditor::resetCursor()
+{
+
+  //sequencer{sequencer}, 
+  currentSequence = 0; 
+  currentStep = 0;
+  currentStepIndex = 0; 
+  editMode = SequencerEditorMode::selectingSeqAndStep; 
+  editSubMode = SequencerEditorSubMode::editCol1;
+  stepIncrement = 0.5f;
 }
 
 SequencerEditorMode SequencerEditor::getEditMode() const
@@ -649,8 +666,10 @@ for (int i=0; i<sequencer->howManySteps(currentSequence); ++i)
 SequencerViewer::SequencerViewer(){}
 
 
-std::string SequencerViewer::toTextDisplay(const int rows, const int cols, Sequencer* sequencer, const SequencerEditor* editor)
+std::string SequencerViewer::toTextDisplay(const int rows, const int cols,  Sequencer* sequencer, const SequencerEditor* editor)
 {  
+    //assert(sequencer == editor->getSequencer()); 
+
     switch(editor->getEditMode())
     {
     case SequencerEditorMode::settingSeqLength:
@@ -772,7 +791,7 @@ std::string SequencerViewer::getSequenceConfigView(const unsigned int channel, c
  * and make two separate functions even if they are really similar
  */
 
-std::string SequencerViewer::getSequencerView(const int max_rows, const int cols, Sequencer* sequencer, const SequencerEditor* editor)
+std::string SequencerViewer::getSequencerView(const int max_rows, const int cols,  Sequencer* sequencer, const SequencerEditor* editor)
 {
     std::map<int,char> noteToDrum = MidiUtils::getIntToDrumMap();
     std::map<int,char> noteToNote = MidiUtils::getIntToNoteMap();
@@ -790,6 +809,7 @@ std::string SequencerViewer::getSequencerView(const int max_rows, const int cols
     else {
         rows = max_rows;
     }
+
 // the editor cursor dictates which bit we show
     std::string disp{""};
     // we display the bit of the sequences
@@ -799,6 +819,7 @@ std::string SequencerViewer::getSequencerView(const int max_rows, const int cols
     {
         seqOffset = editor->getCurrentSequence() - 1;
     }
+  
     int stepOffset = 0;//editor->getCurrentStep();
 
     if (editor->getCurrentStep() > cols - 4)
@@ -906,7 +927,7 @@ std::string SequencerViewer::getSequencerView(const int max_rows, const int cols
             disp += preview + "\n";
             preview = "";
         }
-    }  
+    }    
     return disp;
 }   
 

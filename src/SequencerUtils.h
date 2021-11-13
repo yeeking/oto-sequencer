@@ -19,6 +19,9 @@ class SequencerEditor {
   public:
     SequencerEditor(Sequencer* sequencer);
     void setSequencer(Sequencer* sequencer);
+    Sequencer* getSequencer();
+    /** resets editor, e.g. when changing sequence*/
+    void resetCursor();
     SequencerEditorMode getEditMode() const;
     SequencerEditorSubMode getEditSubMode() const;
     void setEditMode(SequencerEditorMode mode);
@@ -57,7 +60,6 @@ class SequencerEditor {
   void moveCursorRight();
   static SequencerEditorSubMode cycleSubModeLeft(SequencerEditorSubMode subMode);
   static SequencerEditorSubMode cycleSubModeRight(SequencerEditorSubMode subMode);
-
 
   /** decreas the sent step's data
    * based on current edit mode and edit sub mode
@@ -147,7 +149,7 @@ class SequencerViewer{
      * and make two separate functions even if they are really similar
      */
    
-    static std::string getSequencerView(const int max_rows, const int cols, Sequencer* sequencer, const SequencerEditor* editor);
+    static std::string getSequencerView(const int max_rows, const int cols,  Sequencer* sequencer, const SequencerEditor* editor);
    
 }; 
 

@@ -1335,11 +1335,26 @@ bool testExtendSeqCorrectStepType()
 bool testSongMode()
 {
   // can we stop
-  Sequencer seqr{1, 1};
-  SequencerEditor cursor{&seqr};
-  cursor.stop();
-  cursor.start();
-  
+  // Sequencer seqr{1, 1};
+  // seqr.tick();
+  // seqr.howManySequences();
+  // SequencerEditor cursor{&seqr};
+  // cursor.stop();
+  // cursor.start();
+  std::vector<Sequencer*> seqrs{};
+  for (int i=0;i<4;i++)  seqrs.push_back(new Sequencer{2, 2});
+  for (Sequencer* s: seqrs)
+  {
+    s->howManySequences();
+  }
+  for (Sequencer* s: seqrs)
+  {
+    s->tick();
+    s->howManySequences();
+  }
+  //
+
+
   return true;
 }
 
