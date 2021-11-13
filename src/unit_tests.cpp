@@ -813,7 +813,8 @@ bool viewSeqTypeMidi()
   std::string want {"c:0 t:midi tps:4"};
   std::string got = SequencerViewer::getSequenceConfigView(seq.getStepData(0)[Step::channelInd], 
                                                            seq.getType(), 
-                                                           seq.getTicksPerStep());
+                                                           seq.getTicksPerStep(), 
+                                                           SequencerEditorSubMode::editCol1);
   if (got == want) res = true;
   else {
     std::cout << "viewSeqTypeMidi want " << want << " got " << got << std::endl;
@@ -1331,6 +1332,11 @@ bool testExtendSeqCorrectStepType()
   return false; 
 }
 
+bool testSongMode()
+{
+
+  return false;
+}
 
 
 
