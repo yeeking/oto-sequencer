@@ -1334,8 +1334,13 @@ bool testExtendSeqCorrectStepType()
 
 bool testSongMode()
 {
-
-  return false;
+  // can we stop
+  Sequencer seqr{1, 1};
+  SequencerEditor cursor{&seqr};
+  cursor.stop();
+  cursor.start();
+  
+  return true;
 }
 
 
@@ -1452,7 +1457,7 @@ int main()
 //log("testNoteDisplay", testNoteDisplay());
 //log("testDrumDisplay", testDrumDisplay());
 //log("testExtendSeqCorrectStepChannel", testExtendSeqCorrectStepChannel());
-log("testVelEdit", testVelEdit());
+log("testSongMode", testSongMode());
 
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

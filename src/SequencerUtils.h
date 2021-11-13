@@ -18,6 +18,7 @@ enum class SequencerEditorSubMode {editCol1, editCol2, editCol3};
 class SequencerEditor {
   public:
     SequencerEditor(Sequencer* sequencer);
+    void setSequencer(Sequencer* sequencer);
     SequencerEditorMode getEditMode() const;
     SequencerEditorSubMode getEditSubMode() const;
     void setEditMode(SequencerEditorMode mode);

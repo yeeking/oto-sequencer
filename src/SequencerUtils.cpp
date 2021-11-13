@@ -7,6 +7,12 @@ SequencerEditor::SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, c
 {
 
 }
+
+void SequencerEditor::setSequencer(Sequencer* sequencer)
+{
+    this->sequencer = sequencer;
+}
+
 SequencerEditorMode SequencerEditor::getEditMode() const
 {
     return this->editMode;
@@ -776,14 +782,14 @@ std::string SequencerViewer::getSequencerView(const int max_rows, const int cols
 // fix to display key info at the end of the row 
 //cols = cols - 3;
 // only display as many sequences as we have
-int rows;
-if (max_rows > sequencer->howManySequences()) 
-{
-    rows = sequencer->howManySequences();
-}
-else {
-    rows = max_rows;
-}
+    int rows;
+    if (max_rows > sequencer->howManySequences()) 
+    {
+        rows = sequencer->howManySequences();
+    }
+    else {
+        rows = max_rows;
+    }
 // the editor cursor dictates which bit we show
     std::string disp{""};
     // we display the bit of the sequences
@@ -791,121 +797,115 @@ else {
     int seqOffset = 0;//-editor->getCurrentSequence();
     if (editor->getCurrentSequence() >= rows)
     {
-    seqOffset = editor->getCurrentSequence() - 1;
+        seqOffset = editor->getCurrentSequence() - 1;
     }
     int stepOffset = 0;//editor->getCurrentStep();
 
     if (editor->getCurrentStep() > cols - 4)
     {
-    stepOffset = editor->getCurrentStep();
+        stepOffset = editor->getCurrentStep();
     }
     int displaySeq, displayStep;
     std::string preview {""};
     for (int seq=0;seq<rows;++seq)
     {
-    displaySeq = seq + seqOffset;
-    if (displaySeq > sequencer->howManySequences()) break;
+        displaySeq = seq + seqOffset;
+        if (displaySeq > sequencer->howManySequences()) break;
     // the first thing is the channel number
-    disp += std::to_string(displaySeq);
+        disp += std::to_string(displaySeq);
     // space pad it
-    if (displaySeq < 9) disp += " ";
-    // the second thing is a '-' if this is the start of the 
-    // sequence or a ' ' if it is not, based on the 
-    // position of the cursor
-    //if (editor->getCurrentStep() == 0) disp += "-";
-    //else disp += " ";
+        if (displaySeq < 9) disp += " ";
+        char state{'o'};// default
 
-    char state{'o'};// default
-
-    for (int step=0;step<cols - 3;++step) // -3 as we we used 3 chars already
-    
-    {
-        displayStep = step + stepOffset;
-        if (step>0) disp += state;
+        for (int step=0;step<cols - 3;++step) // -3 as we we used 3 chars already
         
-        // three choices, in order of priority as two can be true:
-        // I : the editor is at this step
-        // - : the sequencer is at this step 
-        // o : neither the editor or sequencer are at step
-        //   : gone past the end of the sequence
-        state = 'o';    
-        // get note name
-        if (sequencer->howManySteps(displaySeq) > displayStep  && 
-            sequencer->getSequenceType(displaySeq) == SequenceType::midiNote)
         {
-        state = noteToNote[
-            ((int) sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind))
-            % 12
-        ];
-        }
-        if (sequencer->howManySteps(displaySeq) > displayStep  && 
-            sequencer->getSequenceType(displaySeq) == SequenceType::drumMidi)
-        {
-        state = noteToDrum[
-            ((int) sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind))
-            % 12
-        ];
-        }
-        if (sequencer->howManySteps(displaySeq) > displayStep  && 
-            (sequencer->getSequenceType(displaySeq) == SequenceType::transposer ||
-            sequencer->getSequenceType(displaySeq) == SequenceType::lengthChanger
-            )
-            )
-        {
-        if (sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind)
-            < 0)
-            state = '_'; // down
-        else 
-            state = '^'; // up         
-        }
+            displayStep = step + stepOffset;
+            if (step>0) disp += state;
+            
+            // three choices, in order of priority as two can be true:
+            // I : the editor is at this step
+            // - : the sequencer is at this step 
+            // o : neither the editor or sequencer are at step
+            //   : gone past the end of the sequence
+            state = 'o';    
+            // get note name
+            if (sequencer->howManySteps(displaySeq) > displayStep  && 
+                sequencer->getSequenceType(displaySeq) == SequenceType::midiNote)
+            {
+            state = noteToNote[
+                ((int) sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind))
+                % 12
+            ];
+            }
+            if (sequencer->howManySteps(displaySeq) > displayStep  && 
+                sequencer->getSequenceType(displaySeq) == SequenceType::drumMidi)
+            {
+            state = noteToDrum[
+                ((int) sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind))
+                % 12
+            ];
+            }
+            if (sequencer->howManySteps(displaySeq) > displayStep  && 
+                (sequencer->getSequenceType(displaySeq) == SequenceType::transposer ||
+                sequencer->getSequenceType(displaySeq) == SequenceType::lengthChanger
+                )
+                )
+            {
+            if (sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind)
+                < 0)
+                state = '_'; // down
+            else 
+                state = '^'; // up         
+            }
+            
+            
+            // in step edit mode, printing a particular step
+            // that does not have data
+            if (editor->getEditMode() == SequencerEditorMode::selectingSeqAndStep && 
+                sequencer->howManySteps(displaySeq) > displayStep && 
+                sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind) == 0)
+            {
+            state = '.';
+            } 
         
-        
-        // in step edit mode, printing a particular step
-        // that does not have data
-        if (editor->getEditMode() == SequencerEditorMode::selectingSeqAndStep && 
-            sequencer->howManySteps(displaySeq) > displayStep && 
-            sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind) == 0)
-        {
-        state = '.';
-        } 
-    
-        // inactive/ shortened/ non-existent sequence   
-        if ((sequencer->howManySteps(displaySeq) <= displayStep || 
-            sequencer->isStepActive(displaySeq, displayStep) == false)) 
-        {
-        state = ' ';
-        }
-        // sequence length mode
-        if (editor->getEditMode() == SequencerEditorMode::settingSeqLength && 
-            sequencer->howManySteps(displaySeq) > displayStep) 
-        {
-        state = '>';
+            // inactive/ shortened/ non-existent sequence   
+            if ((sequencer->howManySteps(displaySeq) <= displayStep || 
+                sequencer->isStepActive(displaySeq, displayStep) == false)) 
+            {
+            state = ' ';
+            }
+            // sequence length mode
+            if (editor->getEditMode() == SequencerEditorMode::settingSeqLength && 
+                sequencer->howManySteps(displaySeq) > displayStep) 
+            {
+            state = '>';
+            }
+
+            // override inactive ' ' for 
+            // sequencer playback is at this position
+            if (sequencer->getCurrentStep(displaySeq) == displayStep) 
+            {
+            state = '-';
+            }
+            
+            // cursor is at this position
+            if (editor->getCurrentSequence() == displaySeq &&
+                editor->getCurrentStep() == displayStep 
+                //&& sequencer->isStepActive(displaySeq, displayStep 
+                ) 
+            {
+            state = 'I';  
+            }          
         }
 
-        // override inactive ' ' for 
-        // sequencer playback is at this position
-        if (sequencer->getCurrentStep(displaySeq) == displayStep) 
+        disp += state;
+
+        if (seq < rows - 1)
         {
-        state = '-';
+            disp += preview + "\n";
+            preview = "";
         }
-        
-        // cursor is at this position
-        if (editor->getCurrentSequence() == displaySeq &&
-            editor->getCurrentStep() == displayStep 
-            //&& sequencer->isStepActive(displaySeq, displayStep 
-            ) 
-        {
-        state = 'I';  
-        }          
-    }
-
-    disp += state;
-
-    if (seq < rows - 1)
-    {
-        disp += preview + "\n";
-        preview = "";
-    }
     }  
     return disp;
 }   

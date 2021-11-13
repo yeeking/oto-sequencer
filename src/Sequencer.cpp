@@ -4,6 +4,7 @@
 #include <functional>
 #include <cmath> // fmod
 #include "Sequencer.h"
+#include <assert.h>     /* assert */
 
 Step::Step() : active{true}
 {
@@ -109,6 +110,7 @@ void Sequence::tick()
           break;
     }
     currentStep = (++currentStep) % (currentLength + lengthAdjustment);
+    assert(currentStep >= 0 && currentStep < steps.size());
     if (currentStep == 0)
     {
       // reset transpose at the start of each sequence
@@ -204,9 +206,14 @@ void Sequence::triggerTickType()
 
 void Sequence::setLengthAdjustment(int lenAdjust)
 {
-  // a little assert
+  // do not allow 0 len
   if (currentLength + lenAdjust < 1) return;
+  // do not allow excess len
+  if (! (currentLength + lenAdjust < this->steps.size())) return;
+ 
   lengthAdjustment = lenAdjust;
+
+  assert (currentLength + lenAdjust < this->steps.size() );
   
   // this code makes sure we can accommodate the 
   // length adjust, but without changing the real length now
@@ -215,9 +222,9 @@ void Sequence::setLengthAdjustment(int lenAdjust)
   // this allows the length adjustment (which is caused by another sequence)
   // to be separate from the current length
   // and therefore easily removed (which prevents repeatedly extending)
-  int original_length = currentLength;
-  setLength(original_length + lenAdjust);
-  setLength(original_length);
+  //int original_length = currentLength;
+  setLength(currentLength + lenAdjust);
+ // setLength(original_length);
 }
 
 void Sequence::setTicksPerStep(int tps)
