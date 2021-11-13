@@ -44,7 +44,7 @@ int main()
 
     // create a vector of sequences
     std::vector<Sequencer*> seqrs{};
-    for (int i=0;i<4;i++) seqrs.push_back(new Sequencer{2,4});
+    for (int i=0;i<4;i++) seqrs.push_back(new Sequencer{16,8});
     Sequencer* currentSeqr = seqrs[0];
     SequencerEditor seqEditor{currentSeqr};
    
@@ -79,7 +79,7 @@ int main()
     clock.start(clockIntervalMs);
     char input {1};
     bool escaped = false;
-    bool redraw = true; 
+    bool redraw = false; 
     bool running = true; 
 
     while (input != 'q')
