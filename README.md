@@ -39,7 +39,7 @@ In step overview mode:
 In step edit mode:
 * Cursor left and right: select field to edit
 * Computer keyboard piano keys: set note for step under cursor 
-* Cursor up and down: set fieid's value
+* Cursor up and down: set field's value
 * Space: toggle active/ inactive step
 * Enter: exit to step overview mode
  
