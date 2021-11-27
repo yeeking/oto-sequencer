@@ -110,8 +110,10 @@ void SequencerEditor::resetAtCursor()
     break;  
     case SequencerEditorMode::settingSeqLength:
     // 
-    break;
+    sequencer->resetSequence(currentSequence);
+      break;
     case SequencerEditorMode::configuringSequence:
+
     break;
     }
 }

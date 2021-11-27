@@ -11,7 +11,7 @@ class SimpleClock
     SimpleClock(int sleepTimeMs = 5, 
                 std::function<void()>callback = [](){
                     std::cout << "SimpleClock::default tick callback" << std::endl;
-                }) : sleepTimeMs{sleepTimeMs}, running{false}, callback{callback}, currentTick{0}
+                }) : sleepTimeMs{sleepTimeMs}, running{false}, callback{callback}, currentTick{0}, inTick{false}
      {
        // constructor body
      }
@@ -25,6 +25,7 @@ class SimpleClock
     void start(int intervalMs)
     {
       stop();
+      inTick = false;
       running = true;
       tickThread = new std::thread(SimpleClock::ticker, this, intervalMs, sleepTimeMs);
     }
@@ -40,14 +41,23 @@ class SimpleClock
     }
     /** set the function to be called when the click ticks */
     void setCallback(std::function<void()> c){
+
+      while(inTick) ;
+       //	std::cout << "setcallback in tick" << std::endl;// wait until not in tick
+      inTick = true;
       callback = c;
+      inTick = false;
     }
     void tick()
     {
+      while(inTick) ;
+	//	std::cout << "tick in tick" << std::endl;// wait until not in ti
+      inTick = true;// mutex stuff
       currentTick ++;
       // call the callback
       //std::cout << "SimpleClock::tick" << std::endl; 
-      callback();     
+      callback();
+      inTick = false; 
     }
     long getCurrentTick() const 
     {
@@ -93,5 +103,6 @@ class SimpleClock
     std::thread* tickThread;
     std::function<void()> callback;
     long currentTick;
+    bool inTick;
 };
 

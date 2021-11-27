@@ -83,13 +83,14 @@ Sequence::Sequence(Sequencer* sequencer,
 }
 
 /** go to the next step */
-void Sequence::tick()
+void Sequence::tick(bool trigger)
 {
   ++ticksElapsed;
 
   if (ticksElapsed == ticksPerStep)
     {
       ticksElapsed = 0;
+      if (trigger) {
       switch (type){
         case SequenceType::midiNote:
           triggerMidiNoteType();
@@ -109,7 +110,7 @@ void Sequence::tick()
         default:
           std::cout << "Sequnce::tick warning unkown seq type" << std::endl;
           break;
-    }
+      }} // end of if trigger
     if (currentLength + lengthAdjustment < 1) currentStep = 0;
     else currentStep = (++currentStep) % (currentLength + lengthAdjustment);
     if (currentStep >= steps.size()) currentStep = 0;
@@ -413,11 +414,11 @@ unsigned int Sequencer::getSequenceTicksPerStep(unsigned int sequence) const
 }
 
 /** move the sequencer along by one tick */
-void Sequencer::tick()
+void Sequencer::tick(bool trigger)
 {
   for (Sequence& seq : sequences)
   {
-      seq.tick();
+      seq.tick(trigger);
   }
 }
 

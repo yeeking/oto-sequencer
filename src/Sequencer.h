@@ -67,8 +67,8 @@ enum class SequenceType {midiNote, drumMidi, samplePlayer, transposer, lengthCha
 class Sequence{
   public:
     Sequence(Sequencer* sequencer, unsigned int seqLength = 16, unsigned short midiChannel = 1);
-    /** go to the next step */
-    void tick();
+    /** go to the next step. If trigger is false, just move along without triggering. */
+    void tick(bool trigger = true);
     /** which step are you on? */
     unsigned int getCurrentStep() const;
     /** is this step number valid? */
@@ -197,8 +197,8 @@ class Sequencer  {
       SequenceType getSequenceType(unsigned int sequence) const;
       unsigned int getSequenceTicksPerStep(unsigned int sequence) const;
 
-      /** move the sequencer along by one tick */
-      void tick();
+      /** go to the next step. If trigger is false, just move along without triggering. */
+      void tick(bool trigger = true);
       /** return a pointer to the sequence with sent id*/
       Sequence* getSequence(unsigned int sequence);
       /** the the type of sequence to type*/

@@ -13,19 +13,29 @@
 #include "MidiUtils.h"
 #include "IOUtils.h"
 
-void updateClockCallback(SimpleClock& clock, 
+void updateClockCallback(SimpleClock& clock,
+			std::vector<Sequencer*>& seqrs,
                     Sequencer* currentSeqr, 
                     SequencerEditor& seqEditor, 
                     MidiUtils& midiUtils, 
                     std::string& wioSerial)
 {
-  clock.setCallback([currentSeqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
+  clock.setCallback([&seqrs, currentSeqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
-      currentSeqr->tick();
+
       std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
       Display::redrawToConsole(output);
       if (wioSerial != "")
-        Display::redrawToWio(wioSerial, output);    
+        Display::redrawToWio(wioSerial, output);
+      for (Sequencer* s : seqrs)
+	{
+	  //s->tick(false);
+	  // only do a proper trigger on current seq
+	  if (currentSeqr == s) s->tick();
+	  // otherwise tick without trigger
+	  else s->tick(false);
+	}
+
     });
 }
 
@@ -67,7 +77,8 @@ int main()
       );
     }
 
-    updateClockCallback(clock, 
+    updateClockCallback(clock,
+			seqrs, 
                         currentSeqr, 
                         seqEditor, 
                         midiUtils, 
@@ -145,15 +156,16 @@ int main()
         // trigger switch to different sequencer
         for (int i=0;i<seqrs.size();i++)
         {
-          if (input == 49 + i) // ascii 1 == 49
+	  if (input == 49 + i) // ascii 1 == 49
           //if (false)
           {
             assert (i < seqrs.size());
             midiUtils.allNotesOff();
             currentSeqr = seqrs[i];
-            // clock needs to know it is calling 
-            // tick on a different sequencer
-            updateClockCallback(clock, 
+            //clock needs to know it is calling 
+            //tick on a different sequencer
+            updateClockCallback(clock,
+	    			seqrs, 
                     currentSeqr, 
                     seqEditor, 
                     midiUtils, 
@@ -213,8 +225,7 @@ int main()
       {
         std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
         Display::redrawToConsole(output);
-        if (wioSerial != "")
-          Display::redrawToWio(wioSerial, output);
+        if (wioSerial != "") Display::redrawToWio(wioSerial, output);
       }
       // make sure all sequences have the same channels and types as eachother
    
