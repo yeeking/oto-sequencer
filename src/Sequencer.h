@@ -189,7 +189,8 @@ class Sequencer  {
     /** create a sequencer: channels,stepsPerChannel*/
       Sequencer(unsigned int seqCount = 4, unsigned int seqLength = 16);
       ~Sequencer();
-
+      /** set seq channels and seq types of this sequence to the same as the sent sequence*/
+      void copyChannelAndTypeSettings(Sequencer* otherSeq);
       unsigned int howManySequences() const ;
       unsigned int howManySteps(unsigned int sequence) const ;
       unsigned int getCurrentStep(unsigned int sequence) const;

@@ -113,7 +113,6 @@ void Sequence::tick()
     if (currentLength + lengthAdjustment < 1) currentStep = 0;
     else currentStep = (++currentStep) % (currentLength + lengthAdjustment);
     if (currentStep >= steps.size()) currentStep = 0;
-    std::cout << "Sequence::tick currentStep " << currentStep << " of "<< steps.size() << std::endl;
     assert(currentStep >= 0 && currentStep < steps.size());
     // switch off any adjusters when we are at step 0
     if (currentStep == 0) deactivateProcessors();
@@ -369,6 +368,24 @@ Sequencer::Sequencer(unsigned int seqCount, unsigned int seqLength)
 Sequencer::~Sequencer()
 {
 }
+
+void Sequencer::copyChannelAndTypeSettings(Sequencer* otherSeq)
+{
+  // ignore if diff sizes
+  assert (otherSeq->sequences.size() == this->sequences.size()); 
+  //if (otherSeq->sequences.size() != this->sequences.size()) return; 
+  for (int seq = 0; seq < this->sequences.size(); ++seq)
+  { 
+    this->sequences[seq].setType(otherSeq->sequences[seq].getType());
+    // assign the same channel
+    double channel = otherSeq->sequences[seq].getStepDataDirect(0)->at(Step::channelInd);
+    for (int step=0; step < this->sequences[seq].howManySteps(); ++step)
+    {
+      this->updateStepData(seq, step, Step::channelInd, channel);
+    } 
+  }
+}
+
 
 unsigned int Sequencer::howManySequences() const 
 {

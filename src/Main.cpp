@@ -84,6 +84,14 @@ int main()
 
     while (input != 'q')
     {
+      // check if we have make a sequencer config edit 
+      if (seqEditor.getEditMode() == SequencerEditorMode::configuringSequence)
+      {
+        for (Sequencer* seqr : seqrs) {
+          if (seqr != currentSeqr)
+            seqr->copyChannelAndTypeSettings(currentSeqr);
+        }
+      }
       input = KeyReader::getCharNoEcho();
       //std::cout << "got input:: " << ((int)input) << std::endl;
       if (!escaped)
@@ -197,7 +205,8 @@ int main()
             // down
             seqEditor.moveCursorDown();
             escaped = false;
-            redraw = true;   
+            redraw = true;  
+            continue; 
         }
       }
       if (redraw)
@@ -207,6 +216,8 @@ int main()
         if (wioSerial != "")
           Display::redrawToWio(wioSerial, output);
       }
+      // make sure all sequences have the same channels and types as eachother
+   
     }// end of key input loop
   clock.stop();
 

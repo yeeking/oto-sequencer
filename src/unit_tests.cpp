@@ -1403,7 +1403,26 @@ bool testLengthChangerDisp()
   return true;
 }
 
+bool testSetAllChannels()
+{
+  std::vector<Sequencer*> seqrs{};
+  for (int i=0;i<4;i++) seqrs.push_back(new Sequencer{2,8});
+  Sequencer* currentSeqr = seqrs[0];
+  // seq 0 is channel 4
+  currentSeqr->getStepDataDirect(0, 0)->at(Step::channelInd) = 4;
+  // seq 0 and 1 
+  currentSeqr->setSequenceType(0, SequenceType::tickChanger);
+  
 
+  // if here, they pressed a key and they are in 
+  for (Sequencer* seqr : seqrs) {
+    if (seqr != currentSeqr)
+      seqr->copyChannelAndTypeSettings(currentSeqr);
+    if (seqr->getSequenceType(0) != SequenceType::tickChanger) return false;
+  } 
+
+  return true;
+}
 
 int global_pass_count = 0;
 int global_fail_count = 0;
@@ -1518,6 +1537,6 @@ int main()
 //log("testDrumDisplay", testDrumDisplay());
 //log("testExtendSeqCorrectStepChannel", testExtendSeqCorrectStepChannel());
 //log("testSongMode", testSongMode());
-log("testLengthChangerDisp", testLengthChangerDisp());
+log("testSetAllChannels", testSetAllChannels());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }
