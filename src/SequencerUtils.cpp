@@ -100,10 +100,13 @@ void SequencerEditor::resetAtCursor()
     {
     case SequencerEditorMode::selectingSeqAndStep:
     // reset the whole sequence
-    sequencer->resetSequence(currentSequence);
+    enterNoteData(0);
+    //sequencer->resetSequence(currentSequence);
     break;
     case SequencerEditorMode::editingStep:
-    enterNoteData(0);
+    //enterNoteData(0);
+    //sequencer->resetSequence(currentSequence);
+    
     break;  
     case SequencerEditorMode::settingSeqLength:
     // 
@@ -854,10 +857,12 @@ std::string SequencerViewer::getSequencerView(const int max_rows, const int cols
             if (sequencer->howManySteps(displaySeq) > displayStep  && 
                 sequencer->getSequenceType(displaySeq) == SequenceType::midiNote)
             {
+              
             state = noteToNote[
                 ((int) sequencer->getStepDataDirect(displaySeq, displayStep)->at(Step::note1Ind))
                 % 12
             ];
+
             }
             if (sequencer->howManySteps(displaySeq) > displayStep  && 
                 sequencer->getSequenceType(displaySeq) == SequenceType::drumMidi)

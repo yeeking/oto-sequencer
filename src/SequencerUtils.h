@@ -22,8 +22,11 @@ class SequencerEditor {
     Sequencer* getSequencer();
     /** resets editor, e.g. when changing sequence*/
     void resetCursor();
-    SequencerEditorMode getEditMode() const;
+    /** returns current major edit mode which is a SequencerEditorMode*/
+    SequencerEditorMode getEditMode() const; 
+    /** returns current minor edit mode which is a SequencerEditorSubMode*/
     SequencerEditorSubMode getEditSubMode() const;
+    /** directly set major edit mode */
     void setEditMode(SequencerEditorMode mode);
     /** cycle through the edit modes in the sequence:
      * settingSeqLength (start mode)

@@ -86,9 +86,16 @@ class Sequence{
     */
     unsigned int getLength() const;
     /** set the length of the sequence 
-     * If it is higher than the current max length, new steps will be created
+     * if there are not enough steps currently for this length, 
+     * an assert will crash the program. So you should also call
+     * ensureEnoughStepsForLength
     */
     void setLength(int length);
+    /** call this before calling setLength to make sure that many steps are 
+     * available
+    */
+    void ensureEnoughStepsForLength(int length);
+  
     /**
      * Set the permanent tick per step. To apply a temporary
      * change, call setTicksPerStepAdjustment
@@ -155,8 +162,10 @@ class Sequence{
     void triggerTickType();
     /** provides access to the sequencer so this sequence can change things*/
     Sequencer* sequencer;
-    unsigned int currentLength;
-    unsigned int currentStep;
+    /** current length. This is a signed int as we apply length adjustments to it that might be negative*/
+    signed int currentLength;
+    /** Current seq length. This is signed in case we are computing current step using currentLength*/
+    signed int currentStep;
     unsigned short midiChannel;
     std::vector<Step> steps;
     SequenceType type;
@@ -191,6 +200,7 @@ class Sequencer  {
       void tick();
       /** return a pointer to the sequence with sent id*/
       Sequence* getSequence(unsigned int sequence);
+      /** the the type of sequence to type*/
       void setSequenceType(unsigned int sequence, SequenceType type);
        /** set the length of the sequence 
        * If it is higher than the current max length, new steps will be created

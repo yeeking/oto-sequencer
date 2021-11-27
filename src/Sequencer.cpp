@@ -64,17 +64,18 @@ bool Step::isActive() const
 Sequence::Sequence(Sequencer* sequencer, 
                   unsigned int seqLength, 
                   unsigned short midiChannel) 
-: sequencer{sequencer}, currentStep{0}, currentLength{seqLength}, 
+: sequencer{sequencer}, currentStep{0},  
   midiChannel{midiChannel}, type{SequenceType::midiNote}, 
   transpose{0}, lengthAdjustment{0}, ticksPerStep{4}, originalTicksPerStep{4}, ticksElapsed{0}, 
   midiScaleToDrum{MidiUtils::getScaleMidiToDrumMidi()}
 {
+  currentLength = seqLength;
   for (auto i=0;i<seqLength;i++)
   {
     Step s;
     s.setCallback([i](std::vector<double>* data){
       if (data->size() > 0){
-        std::cout << "Sequence::Sequence default step callback " << i << " triggered " << std::endl;
+        //std::cout << "Sequence::Sequence default step callback " << i << " triggered " << std::endl;
       }
     });
     steps.push_back(s);
@@ -109,14 +110,16 @@ void Sequence::tick()
           std::cout << "Sequnce::tick warning unkown seq type" << std::endl;
           break;
     }
-    currentStep = (++currentStep) % (currentLength + lengthAdjustment);
+    if (currentLength + lengthAdjustment < 1) currentStep = 0;
+    else currentStep = (++currentStep) % (currentLength + lengthAdjustment);
+    if (currentStep >= steps.size()) currentStep = 0;
+    std::cout << "Sequence::tick currentStep " << currentStep << " of "<< steps.size() << std::endl;
     assert(currentStep >= 0 && currentStep < steps.size());
-    if (currentStep == 0)
-    {
-      // reset transpose at the start of each sequence
-      deactivateProcessors();
-    }
+    // switch off any adjusters when we are at step 0
+    if (currentStep == 0) deactivateProcessors();
+
   }
+  
 }
 
 void Sequence::deactivateProcessors()
@@ -181,6 +184,7 @@ void Sequence::triggerTransposeType()
 
 void Sequence::triggerLengthType()
 {
+  //return; 
   if (steps[currentStep].isActive())
   {
     std::vector<double> data = steps[currentStep].getData();  
@@ -188,7 +192,7 @@ void Sequence::triggerLengthType()
     { 
       sequencer->getSequence(data[Step::channelInd])->setLengthAdjustment(data[Step::note1Ind]);
     }
-  } 
+  }   
 }
 
 void Sequence::triggerTickType()
@@ -206,12 +210,9 @@ void Sequence::triggerTickType()
 
 void Sequence::setLengthAdjustment(int lenAdjust)
 {
-  // do not allow 0 len
-  if (currentLength + lenAdjust < 1) return;
-  // do not allow len to go over available steps len
-  if (! (currentLength + lenAdjust < this->steps.size())) return;
-  lengthAdjustment = lenAdjust;
-  setLength(currentLength + lenAdjust);
+  // make sure we have enough steps
+  this->ensureEnoughStepsForLength(currentLength + lenAdjust);
+  this->lengthAdjustment = lenAdjust;
 }
 
 void Sequence::setTicksPerStep(int tps)
@@ -259,10 +260,8 @@ unsigned int Sequence::getLength() const
   return currentLength; 
 }
 
-void Sequence::setLength(int length)
+void Sequence::ensureEnoughStepsForLength(int length)
 {
-
-  if (length < 1) return;
   if (length > steps.size()) // bad need more steps
   {
     int toAdd = length - steps.size();
@@ -277,6 +276,13 @@ void Sequence::setLength(int length)
       steps.push_back(s);
     }
   }
+}
+void Sequence::setLength(int length)
+{
+
+  if (length < 1) return;
+  if (length > steps.size()) return; 
+  
   currentLength = length;
 }
 
@@ -307,7 +313,10 @@ std::string Sequence::stepToString(int step) const
 unsigned int Sequence::howManySteps() const 
 {
   //return steps.size();
-  return currentLength + lengthAdjustment;
+  // case where length adjust is too high
+  //if (currentLength + lengthAdjustment >= steps.size()) return currentLength;
+  
+  return currentLength + lengthAdjustment > 0 ? currentLength + lengthAdjustment : 1;
 }
 
 void Sequence::toggleActive(unsigned int step)
@@ -359,7 +368,6 @@ Sequencer::Sequencer(unsigned int seqCount, unsigned int seqLength)
 
 Sequencer::~Sequencer()
 {
-  std::cout << "dest" << std::endl;
 }
 
 unsigned int Sequencer::howManySequences() const 
@@ -417,6 +425,7 @@ void Sequencer::shrinkSequence(unsigned int sequence)
 }
 void Sequencer::extendSequence(unsigned int sequence)
 {
+  sequences[sequence].ensureEnoughStepsForLength(sequences[sequence].getLength()+1);
   sequences[sequence].setLength(sequences[sequence].getLength()+1);
 }
 
@@ -474,8 +483,8 @@ std::vector<double> Sequencer::getStepData(int sequence, int step) const
 /** retrieve the data for a specific step */
 std::vector<double>* Sequencer::getStepDataDirect(int sequence, int step)
 {
-  // TODO should throw an exception if they ask for an invalid step or sequence
-  //if (!assertSeqAndStep(sequence, step)) return std::vector<double>{};
+  assert(sequence < sequences.size());
+  assert(step < sequences[sequence].howManySteps());
   return sequences[sequence].getStepDataDirect(step);
 }
 

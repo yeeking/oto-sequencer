@@ -1352,9 +1352,54 @@ bool testSongMode()
     s->tick();
     s->howManySequences();
   }
-  //
 
+  return true;
+}
 
+bool testLengthChanger()
+{
+  //Sequencer seqr{2, 16};
+  Sequencer seqr{2, 10};
+  
+  seqr.setSequenceType(0, SequenceType::midiNote);
+  seqr.setSequenceType(1, SequenceType::lengthChanger);
+  std::vector<double> data = {0, 0, 0, 0};
+  data[Step::note1Ind] = -4;
+  seqr.setStepData(1, 0, data);
+  //seqr.setStepData(3, 0, data);
+  for (int i=0;i<1000;i++)
+  {
+    std::cout << i << std::endl;
+    seqr.tick();
+  }
+  return true;
+}
+bool testLengthChangerDisp()
+{
+  //Sequencer seqr{2, 16};
+  Sequencer seqr{2, 4};
+  SequencerEditor ed{&seqr};
+
+  
+  seqr.setSequenceType(0, SequenceType::midiNote);
+  seqr.setSequenceType(1, SequenceType::lengthChanger);
+  std::vector<double> data = {0, 0, 0, 0};
+  data[Step::note1Ind] = -4;
+  seqr.setStepData(0, 0, data);
+  data[Step::note1Ind] = 4;
+  seqr.setStepData(1, 0, data);
+  
+  //seqr.setStepData(3, 0, data);
+  for (int i=0;i<1000;i++)
+  {
+    std::cout << i << std::endl;
+    seqr.tick();
+    int note =  ((int) seqr.getStepDataDirect(0, 0)->at(Step::note1Ind))
+                % 12 ; 
+            
+    std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &ed);
+
+  }
   return true;
 }
 
@@ -1472,7 +1517,7 @@ int main()
 //log("testNoteDisplay", testNoteDisplay());
 //log("testDrumDisplay", testDrumDisplay());
 //log("testExtendSeqCorrectStepChannel", testExtendSeqCorrectStepChannel());
-log("testSongMode", testSongMode());
-
+//log("testSongMode", testSongMode());
+log("testLengthChangerDisp", testLengthChangerDisp());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

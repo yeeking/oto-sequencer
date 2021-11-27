@@ -4,7 +4,7 @@
 #include <fstream>
 #include <string>
 #include <assert.h>
-#include "../lib/ml/rapidLib.h"
+//#include "../lib/ml/rapidLib.h"
 
 #include "SimpleClock.h"
 #include "Sequencer.h"
@@ -85,6 +85,7 @@ int main()
     while (input != 'q')
     {
       input = KeyReader::getCharNoEcho();
+      //std::cout << "got input:: " << ((int)input) << std::endl;
       if (!escaped)
       {
         switch(input)
@@ -122,11 +123,18 @@ int main()
             //seqEditor
             seqEditor.resetAtCursor();
             continue;
-//          case (wchar_t)(127): // delete
-//            seqEditor.enterNoteData(0);
-//            continue;
+        //  case (wchar_t)(127): // delete
+        //    seqEditor.enterNoteData(0);
+        //    continue;
         }// send switch on key
-        // now check for sequence switch
+        // reset the step under the cursor
+        if ((int)input == 127) 
+        {
+          
+        }
+        // this is the implementation
+        // of sequencer switching where keys 1->seqrs.size
+        // trigger switch to different sequencer
         for (int i=0;i<seqrs.size();i++)
         {
           if (input == 49 + i) // ascii 1 == 49
@@ -144,10 +152,11 @@ int main()
                     wioSerial);
             seqEditor.setSequencer(currentSeqr);
             seqEditor.resetCursor();
-            
           }
         }
-        // now check all the piano keys
+        // this is the implementation 
+        // of note entry, where bottom two rows
+        // of keyboard map to piano keys
         bool key_note_match{false};
         for (const std::pair<char, double>& key_note : key_to_note)
         {
@@ -161,6 +170,7 @@ int main()
         }
         //if (key_note_match) continue; // continue the while loop
       } // end if !escapted
+      // now the escaped keys - allows cursor keys to be used
       if (escaped){
         switch(input){
           case '[': 
