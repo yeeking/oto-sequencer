@@ -8,6 +8,7 @@
 #include <iostream>
 #include <termios.h>
 #include <fstream>
+#include <map>
 
 
 class Display{
@@ -53,7 +54,7 @@ class Display{
 
     static void redrawToConsole(const std::string& output)
     { 
-        std::cout << "\x1B[2J\x1B[H";
+        //std::cout << "\x1B[2J\x1B[H";
         std::cout << output << std::endl;
     }
 
@@ -67,7 +68,6 @@ class Display{
 
 };
 
-
 /** class that provides keyboard input helpers 
  * including low level keyboard input */
 class KeyReader 
@@ -75,8 +75,9 @@ class KeyReader
     public:
         KeyReader(std::string device = "/dev/input/event0")
         {
-            if ((file_ref = open("/dev/input/event0", O_RDONLY)) < 0) {
+            if ((file_ref = open(device.c_str(), O_RDONLY)) < 0) {
                 perror("KeyReader::construct cannot read keyboard device ");
+                perror(device.c_str());
             }
         }
         /** 
@@ -114,7 +115,12 @@ class KeyReader
             while(1)
             {
                 rd = read(file_ref, ev, sizeof(struct input_event) * 64);
-                if (rd > 48) continue; // holding lots of keys, ignore.
+                //printf("read %i\n", rd);
+                // if (rd > 48) 
+                // {
+                //   printf("Ignoring\n");
+                //   continue; // holding lots of keys, ignore.
+                // }
                 ev_count = rd / sizeof(struct input_event);
                 if(ev_count == 2)
                 {
@@ -145,9 +151,67 @@ class KeyReader
 
             return key_code;  
         }
+    /** returns a map from the chars obtained from getChar cast to ints to 
+     * normak keyboard chars, e.g. 42 -> z
+     */
+    static std::map<int,char> getCharNameMap()
+    {
+        std::map<int, char> intToKey = 
+      {
+        {2, '1'}, 
+        {3, '2'},
+        {4, '3'}, 
+        {5, '4'},
+        {6, '5'}, 
+        {7, '6'},
+        {8, '7'}, 
+        {9, '8'},
+        {10, '9'},
+        {15, '\t'},
+        {16, 'q'},
+        {17, 'w'}, 
+        {18, 'e'}, 
+        {19, 'r'}, 
+        {20, 't'}, 
+        {21, 'y'}, 
+        {22, 'u'}, 
+        {23, 'i'}, 
+        {24, 'o'}, 
+        {25, 'p'}, 
+        {30, 'a'}, 
+        {31, 's'}, 
+        {32, 'd'}, 
+        {33, 'f'}, 
+        {34, 'g'}, 
+        {35, 'h'}, 
+        {36, 'j'}, 
+        {37, 'k'}, 
+        {38, 'l'}, 
+        {39, ';'}, 
+        {28, '\n'}, 
+        {44, 'z'}, 
+        {45, 'x'}, 
+        {46, 'c'}, 
+        {47, 'v'}, 
+        {48, 'b'}, 
+        {49, 'n'}, 
+        {50, 'm'}, 
+        {51, ','}, 
+        {52, '.'}, 
+        {57, ' '}, 
+        {105, 'L'}, 
+        {106, 'R'},
+        {103, 'U'},
+        {108, 'D'},
+      };
+
+      return intToKey; 
+
+    }
 
     private:
         struct input_event ev[64];
+        
         int file_ref;
 };
 

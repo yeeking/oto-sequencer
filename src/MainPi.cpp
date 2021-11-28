@@ -1,44 +1,47 @@
 #include <functional>
 #include <iostream>
-#include <fstream>
 #include <stdio.h>  
-
-#include "../lib/ml/rapidLib.h"
+#include <fstream>
+#include <string>
+#include <assert.h>
+//#include "../lib/ml/rapidLib.h"
 
 #include "SimpleClock.h"
 #include "Sequencer.h"
 #include "SequencerUtils.h"
 #include "RapidLibUtils.h"
 #include "MidiUtils.h"
-#include "GroveUtils.h"
 #include "IOUtils.h"
-#include <unistd.h>
-#include <termios.h>
 
-void redrawGroveLCD(Sequencer& seqr, SequencerEditor& seqEditor, GrovePi::LCD& lcd)
-{ 
-    std::string disp = SequencerViewer::toTextDisplay(2, 16, &seqr, &seqEditor);
-    std::cout << disp << std::endl;
-    lcd.setText(disp.c_str());
-}
 
-void updateLCDColour(SequencerEditor& editor, GrovePi::LCD& lcd)
+
+
+void updateClockCallback(SimpleClock& clock,
+			std::vector<Sequencer*>& seqrs,
+                    Sequencer* currentSeqr, 
+                    SequencerEditor& seqEditor, 
+                    MidiUtils& midiUtils, 
+                    std::string& wioSerial)
 {
-    switch(editor.getEditMode() )
-    {
-        case SequencerEditorMode::editingStep:
-            lcd.setRGB(50, 0, 50);
-            break;
-        case SequencerEditorMode::selectingSeqAndStep:
-            lcd.setRGB(0, 0, 50);
-            break;
-        case SequencerEditorMode::settingSeqLength:
-            lcd.setRGB(0, 50, 0);
-            break;
-    }
+  clock.setCallback([&seqrs, currentSeqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
+      midiUtils.sendQueuedMessages(clock.getCurrentTick());
+
+      std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
+      //Display::redrawToConsole(output);
+      if (wioSerial != "")
+        Display::redrawToWio(wioSerial, output);
+      for (Sequencer* s : seqrs)
+      {
+        //s->tick(false);
+        // only do a proper trigger on current seq
+        if (currentSeqr == s) s->tick();
+        // otherwise tick without trigger
+        else s->tick(false);
+      }
+    });
 }
 
-void setupMidiViaLCD(MidiUtils& midiUtils, KeyReader& keyReader, GrovePi::LCD& lcd)
+void setupMidiViaWio( MidiUtils& midiUtils, std::string wioSerial, KeyReader& keyReader)
 {
     int midiDev = -1;
     std::vector<std::string> midiOuts = midiUtils.getOutputDeviceList();
@@ -46,18 +49,17 @@ void setupMidiViaLCD(MidiUtils& midiUtils, KeyReader& keyReader, GrovePi::LCD& l
     {
         std::cout << "Attempting device selection " << std::endl;
         int option_ind = 0;
+        std::string msg {};
         for (std::string& dev : midiOuts)
         {
             option_ind ++;
             dev = std::to_string(option_ind) + ":" + dev;
-            std::cout << dev << std::endl;
-            lcd.setText(dev.c_str());
-            sleep(1);
+            msg += dev + "\n";
         }
-        std::string msg = "Choose 1 to " + std::to_string(midiOuts.size());
-        
+        msg += "Choose 1 to " + std::to_string(midiOuts.size()) + "\n";        
         std::cout << msg << std::endl;
-        lcd.setText(msg.c_str());
+	    Display::redrawToWio(wioSerial, msg);
+        //lcd.setText(msg.c_str());
         midiDev = keyReader.getChar() - 2;
         std::cout << "You chose " << midiDev << std::endl;
         if (midiDev > midiOuts.size() || midiDev < 0) midiDev = -1;
@@ -70,128 +72,188 @@ void setupMidiViaLCD(MidiUtils& midiUtils, KeyReader& keyReader, GrovePi::LCD& l
 
 int main()
 {
-    KeyReader keyReader;
-    // maps from raw event input keycodes
-    // to midi notes
-    const std::map<char, double> key_to_note = MidiUtils::getKeyboardToMidiNotes();
-
-    // access to the wio
+  // wio terminal serial display device if available
     std::string wioSerial = Display::getSerialDevice();
-    
-    // access to the rgb lcd
-    GrovePi::LCD lcd{};
-    bool useLCD = false;
-    try
-	{
-		// connect to the i2c-line
-		lcd.connect();
-		// set text and RGB color on the LCD
-		lcd.setText("Loading sequencer....");
-		lcd.setRGB(255, 0, 0);
-        useLCD = true; 
-    }
-    catch(GrovePi::I2CError &error)
-	{
-		printf(error.detail());
-		//return -1;
-	}
+    KeyReader keyReader{"/dev/input/event19"};
 
-    // this constructor will trigger midi initialisation
+  // maps computer keyboard to midi notes
+    std::map<char, double> key_to_note = MidiUtils::getKeyboardToMidiNotes();
+    
     MidiUtils midiUtils;
-    //midiUtils.interactiveInitMidi();
-    //midiUtils.allNotesOff();
-    setupMidiViaLCD(midiUtils, keyReader, lcd);
-    Sequencer seqr{16, 16};
-    SequencerEditor seqEditor{&seqr};
+    if (wioSerial != "") setupMidiViaWio(midiUtils, wioSerial, keyReader);
+    else midiUtils.interactiveInitMidi();
+    midiUtils.allNotesOff();
+  
     SimpleClock clock{};
+
+    // create a vector of sequences
+    std::vector<Sequencer*> seqrs{};
+    for (int i=0;i<4;i++) seqrs.push_back(new Sequencer{16,8});
+    Sequencer* currentSeqr = seqrs[0];
+    SequencerEditor seqEditor{currentSeqr};
+   
+    for (Sequencer* seqr : seqrs)
+    {
+      // set up a midi note triggering callback 
+      // on all steps
+      seqr->setAllCallbacks(
+          [&midiUtils, &clock](std::vector<double>* data){
+            if (data->size() >= 3)
+            {
+              double channel = data->at(Step::channelInd);
+              double offTick = clock.getCurrentTick() + data->at(Step::lengthInd);
+              // make the length quantised by steps
+              double noteVolocity = data->at(Step::velInd);
+              double noteOne = data->at(Step::note1Ind);
+              midiUtils.playSingleNote(channel, noteOne, noteVolocity, offTick);            
+            }
+          }
+      );
+    }
+
+    updateClockCallback(clock,
+		            	seqrs, 
+                        currentSeqr, 
+                        seqEditor, 
+                        midiUtils, 
+                        wioSerial);
+    
     // this will map joystick x,y to 16 sequences
     //rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
-
-    seqr.setAllCallbacks(
-        [&midiUtils, &clock](std::vector<double>* data){
-          if (data->size() >= 3)
-          {
-            double channel = data->at(Step::channelInd);
-            double offTick = clock.getCurrentTick() + data->at(Step::lengthInd);
-            // make the length quantised by steps
-            double noteVolocity = data->at(Step::velInd);
-            double noteOne = data->at(Step::note1Ind);
-            midiUtils.playSingleNote(channel, noteOne, noteVolocity, offTick);            
-          }
-        }
-    );
-
-    clock.setCallback([&seqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
-      midiUtils.sendQueuedMessages(clock.getCurrentTick());
-      seqr.tick();
-  
-      if (wioSerial != "")
-      {
-        std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
-        Display::redrawToWio(wioSerial, output);    
-      }
-      else 
-      {
-        std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
-        Display::redrawToConsole(output);
-      }
-    });
-
-    clock.start(125);
+    int clockIntervalMs = 125;  
+    clock.start(clockIntervalMs);
     char input {1};
-    
-    while (input != 16) // q for quit
+    bool escaped = false;
+    bool redraw = false; 
+    bool running = true; 
+
+    std::map<int,char> keyMap = KeyReader::getCharNameMap();
+    while (input != 'q')
     {
-        if (useLCD) redrawGroveLCD(seqr, seqEditor, lcd);
-        if (wioSerial != "")
-        {
-            std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
-            Display::redrawToWio(wioSerial, output);    
+      // check if we have make a sequencer config edit 
+      if (seqEditor.getEditMode() == SequencerEditorMode::configuringSequence)
+      {
+        for (Sequencer* seqr : seqrs) {
+          if (seqr != currentSeqr)
+            seqr->copyChannelAndTypeSettings(currentSeqr);
         }
-        else 
-        {
-            std::string output = SequencerViewer::toTextDisplay(9, 13, &seqr, &seqEditor);
-            Display::redrawToConsole(output);
-        }
+      }
+      //input = KeyReader::getCharNoEcho();
+      //input = keyMap[(int)keyReader.getChar()];
         input = keyReader.getChar();
-        switch(input)
+        int asciiInput = (int) keyMap[(int)input];
+        char letterInput = keyMap[(int) input ];
+    switch(letterInput)
+    {
+        case '\t':  // next 'mode'
+        seqEditor.cycleEditMode();
+        continue;
+        case 'p': // stop / start
+        midiUtils.allNotesOff();
+        if (running) clock.stop();
+        else clock.start(clockIntervalMs);
+        running = !running; 
+        continue;
+        case ' ': // mute
+        seqEditor.cycleAtCursor();
+        continue;
+        case '-': // slower
+        clockIntervalMs += 5;
+        clock.stop();
+        clock.start(clockIntervalMs);
+        continue;
+        case '=': // faster
+        clockIntervalMs -= 5;
+        clock.stop();
+        clock.start(clockIntervalMs);
+        continue;
+        case '\n': // enter
+        //seqEditor.cycleMode();
+        seqEditor.enterAtCursor();
+        continue;
+        case 'r':
+        //seqEditor
+        seqEditor.resetAtCursor();
+        continue;
+        case 'U':
+        // up
+        seqEditor.moveCursorUp();
+        escaped = false;
+        redraw = true;   
+        continue;
+        case 'L':
+        // left
+        seqEditor.moveCursorLeft();
+        escaped = false;
+        redraw = true;   
+        continue;
+        case 'R':
+        // right
+        seqEditor.moveCursorRight();
+        escaped = false;
+        redraw = true;   
+        continue;
+        case 'D':
+        // down
+        seqEditor.moveCursorDown();
+        escaped = false;
+        redraw = true;  
+        continue; 
+
+    }// send switch on key
+
+    // this is the implementation
+    // of sequencer switching where keys 1->seqrs.size
+    // trigger switch to different sequencer
+    for (int i=0;i<seqrs.size();i++)
+    {
+    if (asciiInput == 49 + i) // ascii 1 == 49
+        //if (false)
         {
-            case 15: // tab 
-                seqEditor.cycleEditMode();
-                updateLCDColour(seqEditor, lcd);
-                continue;
-            case 57: // space
-                seqEditor.cycleAtCursor();
-                continue;
-            case 28: // return
-                seqEditor.enterAtCursor();
-                updateLCDColour(seqEditor, lcd);
-                continue;
-            case 103: // up
-                seqEditor.moveCursorUp();
-                continue;
-            case 105: // left
-                seqEditor.moveCursorLeft();
-                continue;
-            case 106: // right
-                seqEditor.moveCursorRight();
-                continue;
-            case 108: // down
-                seqEditor.moveCursorDown();
-                continue;     
-        }// end switch on key
-        // now check all the piano keys
-        bool key_note_match{false};
-        for (const std::pair<int, double>& key_note : key_to_note)
-        {
-            if (input == key_note.first) 
-            { 
-                key_note_match = true;
-                seqEditor.enterNoteData(key_note.second);
-                break;// break the for loop
-            }
+        assert (i < seqrs.size());
+        midiUtils.allNotesOff();
+        currentSeqr = seqrs[i];
+        //clock needs to know it is calling 
+        //tick on a different sequencer
+        updateClockCallback(clock,
+                seqrs, 
+                currentSeqr, 
+                seqEditor, 
+                midiUtils, 
+                wioSerial);
+        seqEditor.setSequencer(currentSeqr);
+        seqEditor.resetCursor();
         }
-    }// end while loop
-    midiUtils.allNotesOff();
+    }
+    // this is the implementation 
+    // of note entry, where bottom two rows
+    // of keyboard map to piano keys
+    bool key_note_match{false};
+    for (const std::pair<char, double>& key_note : key_to_note)
+    {
+        if (letterInput == key_note.first) 
+        { 
+        key_note_match = true;
+        seqEditor.enterNoteData(key_note.second); 
+        redraw = true;   
+        break;// break the for loop
+        }
+    }
+
+      if (redraw)
+      {
+        std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
+        Display::redrawToConsole(output);
+        if (wioSerial != "") Display::redrawToWio(wioSerial, output);
+      }
+      // make sure all sequences have the same channels and types as eachother
+   
+    }// end of key input loop
+  clock.stop();
+
+  midiUtils.allNotesOff();
+  for (Sequencer* s : seqrs) delete s;
   return 0;
 }
+
+
