@@ -54,7 +54,7 @@ class Display{
 
     static void redrawToConsole(const std::string& output)
     { 
-        //std::cout << "\x1B[2J\x1B[H";
+        std::cout << "\x1B[2J\x1B[H";
         std::cout << output << std::endl;
     }
 

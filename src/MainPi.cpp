@@ -27,7 +27,7 @@ void updateClockCallback(SimpleClock& clock,
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
 
       std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
-      //Display::redrawToConsole(output);
+      Display::redrawToConsole(output);
       if (wioSerial != "")
         Display::redrawToWio(wioSerial, output);
       for (Sequencer* s : seqrs)
@@ -74,7 +74,7 @@ int main()
 {
   // wio terminal serial display device if available
     std::string wioSerial = Display::getSerialDevice();
-    KeyReader keyReader{"/dev/input/event19"};
+    KeyReader keyReader{"/dev/input/event0"};
 
   // maps computer keyboard to midi notes
     std::map<char, double> key_to_note = MidiUtils::getKeyboardToMidiNotes();
@@ -207,22 +207,23 @@ int main()
     // trigger switch to different sequencer
     for (int i=0;i<seqrs.size();i++)
     {
-    if (asciiInput == 49 + i) // ascii 1 == 49
         //if (false)
+        if (asciiInput == 49 + i) // ascii 1 == 49
         {
-        assert (i < seqrs.size());
-        midiUtils.allNotesOff();
-        currentSeqr = seqrs[i];
-        //clock needs to know it is calling 
-        //tick on a different sequencer
-        updateClockCallback(clock,
-                seqrs, 
-                currentSeqr, 
-                seqEditor, 
-                midiUtils, 
-                wioSerial);
-        seqEditor.setSequencer(currentSeqr);
-        seqEditor.resetCursor();
+            assert (i < seqrs.size());
+            midiUtils.allNotesOff();
+            currentSeqr = seqrs[i];
+            //clock needs to know it is calling 
+            //tick on a different sequencer
+            updateClockCallback(clock,
+                    seqrs, 
+                    currentSeqr, 
+                    seqEditor, 
+                    midiUtils, 
+                    wioSerial);
+            seqEditor.setSequencer(currentSeqr);
+            seqEditor.resetCursor();
+            break;
         }
     }
     // this is the implementation 
