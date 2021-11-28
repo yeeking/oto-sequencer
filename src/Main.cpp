@@ -28,16 +28,47 @@ void updateClockCallback(SimpleClock& clock,
       if (wioSerial != "")
         Display::redrawToWio(wioSerial, output);
       for (Sequencer* s : seqrs)
-	{
-	  //s->tick(false);
-	  // only do a proper trigger on current seq
-	  if (currentSeqr == s) s->tick();
-	  // otherwise tick without trigger
-	  else s->tick(false);
-	}
-
+      {
+        //s->tick(false);
+        // only do a proper trigger on current seq
+        if (currentSeqr == s) s->tick();
+        // otherwise tick without trigger
+        else s->tick(false);
+      }
     });
 }
+
+void setupMidiViaWio( MidiUtils& midiUtils, std::string wioSerial)
+{
+    KeyReader keyReader{};
+    int midiDev = -1;
+    std::vector<std::string> midiOuts = midiUtils.getOutputDeviceList();
+    while(midiDev == -1)
+    {
+        std::cout << "Attempting device selection " << std::endl;
+        int option_ind = 0;
+        for (std::string& dev : midiOuts)
+        {
+            option_ind ++;
+            dev = std::to_string(option_ind) + ":" + dev;
+            std::cout << dev << std::endl;
+            Display::redrawToWio(wioSerial, dev);
+            sleep(1);
+        }
+        std::string msg = "Choose 1 to " + std::to_string(midiOuts.size());
+        
+        std::cout << msg << std::endl;
+	      Display::redrawToWio(wioSerial, msg);
+        //lcd.setText(msg.c_str());
+        midiDev = keyReader.getChar() - 2;
+        std::cout << "You chose " << midiDev << std::endl;
+        if (midiDev > midiOuts.size() || midiDev < 0) midiDev = -1;
+    }
+    std::cout << "selecting a device " << midiDev << std::endl;
+    midiUtils.selectOutputDevice(midiDev);
+    midiUtils.allNotesOff();
+}
+
 
 int main()
 {
@@ -47,6 +78,8 @@ int main()
     std::map<char, double> key_to_note = MidiUtils::getKeyboardToMidiNotes();
     
     MidiUtils midiUtils;
+    //if (wioSerial != "") setupMidiViaWio(midiUtils, wioSerial);
+
     midiUtils.interactiveInitMidi();
     midiUtils.allNotesOff();
   
