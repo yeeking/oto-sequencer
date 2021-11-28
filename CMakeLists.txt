@@ -47,10 +47,12 @@ add_executable(oto-sequencer src/Main.cpp)
 add_executable(testit src/unit_tests.cpp)
 # raspi version with i2c
 add_executable(oto-sequencer-pi src/MainPi.cpp)
+# raw input version
+add_executable(oto-sequencer-raw src/MainRaw.cpp)
 
 # link the main executable to the rapidlib library and pthreads
 target_link_libraries(oto-sequencer seq-lib sequtil-lib midi-lib  -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(oto-sequencer-raw seq-lib sequtil-lib midi-lib  -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(testit seq-lib sequtil-lib midi-lib ml-libs ${CMAKE_THREAD_LIBS_INIT})
-#target_link_libraries(oto-sequencer-pi sequtil-lib seq-lib midi-lib ml-libs grove-libs ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(oto-sequencer-pi seq-lib sequtil-lib midi-lib  -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(oto-sequencer-pi sequtil-lib seq-lib midi-lib ml-libs grove-libs ${CMAKE_THREAD_LIBS_INIT})
 
