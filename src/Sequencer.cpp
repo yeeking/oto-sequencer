@@ -5,6 +5,7 @@
 #include <cmath> // fmod
 #include "Sequencer.h"
 #include <assert.h>     /* assert */
+#include "ChordUtils.h"
 
 Step::Step() : active{true}
 {
@@ -165,6 +166,37 @@ void Sequence::triggerMidiDrumType()
   s.trigger();
 }
 
+void Sequence::triggerMidiChordType()
+{
+  // this is a nice tricksy one
+  // we make several local copies of the step
+  // one for each note in the chord
+  std::vector<double>* data = steps[currentStep].getDataDirect();
+
+  std::vector<double> notes = ChordUtils::getChord(
+   (unsigned int) data->at(Step::note1Ind),
+   (unsigned int) data->at(Step::velInd)
+  );
+
+  for (auto i=0;i<notes.size();i++)
+  {
+    Step s = steps[currentStep];
+    std::vector<double>* data = s.getDataDirect();
+    data->at(Step::note1Ind) = notes[i];
+    // apply changes to local copy if needed      
+    if(transpose > 0) 
+    {
+      if (data->at(Step::note1Ind) > 0 ) // only transpose non-zero steps
+      {
+        data->at(Step::note1Ind) = fmod(data->at(Step::note1Ind) + transpose, 127);
+      }
+    }
+    // trigger the local, adjusted copy of the step
+    s.trigger();
+  }
+
+}
+
 
 /** 
  * Called when the sequence ticks and it is a transpose type
@@ -174,10 +206,11 @@ void Sequence::triggerTransposeType()
 {
   if (steps[currentStep].isActive() )
   {
-    std::vector<double> data = steps[currentStep].getData();
-    if (data[Step::note1Ind] != 0) // only do anything if they set a non-zero value
+    std::vector<double>* data = steps[currentStep].getDataDirect();
+    if (data->at(Step::note1Ind) > 0 ) // only transpose non-zero steps
     {
-      sequencer->getSequence(data[Step::channelInd])->setTranspose(data[Step::note1Ind]);
+      sequencer->getSequence(data->at(Step::channelInd))->setTranspose(
+        fmod(data->at(Step::note1Ind), 12) );
     }
   }
 } 
@@ -187,10 +220,11 @@ void Sequence::triggerLengthType()
   //return; 
   if (steps[currentStep].isActive())
   {
-    std::vector<double> data = steps[currentStep].getData();  
-    if (data[Step::note1Ind] != 0) // only do anything if they set a non-zero value
-    { 
-      sequencer->getSequence(data[Step::channelInd])->setLengthAdjustment(data[Step::note1Ind]);
+    std::vector<double>* data = steps[currentStep].getDataDirect();
+    if (data->at(Step::note1Ind) > 0 ) // only transpose non-zero steps
+    {
+      sequencer->getSequence(data->at(Step::channelInd))->setLengthAdjustment(
+        fmod(data->at(Step::note1Ind), 12) );
     }
   }   
 }
@@ -200,9 +234,10 @@ void Sequence::triggerTickType()
   if (steps[currentStep].isActive() )
   {
     std::vector<double>* data = steps[currentStep].getDataDirect();
-    if (data->at(Step::note1Ind) != 0) // only do anything if they set a non-zero value
+    if (data->at(Step::note1Ind) > 0 ) // only transpose non-zero steps
     {
-      sequencer->getSequence(data->at(Step::channelInd))->setTicksPerStep(data->at(Step::note1Ind));
+      sequencer->getSequence(data->at(Step::channelInd))->setTicksPerStep(
+        fmod(data->at(Step::note1Ind), 6) );
     }
   }
 } 

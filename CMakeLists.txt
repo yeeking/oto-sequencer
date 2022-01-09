@@ -33,12 +33,16 @@ FIND_PACKAGE ( Threads REQUIRED )
 add_library(ml-libs ${ML_LIB_DIR})
 add_library(grove-libs ${GROVE_LIB_DIR})
 
+
+# build the chord utils
+add_library(chordutil-lib src/ChordUtils.cpp)
 # build the sequencer library
 add_library(seq-lib src/Sequencer.cpp)
 # build the midi utils
 add_library(midi-lib src/MidiUtils.cpp)
 # build the seq utils
 add_library(sequtil-lib src/SequencerUtils.cpp)
+
 
 # build the executable
 # for normal linux without i2c stuff
@@ -47,12 +51,12 @@ add_executable(oto-sequencer src/Main.cpp)
 add_executable(testit src/unit_tests.cpp)
 # raspi version with i2c
 add_executable(oto-sequencer-pi src/MainPi.cpp)
-# raw input version
+# raw input version using linux /dev/input
 add_executable(oto-sequencer-raw src/MainRaw.cpp)
 
 # link the main executable to the rapidlib library and pthreads
-target_link_libraries(oto-sequencer seq-lib sequtil-lib midi-lib  -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(oto-sequencer-raw seq-lib sequtil-lib midi-lib  -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(testit seq-lib sequtil-lib midi-lib ml-libs ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(oto-sequencer-pi sequtil-lib seq-lib midi-lib ml-libs grove-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(oto-sequencer  seq-lib sequtil-lib chordutil-lib midi-lib  -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(oto-sequencer-raw seq-lib sequtil-lib chordutil-lib  midi-lib  -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(testit seq-lib sequtil-lib chordutil-lib  midi-lib ml-libs ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(oto-sequencer-pi chordutil-lib sequtil-lib seq-lib midi-lib ml-libs grove-libs ${CMAKE_THREAD_LIBS_INIT})
 

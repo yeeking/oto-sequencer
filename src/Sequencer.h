@@ -62,7 +62,7 @@ class Sequencer;
  * samplePlayer triggers internal samples
  * transposer transposes another sequence 
  **/
-enum class SequenceType {midiNote, drumMidi, samplePlayer, transposer, lengthChanger, tickChanger};
+enum class SequenceType {midiNote, drumMidi, chordMidi, samplePlayer, transposer, lengthChanger, tickChanger};
 
 class Sequence{
   public:
@@ -146,8 +146,11 @@ class Sequence{
      * 
     */
     void triggerMidiNoteType(); 
-    /** functoin called when the sequence ticks and it is SequenceType::midiDrum*/
-    void triggerMidiDrumType(); 
+    /** function called when the sequence ticks and it is SequenceType::midiDrum*/
+    void triggerMidiDrumType();
+    /** function called when the sequence ticks and it is SequenceType::midiChord*/
+    void triggerMidiChordType();
+     
     /** 
      * Called when the sequence ticks and it is a transpose type SequenceType::transposer
     */

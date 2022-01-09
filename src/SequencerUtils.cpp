@@ -1,8 +1,6 @@
-/** TODO: split this to h and cpp */
 #include "SequencerUtils.h"
 #include <cmath> // fmod
 #include <assert.h>
-
 
 SequencerEditor::SequencerEditor(Sequencer* sequencer) : sequencer{sequencer}, currentSequence{0}, currentStep{0}, currentStepIndex{0}, editMode{SequencerEditorMode::selectingSeqAndStep}, editSubMode{SequencerEditorSubMode::editCol1}, stepIncrement{0.5f}
 {
@@ -151,41 +149,13 @@ if (note < 0 || note > 127) return;
     if (editMode == SequencerEditorMode::editingStep ||
         editMode == SequencerEditorMode::selectingSeqAndStep)
     {     
-    std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
-    // set a default vel and len if needed.
-    if (data[Step::velInd] == 0) data[Step::velInd] = 64;
-    if (data[Step::lengthInd] == 0) data[Step::lengthInd] = 1; // two ticks
-    switch (sequencer->getSequenceType(currentSequence))
-    {
-        case SequenceType::midiNote: // midi note - 0-127
-        {
-        data[Step::note1Ind] = note; 
-        break;
-        }
-        case SequenceType::drumMidi: // midi note - 0-127
-        {
-        data[Step::note1Ind] = note; 
-        break;
-        }
-        
-        case SequenceType::transposer: // transposition - 0-12
-        {
-        data[Step::note1Ind] = fmod(note, 12);
-        break;    
-        }
-        case SequenceType::lengthChanger:// length adjust - 0-12
-        {
-        data[Step::note1Ind] = fmod(note, 12);
-        break;    
-        }
-        case SequenceType::tickChanger:// length adjust - 0-12
-        {
-        data[Step::note1Ind] = fmod(note, 12);
-        break;    
-        }
-        
-    }        
-    writeStepData(data);
+      std::vector<double> data = sequencer->getStepData(currentSequence, currentStep);
+      // set a default vel and len if needed.
+      if (data[Step::velInd] == 0) data[Step::velInd] = 64;
+      if (data[Step::lengthInd] == 0) data[Step::lengthInd] = 1; // two ticks
+      
+      data[Step::note1Ind] = note; 
+      writeStepData(data);
     }
     // after note update in this mode, 
     // move to the next note
@@ -598,6 +568,9 @@ void SequencerEditor::nextSequenceType(Sequencer* seqr, unsigned int sequence)
       seqr->setSequenceType(sequence, SequenceType::drumMidi);
       break;
      case SequenceType::drumMidi:
+      seqr->setSequenceType(sequence, SequenceType::chordMidi);
+      break;
+     case SequenceType::chordMidi:
       seqr->setSequenceType(sequence, SequenceType::transposer);
       break;
      case SequenceType::transposer:
