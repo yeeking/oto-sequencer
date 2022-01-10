@@ -734,6 +734,9 @@ std::string SequencerViewer::getSequenceConfigView(const unsigned int channel, c
     case SequenceType::drumMidi:
         disp += "drum";
         break;
+    case SequenceType::chordMidi:
+        disp += "chord";
+        break;
     case SequenceType::transposer:
         disp += "transposer";
         break;
@@ -829,8 +832,10 @@ std::string SequencerViewer::getSequencerView(const int max_rows, const int cols
             //   : gone past the end of the sequence
             state = 'o';    
             // get note name
-            if (sequencer->howManySteps(displaySeq) > displayStep  && 
-                sequencer->getSequenceType(displaySeq) == SequenceType::midiNote)
+            if (sequencer->howManySteps(displaySeq) > displayStep  &&
+            (sequencer->getSequenceType(displaySeq) == SequenceType::chordMidi ||
+                sequencer->getSequenceType(displaySeq) == SequenceType::midiNote
+            ))
             {
               
             state = noteToNote[

@@ -6,7 +6,7 @@
 #include "RapidLibUtils.h"
 #include "EventQueue.h"
 #include <fstream>
-
+#include "ChordUtils.h"
 
 bool assertStrEqual(std::string want, std::string got)
 {
@@ -1424,6 +1424,13 @@ bool testSetAllChannels()
   return true;
 }
 
+bool testChord()
+{
+  std::vector<double> chord = ChordUtils::getChord(48, 0);
+  if (chord[0] == 0) return false;
+  return true;
+}
+
 int global_pass_count = 0;
 int global_fail_count = 0;
 
@@ -1537,6 +1544,6 @@ int main()
 //log("testDrumDisplay", testDrumDisplay());
 //log("testExtendSeqCorrectStepChannel", testExtendSeqCorrectStepChannel());
 //log("testSongMode", testSongMode());
-log("testSetAllChannels", testSetAllChannels());
+log("testChord", testChord());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

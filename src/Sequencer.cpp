@@ -99,6 +99,10 @@ void Sequence::tick(bool trigger)
         case SequenceType::drumMidi:
           triggerMidiDrumType();
           break;
+        case SequenceType::chordMidi:
+          triggerMidiChordType();
+          break;
+          
         case SequenceType::transposer:
           triggerTransposeType();
           break;
@@ -172,36 +176,35 @@ void Sequence::triggerMidiChordType()
   // we make several local copies of the step
   // one for each note in the chord
   std::vector<double>* data = steps[currentStep].getDataDirect();
-
+  assert(data->size() > 0);
+  if (data->at(Step::note1Ind) > 0)
+  {
   std::vector<double> notes = ChordUtils::getChord(
    (unsigned int) data->at(Step::note1Ind),
    (unsigned int) data->at(Step::velInd)
   );
+  std::cout << "Sequencer::note " << notes[0] << ":" << data->at(Step::note1Ind) << std::endl;
 
-  for (auto i=0;i<notes.size();i++)
-  {
-    Step s = steps[currentStep];
-    std::vector<double>* data = s.getDataDirect();
-    data->at(Step::note1Ind) = notes[i];
-    // apply changes to local copy if needed      
-    if(transpose > 0) 
-    {
-      if (data->at(Step::note1Ind) > 0 ) // only transpose non-zero steps
-      {
-        data->at(Step::note1Ind) = fmod(data->at(Step::note1Ind) + transpose, 127);
-      }
-    }
-    // trigger the local, adjusted copy of the step
-    s.trigger();
-  }
-
+  // for (auto i=0;i<notes.size();i++)
+  // {
+  //   Step s = steps[currentStep];
+  //   std::vector<double>* data = s.getDataDirect();
+  //   data->at(Step::note1Ind) = notes[i];
+  //   // apply changes to local copy if needed      
+  //   if(transpose > 0) 
+  //   {
+  //     if (data->at(Step::note1Ind) > 0 ) // only transpose non-zero steps
+  //     {
+  //       data->at(Step::note1Ind) = fmod(data->at(Step::note1Ind) + transpose, 127);
+  //     }
+  //   }
+  //   // trigger the local, adjusted copy of the step
+  //   s.trigger();
+  // }
+  }   
 }
 
 
-/** 
- * Called when the sequence ticks and it is a transpose type
- * Causes this sequence to apply a transpose to another sequence
-*/
 void Sequence::triggerTransposeType()
 {
   if (steps[currentStep].isActive() )
