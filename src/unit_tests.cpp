@@ -1431,6 +1431,30 @@ bool testChord()
   return true;
 }
 
+bool testPlayChord()
+{
+  Sequencer seqr{2, 2};
+  std::string test {""};
+  Sequence seq{&seqr};
+  seq.setTicksPerStep(1);
+ //seq.setType(SequenceType::midiNote);
+  
+  seq.setType(SequenceType::chordMidi);
+  for (auto i = 0; i < seq.getLength();i++)
+  {
+    seq.setStepData(i, {60,60,60,60});
+
+    seq.setStepCallback(i, 
+        [&test,i](std::vector<double>* data){
+          std::cout << "Tick step callback " << i << ":" << data->at(Step::note1Ind) << std::endl;
+          test = std::to_string((int)data->at(Step::note1Ind));
+        });
+  }
+
+  for (auto i=0; i<8;i++) seq.tick(); 
+  return true; 
+}
+
 int global_pass_count = 0;
 int global_fail_count = 0;
 
@@ -1544,6 +1568,6 @@ int main()
 //log("testDrumDisplay", testDrumDisplay());
 //log("testExtendSeqCorrectStepChannel", testExtendSeqCorrectStepChannel());
 //log("testSongMode", testSongMode());
-log("testChord", testChord());
+log("testPlayChord", testPlayChord());
   std::cout << "passed: " << global_pass_count << " \nfailed: " << global_fail_count << std::endl;
 }

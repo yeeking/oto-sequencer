@@ -49,6 +49,7 @@ std::function<void(std::vector<double>*)> Step::getCallback()
 /** trigger this step, causing it to pass its data to its callback*/
 void Step::trigger() 
 { 
+  std::cout << "Step::trigger" << std::endl;
   if (active && data[Step::note1Ind] != 0) stepCallback(&data);
 }
 /** toggle the activity status of this step*/
@@ -86,6 +87,7 @@ Sequence::Sequence(Sequencer* sequencer,
 /** go to the next step */
 void Sequence::tick(bool trigger)
 {
+  std::cout << "Sequence::tick" << std::endl;
   ++ticksElapsed;
 
   if (ticksElapsed == ticksPerStep)
