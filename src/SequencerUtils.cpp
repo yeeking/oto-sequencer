@@ -568,11 +568,11 @@ void SequencerEditor::nextSequenceType(Sequencer* seqr, unsigned int sequence)
       seqr->setSequenceType(sequence, SequenceType::drumMidi);
       break;
      case SequenceType::drumMidi:
-      seqr->setSequenceType(sequence, SequenceType::chordMidi);
-      break;
-     case SequenceType::chordMidi:
       seqr->setSequenceType(sequence, SequenceType::transposer);
       break;
+    //  case SequenceType::chordMidi:
+    //   seqr->setSequenceType(sequence, SequenceType::transposer);
+    //   break;
      case SequenceType::transposer:
       seqr->setSequenceType(sequence, SequenceType::lengthChanger);
       break;
@@ -734,9 +734,9 @@ std::string SequencerViewer::getSequenceConfigView(const unsigned int channel, c
     case SequenceType::drumMidi:
         disp += "drum";
         break;
-    case SequenceType::chordMidi:
-        disp += "chord";
-        break;
+    // case SequenceType::chordMidi:
+    //     disp += "chord";
+    //     break;
     case SequenceType::transposer:
         disp += "transposer";
         break;
@@ -752,7 +752,8 @@ std::string SequencerViewer::getSequenceConfigView(const unsigned int channel, c
     }
     if (editField == SequencerEditorSubMode::editCol2) disp += "]";
     else disp += " ";
-
+    
+    disp += "\n";
     if (editField == SequencerEditorSubMode::editCol3) disp += "[";
     else disp += " ";
     disp += "tps:" + std::to_string(ticksPerStep);
