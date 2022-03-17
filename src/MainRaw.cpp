@@ -24,7 +24,7 @@ void updateClockCallbackIndex(SimpleClock& clock,
 clock.setCallback([&seqrs, seqInd, &seqEditor, &midiUtils, &clock, &wioSerial](){
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
 
-      std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
+      std::string output = SequencerViewer::toTextDisplay(9, 13, seqrs[seqInd], &seqEditor);
       if (wioSerial != "")
         Display::redrawToWio(wioSerial, output);
       else
