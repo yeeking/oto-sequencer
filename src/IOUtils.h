@@ -13,7 +13,6 @@
 
 class Display{
     public:
-    //static 
 
     /** attempts to get the serial device filename 
      * if it fails, returns ""
@@ -108,6 +107,7 @@ class KeyReader
         {
           
             int rd, code_id, ev_count, key_code;
+            //std::cout << "KeyUtils::getChar called " << std::endl;
             ev_count = 0;
             key_code = 0;
             // keep reading until 
@@ -116,11 +116,11 @@ class KeyReader
             {
                 rd = read(file_ref, ev, sizeof(struct input_event) * 64);
                 //printf("read %i\n", rd);
-                // if (rd > 48) 
-                // {
-                //   printf("Ignoring\n");
-                //   continue; // holding lots of keys, ignore.
-                // }
+                if (rd > 48) 
+                {
+                  //printf("Ignoring\n");
+                  continue; // holding lots of keys, ignore.
+                }
                 ev_count = rd / sizeof(struct input_event);
                 if(ev_count == 2)
                 {
@@ -133,6 +133,7 @@ class KeyReader
 
                 // .code tells you the key they pressed
                 key_code = ev[code_id].code;
+                // they switched keys so we just return the original
                 // .value tells you key up, down, hold 
                 //1 and 2 are key down or held events
                // if (ev[code_id].value == 1 || ev[code_id].value == 2)
@@ -140,15 +141,14 @@ class KeyReader
                
                 if (ev[code_id].value == 0) // only break on key up...
                 {
-          //          std::cout << "KeyUtils:: breaking " << std::endl;
+                   std::cout << "KeyUtils:: breaking " << std::endl;
                     break;
                 }
-                // else {
-                //     std::cout << "KeyUtils:: waiting " << std::endl;
-                // }
+                else {
+                    //std::cout << "KeyUtils:: waiting " << std::endl;
+                }
             }
-            //std::cout << "KeyUtils:: returning " << key_code << std::endl;
-
+            //std::cout << "KeyUtils:: returning " << key_code << " calls " << calls << std::endl;
             return key_code;  
         }
     /** returns a map from the chars obtained from getChar cast to ints to 
@@ -211,7 +211,6 @@ class KeyReader
 
     private:
         struct input_event ev[64];
-        
         int file_ref;
 };
 

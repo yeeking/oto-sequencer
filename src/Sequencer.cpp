@@ -117,13 +117,15 @@ void Sequence::tick(bool trigger)
         default:
           std::cout << "Sequnce::tick warning unkown seq type" << std::endl;
           break;
-      }} // end of if trigger
+      }
     if (currentLength + lengthAdjustment < 1) currentStep = 0;
     else currentStep = (++currentStep) % (currentLength + lengthAdjustment);
     if (currentStep >= steps.size()) currentStep = 0;
     assert(currentStep >= 0 && currentStep < steps.size());
     // switch off any adjusters when we are at step 0
     if (currentStep == 0) deactivateProcessors();
+
+    } // end of if trigger
 
   }
   

@@ -14,31 +14,6 @@
 #include "IOUtils.h"
 
 
-void updateClockCallbackIndex(SimpleClock& clock,
-			              std::vector<Sequencer*>& seqrs,
-                    int seqInd, 
-                    SequencerEditor& seqEditor, 
-                    MidiUtils& midiUtils, 
-                    std::string& wioSerial)
-{
-clock.setCallback([&seqrs, seqInd, &seqEditor, &midiUtils, &clock, &wioSerial](){
-      midiUtils.sendQueuedMessages(clock.getCurrentTick());
-
-      std::string output = SequencerViewer::toTextDisplay(9, 13, seqrs[seqInd], &seqEditor);
-      if (wioSerial != "")
-        Display::redrawToWio(wioSerial, output);
-      else
-        Display::redrawToConsole(output);
-
-      for (int i=0;i<seqrs.size(); ++i)
-      {
-        if (i == seqInd) seqrs[i]->tick();
-        else seqrs[i]->tick(false);   
-      }
-    });
-}
-
-
 
 void updateClockCallback(SimpleClock& clock,
 			              std::vector<Sequencer*>& seqrs,
@@ -136,18 +111,13 @@ int main()
       );
     }
 
-    // updateClockCallback(clock,
-		//             	seqrs, 
-    //                     currentSeqr, 
-    //                     seqEditor, 
-    //                     midiUtils, 
-    //                     wioSerial);
-        updateClockCallbackIndex(clock,
-		            	          seqrs, 
-                        0, 
+    updateClockCallback(clock,
+		                  	seqrs, 
+                        currentSeqr, 
                         seqEditor, 
                         midiUtils, 
                         wioSerial);
+
     
     // this will map joystick x,y to 16 sequences
     //rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
@@ -172,6 +142,7 @@ int main()
       //input = KeyReader::getCharNoEcho();
       //input = keyMap[(int)keyReader.getChar()];
         input = keyReader.getChar();
+        std::cout << "got input " << input << std::endl;
         int asciiInput = (int) keyMap[(int)input];
         char letterInput = keyMap[(int) input ];
     switch(letterInput)
@@ -232,35 +203,35 @@ int main()
         continue; 
 
     }// send switch on key
-
     // this is the implementation
     // of sequencer switching where keys 1->seqrs.size
     // trigger switch to different sequencer
     for (int i=0;i<seqrs.size();i++)
     {
+      // don't allow multiple triggers until they
+      // did something else
+    
         //if (false)
         if (asciiInput == 49 + i) // ascii 1 == 49
         {
             assert (i < seqrs.size());
+            std::cout << "Switching seq to " << i << std::endl;
+            
             midiUtils.allNotesOff();
             currentSeqr = seqrs[i];
-            //clock needs to know it is calling 
-            //tick on a different sequencer
-            // updateClockCallback(clock,
-            //         seqrs, 
-            //         currentSeqr, 
-            //         seqEditor, 
-            //         midiUtils, 
-            //         wioSerial);
-              updateClockCallbackIndex(clock,
+            // //clock needs to know it is calling 
+            // //tick on a different sequencer
+            seqEditor.setSequencer(seqrs[i]);
+            seqEditor.resetCursor();
+
+            updateClockCallback(clock,
                     seqrs, 
-                    i, 
+                    currentSeqr, 
                     seqEditor, 
                     midiUtils, 
                     wioSerial);
-
-            seqEditor.setSequencer(seqrs[i]);
-            seqEditor.resetCursor();
+            
+            std::cout << "Done switching pattern" << std::endl;
             break;
         }
     }
@@ -282,8 +253,8 @@ int main()
       if (redraw)
       {
         std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
-        Display::redrawToConsole(output);
         if (wioSerial != "") Display::redrawToWio(wioSerial, output);
+        else Display::redrawToConsole(output);
       }
       // make sure all sequences have the same channels and types as eachother
    
