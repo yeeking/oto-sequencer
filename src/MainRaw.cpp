@@ -14,10 +14,34 @@
 #include "IOUtils.h"
 
 
+void updateClockCallbackIndex(SimpleClock& clock,
+			              std::vector<Sequencer*>& seqrs,
+                    int seqInd, 
+                    SequencerEditor& seqEditor, 
+                    MidiUtils& midiUtils, 
+                    std::string& wioSerial)
+{
+clock.setCallback([&seqrs, seqInd, &seqEditor, &midiUtils, &clock, &wioSerial](){
+      midiUtils.sendQueuedMessages(clock.getCurrentTick());
+
+      std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
+      if (wioSerial != "")
+        Display::redrawToWio(wioSerial, output);
+      else
+        Display::redrawToConsole(output);
+
+      for (int i=0;i<seqrs.size(); ++i)
+      {
+        if (i == seqInd) seqrs[i]->tick();
+        else seqrs[i]->tick(false);   
+      }
+    });
+}
+
 
 
 void updateClockCallback(SimpleClock& clock,
-			std::vector<Sequencer*>& seqrs,
+			              std::vector<Sequencer*>& seqrs,
                     Sequencer* currentSeqr, 
                     SequencerEditor& seqEditor, 
                     MidiUtils& midiUtils, 
@@ -27,9 +51,10 @@ void updateClockCallback(SimpleClock& clock,
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
 
       std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
-      Display::redrawToConsole(output);
       if (wioSerial != "")
         Display::redrawToWio(wioSerial, output);
+      else
+        Display::redrawToConsole(output);
       for (Sequencer* s : seqrs)
       {
         //s->tick(false);
@@ -111,9 +136,15 @@ int main()
       );
     }
 
-    updateClockCallback(clock,
-		            	seqrs, 
-                        currentSeqr, 
+    // updateClockCallback(clock,
+		//             	seqrs, 
+    //                     currentSeqr, 
+    //                     seqEditor, 
+    //                     midiUtils, 
+    //                     wioSerial);
+        updateClockCallbackIndex(clock,
+		            	          seqrs, 
+                        0, 
                         seqEditor, 
                         midiUtils, 
                         wioSerial);
@@ -215,13 +246,20 @@ int main()
             currentSeqr = seqrs[i];
             //clock needs to know it is calling 
             //tick on a different sequencer
-            updateClockCallback(clock,
+            // updateClockCallback(clock,
+            //         seqrs, 
+            //         currentSeqr, 
+            //         seqEditor, 
+            //         midiUtils, 
+            //         wioSerial);
+              updateClockCallbackIndex(clock,
                     seqrs, 
-                    currentSeqr, 
+                    i, 
                     seqEditor, 
                     midiUtils, 
                     wioSerial);
-            seqEditor.setSequencer(currentSeqr);
+
+            seqEditor.setSequencer(seqrs[i]);
             seqEditor.resetCursor();
             break;
         }
