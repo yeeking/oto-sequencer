@@ -6,7 +6,7 @@ import os
 arduino = serial.Serial(port='/dev/ttyACM0', baudrate=115200, timeout=.1)
 
 def restart_seq():
-    os.system('/home/matthewyk/src/audio-projects/oto-sequencer/launcher.sh')
+    os.system('~/launcher.sh')
 
 def write_read():
     # arduino.write(bytes(x+'\t', 'utf-8'))
