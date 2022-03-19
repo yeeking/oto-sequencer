@@ -1,4 +1,10 @@
-# Importing Libraries
+## Simple python script that reads from an arduino 
+## serial port, looking for the text 'click'
+## and running a shell command if it gets 'click'
+## works in collaboration with a wio terminal 
+## running a script that writes click to serial
+## when its joystick is clicked
+
 import serial
 import time
 import os 
