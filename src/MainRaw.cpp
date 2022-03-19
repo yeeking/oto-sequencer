@@ -25,11 +25,11 @@ void updateClockCallback(SimpleClock& clock,
   clock.setCallback([&seqrs, currentSeqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
 
-      std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
-      if (wioSerial != "")
-        Display::redrawToWio(wioSerial, output);
-      else
-        Display::redrawToConsole(output);
+      //std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
+      // if (wioSerial != "")
+      //   Display::redrawToWio(wioSerial, output);
+      // else
+      //   Display::redrawToConsole(output);
       for (Sequencer* s : seqrs)
       {
         //s->tick(false);
@@ -85,6 +85,8 @@ int main()
     midiUtils.allNotesOff();
   
     SimpleClock clock{};
+    SimpleClock drawClock{};
+
 
     // create a vector of sequences
     std::vector<Sequencer*> seqrs{};
@@ -137,6 +139,15 @@ int main()
                         seqEditor, 
                         midiUtils, 
                         wioSerial);
+
+    drawClock.setCallback([currentSeqr, &seqEditor, &wioSerial](){
+        std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
+      if (wioSerial != "")
+        Display::redrawToWio(wioSerial, output);
+      else
+        Display::redrawToConsole(output);
+    });
+    drawClock.start(100);
 
     
     // this will map joystick x,y to 16 sequences
@@ -280,6 +291,7 @@ int main()
    
     }// end of key input loop
   clock.stop();
+  drawClock.stop();
 
   midiUtils.allNotesOff();
   for (Sequencer* s : seqrs) delete s;
