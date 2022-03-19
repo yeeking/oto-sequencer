@@ -21,36 +21,24 @@ void setup() {
   spr.createSprite(TFT_HEIGHT,TFT_WIDTH); //Create buffer
   spr.fillSprite(tft.color565(0,0,0)); //Fill background with white color
  spr.pushSprite(0,0); //Push to LCD
-
+//https://github.com/lakshanthad/Wio_Terminal_Classroom_Arduino/blob/main/Classroom%208/5-way_switch_test/5-way_switch_test.ino
+  pinMode(WIO_5S_UP, INPUT); //set switch pin up as input
+  pinMode(WIO_5S_DOWN, INPUT); //set switch pin down as input
+  pinMode(WIO_5S_LEFT, INPUT); //set switch pin left as input
+  pinMode(WIO_5S_RIGHT, INPUT); //set switch pin right as input
+  pinMode(WIO_5S_PRESS, INPUT); //set switch pin press as input
 }
 
-
-// void setup ()
-//   {
-//   Serial.begin (115200);
-//   } // end of setup
 
 // here to process incoming serial data after a terminator received
 void process_data (const char * data)
   {
     String str{data};
-  // for now just display it
-  // (but you could compare it to some value, convert to an integer, etc.)
-//  Serial.println (data);
-  // if (y_pos > max_height)
-  // {
-  //   // clear screen
-  //   spr.fillSprite(tft.color565(0,0,0)); 
-  //   y_pos = 0;
-  // }
+    spr.setTextColor(0xFAA0); //set text color
+    spr.setFreeFont(FMB18); //set font 
 
-
-  spr.setTextColor(0xFAA0); //set text color
-  spr.setFreeFont(FMB18); //set font 
- // spr.drawString(data,0,y_pos); //draw string 
-//   y_pos += row_h;
-  // now draw it line by line
- spr.fillSprite(tft.color565(0,0,0)); //Fill background with white color
+    // now draw it line by line
+   spr.fillSprite(tft.color565(0,0,0)); //Fill background with white color
  
   int startPos = 0;
   int endPos = 0; 
@@ -105,6 +93,26 @@ void loop()
   while (Serial.available () > 0)
     processIncomingByte (Serial.read ());
 
-  // do other stuff here like testing digital input (button presses) ...
 
+  // do other stuff here like testing digital input (button presses) ...
+  if (digitalRead(WIO_5S_UP) == LOW) { //check whether switch is moved up 
+  Serial.println("UP");
+   delay(1000); //hold text on screen 
+  }
+  else if (digitalRead(WIO_5S_DOWN) == LOW) {
+  Serial.println("DOWN");
+   delay(1000);
+  }
+  else if (digitalRead(WIO_5S_LEFT) == LOW) {
+    Serial.println("LEFT");
+   delay(1000);
+  }
+  else if (digitalRead(WIO_5S_RIGHT) == LOW) {
+    Serial.println("RIGHT");
+   delay(1000);
+  }
+  else if (digitalRead(WIO_5S_PRESS) == LOW) {
+    Serial.println("CLICK");
+   delay(1000);
+  }
   }  // end of loop

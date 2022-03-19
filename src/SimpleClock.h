@@ -50,7 +50,7 @@ class SimpleClock
     }
     void tick()
     {
-      while(inTick) ;
+      //while(inTick) ;
 	//	std::cout << "tick in tick" << std::endl;// wait until not in ti
       inTick = true;// mutex stuff
       currentTick ++;

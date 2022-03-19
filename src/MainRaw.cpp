@@ -109,6 +109,26 @@ int main()
             }
           }
       );
+      // 4 drum channels on 10
+      int channel = 9; 
+      for (int seq=0;seq < seqr->howManySequences() && seq < 4; ++seq)
+      {
+        seqr->setSequenceType(seq, SequenceType::drumMidi);
+        for (int step=0; step < seqr->howManySteps(seq); ++step)
+        {
+          seqr->updateStepData(seq, step, Step::channelInd, channel);
+        }
+      }
+      // 4 synth channels on 1
+      channel = 0; 
+      for (int seq=4;seq < seqr->howManySequences() && seq < 8; ++seq)
+      {
+            seqr->setSequenceType(seq, SequenceType::midiNote);
+        for (int step=0; step < seqr->howManySteps(seq); ++step)
+        {
+          seqr->updateStepData(seq, step, Step::channelInd, channel);
+        }
+      }
     }
 
     updateClockCallback(clock,
@@ -142,9 +162,9 @@ int main()
       //input = KeyReader::getCharNoEcho();
       //input = keyMap[(int)keyReader.getChar()];
         input = keyReader.getChar();
-        std::cout << "got input " << input << std::endl;
         int asciiInput = (int) keyMap[(int)input];
         char letterInput = keyMap[(int) input ];
+        printf("Letter: %c \n", letterInput);
     switch(letterInput)
     {
         case '\t':  // next 'mode'
@@ -159,12 +179,12 @@ int main()
         case ' ': // mute
         seqEditor.cycleAtCursor();
         continue;
-        case '-': // slower
+        case '0': // slower
         clockIntervalMs += 5;
         clock.stop();
         clock.start(clockIntervalMs);
         continue;
-        case '=': // faster
+        case '9': // faster
         clockIntervalMs -= 5;
         clock.stop();
         clock.start(clockIntervalMs);

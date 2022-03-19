@@ -275,7 +275,7 @@ void SequencerEditor::moveCursorLeft()
     }
     case SequencerEditorMode::configuringSequence:
     {
-        SequencerEditor::nextSequenceType(sequencer, currentSequence);
+        //SequencerEditor::nextSequenceType(sequencer, currentSequence);
         break;
     }
     }
@@ -305,7 +305,7 @@ void SequencerEditor::moveCursorRight()
     case SequencerEditorMode::configuringSequence:
     {
     // right changes the type
-        SequencerEditor::nextSequenceType(sequencer, currentSequence);
+      //  SequencerEditor::nextSequenceType(sequencer, currentSequence);
         break;
     }
     }

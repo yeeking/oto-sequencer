@@ -1443,7 +1443,6 @@ bool testPlayChord()
   for (auto i = 0; i < seq.getLength();i++)
   {
     seq.setStepData(i, {60,60,60,60});
-
     seq.setStepCallback(i, 
         [&test,i](std::vector<double>* data){
           std::cout << "Tick step callback " << i << ":" << data->at(Step::note1Ind) << std::endl;
