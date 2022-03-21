@@ -14,8 +14,8 @@
 #include "IOUtils.h"
 
 
-
 void updateClockCallback(SimpleClock& clock,
+                         SimpleClock& drawClock, 
 			              std::vector<Sequencer*>& seqrs,
                     Sequencer* currentSeqr, 
                     SequencerEditor& seqEditor, 
@@ -24,20 +24,20 @@ void updateClockCallback(SimpleClock& clock,
 {
   clock.setCallback([&seqrs, currentSeqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
-
-      //std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
-      // if (wioSerial != "")
-      //   Display::redrawToWio(wioSerial, output);
-      // else
-      //   Display::redrawToConsole(output);
       for (Sequencer* s : seqrs)
       {
-        //s->tick(false);
         // only do a proper trigger on current seq
         if (currentSeqr == s) s->tick();
         // otherwise tick without trigger
         else s->tick(false);
       }
+    });
+      drawClock.setCallback([currentSeqr, &seqEditor, &wioSerial](){
+        std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
+      if (wioSerial != "")
+        Display::redrawToWio(wioSerial, output);
+      else
+        Display::redrawToConsole(output);
     });
 }
 
@@ -134,26 +134,23 @@ int main()
     }
 
     updateClockCallback(clock,
+                        drawClock,
 		                  	seqrs, 
                         currentSeqr, 
                         seqEditor, 
                         midiUtils, 
                         wioSerial);
 
-    drawClock.setCallback([currentSeqr, &seqEditor, &wioSerial](){
-        std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
-      if (wioSerial != "")
-        Display::redrawToWio(wioSerial, output);
-      else
-        Display::redrawToConsole(output);
-    });
-    drawClock.start(100);
+  
 
     
     // this will map joystick x,y to 16 sequences
     //rapidLib::regression network = NeuralNetwork::getMelodyStepsRegressor();
     int clockIntervalMs = 125;  
     clock.start(clockIntervalMs);
+  // 10 times a second for the drawClock
+    drawClock.start(100);
+
     char input {1};
     bool escaped = false;
     bool redraw = false; 
@@ -256,6 +253,7 @@ int main()
             seqEditor.resetCursor();
 
             updateClockCallback(clock,
+            drawClock, 
                     seqrs, 
                     currentSeqr, 
                     seqEditor, 
