@@ -9,18 +9,21 @@ To build, first set up the cmake stuff:
    cmake ..
 ```
 
-On raspberry pi (using grove sensors):
-```
-   make oto-sequencer-pi
-   ./oto-sequencer-pi
-```
-
 On normal linux or raspi linux without grove sensors:
 
 ```
   make oto-sequencer
   ./oto-sequencer
 ```
+
+
+On raspberry pi (using grove sensors):
+```
+   make oto-sequencer-pi
+   ./oto-sequencer-pi
+```
+
+
 ## Keys
 
 In all modes:

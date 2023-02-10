@@ -11,7 +11,11 @@
 #include "SequencerUtils.h"
 #include "RapidLibUtils.h"
 #include "MidiUtils.h"
-#include "IOUtils.h"
+//#include "IOUtils.h"
+
+define DISP_COLS = 32;
+
+
 
 void updateClockCallback(SimpleClock& clock,
 			std::vector<Sequencer*>& seqrs,
@@ -23,7 +27,7 @@ void updateClockCallback(SimpleClock& clock,
   clock.setCallback([&seqrs, currentSeqr, &seqEditor, &midiUtils, &clock, &wioSerial](){
       midiUtils.sendQueuedMessages(clock.getCurrentTick());
 
-      std::string output = SequencerViewer::toTextDisplay(9, 13, currentSeqr, &seqEditor);
+      std::string output = SequencerViewer::toTextDisplay(9, 32, currentSeqr, &seqEditor);
       Display::redrawToConsole(output);
       if (wioSerial != "")
         Display::redrawToWio(wioSerial, output);
