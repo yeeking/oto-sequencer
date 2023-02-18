@@ -75,8 +75,13 @@ public:
 
     /** add some midi to be played at the sent sample offset*/
     void addMidi(juce::MidiMessage msg);
+    /** configure the audio device according to current config*/
+    void configureAudioDevice(juce::AudioDeviceManager& dev, juce::String desiredDevice="Pulse");
 
 private:
+    void loadConfig(juce::File config);
+  /** returns true if the sent filename is a loadable sample */
+    bool canLoadSample(juce::String filename);
     // /** add a sampler to the graph. results in the creation of a SamplePlayer
     //  * then its conversion to
     // */

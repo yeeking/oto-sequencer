@@ -8,8 +8,8 @@
 
 #include "DrumMachineAudio.h"
 #include "DrumMachineUI.h"
-
-
+// to get access to the audio device
+#include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
 //==============================================================================
 DrumMachineUI::DrumMachineUI (DrumMachineAudio& p, Sequencer* sequencer)
     : AudioProcessorEditor {&p}, audioProcessor {p}, 
@@ -47,7 +47,18 @@ DrumMachineUI::DrumMachineUI (DrumMachineAudio& p, Sequencer* sequencer)
     // this starts the raw key reader which
     // should override the 
     // key focus but only if its working
-    startThread(); // enable this if using low level keyboard driver e.g. pi
+    if (this->processor.wrapperType == this->processor.wrapperType_Standalone){
+      startThread(); // enable this if using low level keyboard driver e.g. pi
+      juce::StandalonePluginHolder* standalone = juce::StandalonePluginHolder::getInstance();
+      if (standalone != nullptr){
+          DBG("DrumMachineAudio:: got access to wrapper" );
+          AudioDeviceManager& manager = standalone->deviceManager;
+          this->audioProcessor.configureAudioDevice(manager);
+      }
+      else {
+          DBG("DrumMachineAudio:: no wrapper here" );
+      }
+    }
 }
 
 DrumMachineUI::~DrumMachineUI()
@@ -172,10 +183,10 @@ void DrumMachineUI::handleNoteOff(juce::MidiKeyboardState *source, int midiChann
 //==============================================================================
 void DrumMachineUI::paint (juce::Graphics& g)
 {
-//    if (!getPeer()->isFullScreen()){
-//      getPeer()->setFullScreen(true); 
-//    }
-  // paint it
+  //  if (!getPeer()->isFullScreen()){
+  //    getPeer()->setFullScreen(true); 
+  //  }
+  
   g.drawImageAt(offscreenImg, 0, 0);
 
 }
@@ -192,6 +203,7 @@ void DrumMachineUI::resized()
 
 void DrumMachineUI::timerCallback()
 {
+    offscreenImg.clear({0, 0, offscreenImg.getWidth(), offscreenImg.getHeight()});
     sequencerUI.drawSequencer(painterG, offscreenImg);
     if ( ! frameBuffer.ready()){// no framebuffer - normal painting mode
         repaint();

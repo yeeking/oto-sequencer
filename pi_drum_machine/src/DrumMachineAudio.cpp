@@ -8,6 +8,8 @@
 
 #include "DrumMachineAudio.h"
 #include "DrumMachineUI.h"
+// to get access to the audio device
+#include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
 
 //==============================================================================
 DrumMachineAudio::DrumMachineAudio()
@@ -34,25 +36,51 @@ DrumMachineAudio::DrumMachineAudio()
 // constructor body 
 {
     DBG("CONS HosterPluginAudioProcessor");
-   
+  // if standalone mode (which it probably will be :) 
+  // 
+
    // configure the basic audio graph
   setupInitialGraph();
   // patch in some sample players to the graph
   //juce::String sampleDir = "/home/pi/src/JUCE/drum-machine/src/audio/";
-  juce::String sampleDir = "/home/matthewyk/src/ai-enhanced-audio/versioned-docs/ai-audio-book-code/src/TestTools/drum-machine/src/audio/";
+  //juce::String sampleDir = "/home/matthewyk/src/ai-enhanced-audio/versioned-docs/ai-audio-book-code/src/TestTools/drum-machine/src/audio/";
+  juce::String sampleDir = "~/Audio/drum-machine/audio/";
+  juce::File config{sampleDir + "config.txt"};
+  if (! config.exists()){
+    DBG("DrumMachineAudio::config file not there " << config.getFullPathName());
+
+  }
 
   std::vector<juce::String> files = {sampleDir + "kick.wav", sampleDir + "snare.wav", sampleDir + "hat.wav"};
   for (const juce::String& f : files){
-    createAndPatchSamplePlayer(f);
+    if (canLoadSample(f)){
+      createAndPatchSamplePlayer(f);
+    }
   }
   // configure the sequencer 
   setupSequencerCallbacks();
-
 }
 
 DrumMachineAudio::~DrumMachineAudio()
 {
     DBG("DEST ~HosterPluginAudioProcessor");
+}
+
+void DrumMachineAudio::loadConfig(juce::File config)
+{
+  
+}
+
+bool DrumMachineAudio::canLoadSample(juce::String filename)
+{
+  juce::File f{filename};
+  if (!f.exists()) {
+    DBG("rumMachineAudio::canLoadSample checked sample " << filename << " but it does not exist");
+    return false;
+  }
+  return true; 
+
+
 }
 
 //==============================================================================
@@ -121,14 +149,51 @@ void DrumMachineAudio::changeProgramName (int index, const juce::String& newName
   DBG("DrumMachineAudio::changeProgramName" << index << newName);
 }
 
+void DrumMachineAudio::configureAudioDevice(juce::AudioDeviceManager& devMan, juce::String desiredDevice)
+{
+
+// print out all the available devices
+//devMan.scanDevicesIfNeeded
+
+  for (AudioIODeviceType* type : devMan.getAvailableDeviceTypes()){
+    type->scanForDevices();
+    const StringArray devs (type->getDeviceNames ());
+
+    for (int i = 0; i < devs.size(); ++i){
+      DBG("DrumMachineAudio::configureAudioDeviceAudio device " << i<< ":" << devs[i]);
+      if (devs[i].contains(desiredDevice)){
+        DBG("DrumMachineAudio::configureAudioDeviceAudio found my device ");
+      }
+    }
+
+  }
+
+
+  AudioDeviceManager::AudioDeviceSetup newSetup = devMan.getAudioDeviceSetup();
+  DBG("DrumMachineAudio::configureAudioDevice " << devMan.getCurrentAudioDevice()->getName());
+    newSetup.sampleRate = 48000;
+    newSetup.bufferSize = 512;
+    devMan.initialise(
+     2, //int numInputChannelsNeeded,
+     2, //int numOutputChannelsNeeded,
+     nullptr, //XmlElement* const xml,
+     true, //bool selectDefaultDeviceOnFailure,
+     "", //String& preferredDefaultDeviceName,
+     new AudioDeviceManager::AudioDeviceSetup(newSetup)
+  );
+}
+
 //==============================================================================
 void DrumMachineAudio::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
     DBG("HosterPluginAudioProcessor::prepareToPlay");
+    
     tickInterval = DrumMachineAudio::getTickInterval(bpm, sampleRate);
     audioProcGraph->prepareToPlay(sampleRate, samplesPerBlock);
+
+
 }
 
 void DrumMachineAudio::releaseResources()
