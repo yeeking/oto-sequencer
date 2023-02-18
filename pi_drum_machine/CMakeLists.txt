@@ -16,6 +16,7 @@ cmake_minimum_required(VERSION 3.15)
 
 project(myk_drum_machine VERSION 0.0.1)
 
+
 # If you've installed JUCE somehow (via a package manager, or directly using the CMake install
 # target), you'll need to tell this project that it depends on the installed copy of JUCE. If you've
 # included JUCE directly in your source tree (perhaps as a submodule), you'll need to tell CMake to
@@ -110,6 +111,16 @@ target_compile_definitions(myk_drum_machine
 # Conversion to binary-data will happen when your target is built.
 
 # juce_add_binary_data(AudioPluginData SOURCES ...)
+
+
+# target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+#target_compile_options(myk_drum_machine PRIVATE -Werror)
+
+if(MSVC)
+  target_compile_options(${TARGET_NAME} PRIVATE /W4 /WX)
+else()
+  target_compile_options(myk_drum_machine PRIVATE -w)
+endif()
 
 # `target_link_libraries` links libraries and JUCE modules to other libraries or executables. Here,
 # we're linking our executable target to the `juce::juce_audio_utils` module. Inter-module

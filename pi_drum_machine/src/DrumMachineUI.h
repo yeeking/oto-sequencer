@@ -15,24 +15,27 @@
 #include "PluginWindow.h"
 #include "Sequencer.h"
 #include "SequencerUI.h"
+#include "FrameBuffer.h"
 //==============================================================================
 /**
  */
 
-class SequencerUIListener {
-  public:
-  SequencerUIListener(){}
-  ~SequencerUIListener(){}
-  /** override this with functo*/
-  virtual void changeBPM() = 0;
+// class SequencerUIListener {
+//   public:
+//   SequencerUIListener(){}
+//   ~SequencerUIListener(){}
+//   /** override this with functo*/
+//   virtual void changeBPM() = 0;
 
-};
+// };
 
 class DrumMachineUI : public juce::AudioProcessorEditor,
                                          public juce::Button::Listener,
                                          public PluginWindowListener,
                                          private juce::MidiKeyboardState::Listener, 
-                                         public juce::Timer
+                                         public juce::Timer, 
+                                        public juce::Thread
+
 // public juce::MidiKeyboardComponent::Listener
 {
 public:
@@ -50,7 +53,10 @@ public:
 
   void timerCallback() override;
 
+  bool keyPressed(const juce::KeyPress &key) override;
 
+        /** Thread interface - actually runs the low level keyboard listener */
+        void run () override; 
 private:
   // This reference is provided as a quick way for your editor to
   // access the processor object that created it.
@@ -79,5 +85,11 @@ private:
   /** PluginWindowListener interface */
   void pluginCloseButtonClicked() override;
 
+
+  FrameBuffer frameBuffer; 
+  juce::Image offscreenImg;
+  juce::Graphics painterG;  
+  KeyReader keyReader;
+       
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DrumMachineUI)
 };

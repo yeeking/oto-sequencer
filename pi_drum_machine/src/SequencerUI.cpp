@@ -3,33 +3,28 @@
 
 SequencerUI::SequencerUI(Sequencer* _sequencer) 
 : sequencer{_sequencer}, 
-  editor{_sequencer}, 
-  offscreenImg{juce::Image::RGB, 320, 240, true}, 
-  painterG{offscreenImg},
-  Thread{"keyReaderThread"}
-
+  editor{_sequencer}
+//   offscreenImg{juce::Image::RGB, 320, 240, true}, 
+//   painterG{offscreenImg},
 {
-    setWantsKeyboardFocus(true);
-    //startThread(); // enable this if using low level keyboard driver e.g. pi
-    startTimer(100);
+    //setWantsKeyboardFocus(true);
+
 }
 SequencerUI::~SequencerUI()
 {
-    stopThread(100);
 }
 //==============================================================================
 void SequencerUI::paint (juce::Graphics& g)
 {
-    g.drawImageAt(offscreenImg, 0, 0);
+   // g.drawImageAt(offscreenImg, 0, 0);
 }
 
-void SequencerUI::drawSequencer()
+void SequencerUI::drawSequencer(juce::Graphics& painterG, juce::Image& offscreenImg)
 {
      int64 start = juce::Time::currentTimeMillis(); 
     unsigned int xPos = 0;
     unsigned int yPos = 0;
     unsigned int rowHeight = offscreenImg.getHeight() / sequencer->howManySequences();
-    offscreenImg.clear({0, 0, offscreenImg.getWidth(), offscreenImg.getHeight()});
     for (unsigned int seq=0;seq<sequencer->howManySequences(); ++seq){
         drawSequence(painterG, sequencer->getSequence(seq), 
         editor.getCurrentSequence() == seq, 
@@ -82,10 +77,10 @@ void SequencerUI::resized()
 bool SequencerUI::keyPressed(const juce::KeyPress &key)
 {
     std::cout << "SequencerUI::keyPressed: " << key.getKeyCode() << std::endl;
-    //printf("SequencerUI::keyPressed: %c", key.getKeyCode());
+    // printf("SequencerUI::keyPressed: %c", key.getKeyCode());
     // 61 is + 
     // 45 is -
-    // 
+    
 
     if (key.getKeyCode() == '0'){ // increase tbp
         editor.incrementTicksPerStep();
@@ -131,52 +126,31 @@ bool SequencerUI::keyPressed(const juce::KeyPress &key)
     return true; 
 }
 
-void SequencerUI::timerCallback()
+void SequencerUI::rawKeyPressed(char c)
 {
-    drawSequencer();
-    if ( ! frameBuffer.ready()){// no framebuffer - normal painting mode
-        repaint();
+    if (c == ' '){
+        std::vector<double>* stepData = sequencer->getStepDataDirect(
+                editor.getCurrentSequence(), editor.getCurrentStep()
+            );
+        // toggle it
+        stepData->at(Step::note1Ind) = 1 - stepData->at(Step::note1Ind);
     }
-
-    
-}
-
-void SequencerUI::run()
-{   
-
-    while(true){    
-        char c1 = keyReader.getChar();
-        DBG("keycode::" << c1);
-        //char c = KeyReader::getCharNameMap()[keyReader.getChar()];
-        char c = KeyReader::getCharNameMap()[c1];
+    switch(c){
+    case ' ':
+        break;
+    case 'U':
+        editor.moveCursorUp();
+        break;
+    case 'D':
+        editor.moveCursorDown();
+        break;
+    case 'L':
+        editor.moveCursorLeft();
+        break;
+    case 'R':
+        editor.moveCursorRight();
+        break;
         
-        if (c == ' '){
-                std::vector<double>* stepData = sequencer->getStepDataDirect(
-                     editor.getCurrentSequence(), editor.getCurrentStep()
-                 );
-                 // toggle it
-                stepData->at(Step::note1Ind) = 1 - stepData->at(Step::note1Ind);
-        }
-        switch(c){
-            case ' ':
-               break;
-            case 'U':
-                editor.moveCursorUp();
-                break;
-            case 'D':
-                editor.moveCursorDown();
-                break;
-            case 'L':
-                editor.moveCursorLeft();
-                break;
-            case 'R':
-                editor.moveCursorRight();
-                break;
-                
-        }
-   //     const MessageManagerLock mmLock;
-   //     repaint();
-
-
     }
 }
+

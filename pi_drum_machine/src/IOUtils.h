@@ -9,7 +9,7 @@
 #include <termios.h>
 #include <fstream>
 #include <map>
-
+#include <vector>
 
 class Display{
     public:
@@ -73,16 +73,48 @@ class KeyReader
 {
     public:
         //KeyReader(std::string device = "/dev/input/by-id/usb-CHERRY_CHERRY_Keyboard-event-kbd")
-        
-        KeyReader(std::string device = "/dev/input/event0")
+        /** create a raw linux key event reader. If device is specified, 
+         * use that, otherwise, trys a list of devices until one works
+         * 
+        */
+        KeyReader(const std::string& device = "") : 
+        rawEventDeviceReady{false}
         {
-            if ((file_ref = open(device.c_str(), O_RDONLY)) < 0) {
-                perror("KeyReader::construct cannot read keyboard device ");
-                perror(device.c_str());
+            std::cout << "ioutils::keyreader cons setting up dev"  << std::endl;
+            std::vector<std::string> devices = {
+            "/dev/input/by-id/usb-CHERRY_CHERRY_Keyboard-event-kbd",
+            "/dev/input/event3"
+            };
+           setupRawInputDevice(devices[1]);
+        }
+        void setupRawInputDevice(const std::string& forceDevice){
+            rawEventDeviceReady = false; // try to amake it true! 
+  
+            if (forceDevice != ""){
+                std::cout << "ioutils::setupRawInputDevice opening specificed dev " << forceDevice << std::endl;
+                // only try the sent device
+                file_ref = open(forceDevice.c_str(), O_RDONLY);
+                if (file_ref < 0) {rawEventDeviceReady = false; return;}
+                else{rawEventDeviceReady = true;}
+               // if (getChar() != 0) {rawEventDeviceReady = true; return;}
             }
-            else{
-                std::cout << "KeyReader reading from " << device << std::endl;
-            }
+            // else {
+            //     // iterate over the defaults
+            //     for (const std::string& dev : devices){
+            //         std::cout << "ioutils::setupRawInputDevice Trying to open and read" << dev << std::endl;
+            //         file_ref = open(dev.c_str(), O_RDONLY);
+            //         if (file_ref < 0) {
+            //             std::cout << "ioutils::setupRawInputDevice Bad file" << dev << std::endl;
+            //             continue;
+            //             }
+            //         if (getChar() != 0) {
+            //             std::cout << "ioutils::setupRawInputDevice read a char! " << dev << std::endl;
+            //             rawEventDeviceReady = true; 
+            //             return;
+            //             }
+            //     }
+            // }
+
         }
         /** 
          * read a char from keyboard with no echo and instant response
@@ -111,7 +143,8 @@ class KeyReader
         char getChar()
         {
           
-            int rd, code_id, ev_count, key_code;
+            int rd, code_id, ev_count;
+            char key_code{0};
             //std::cout << "KeyUtils::getChar called " << std::endl;
             ev_count = 0;
             key_code = 0;
@@ -214,8 +247,12 @@ class KeyReader
       return intToKey; 
 
     }
+    bool isRawDeviceReady(){
+        return rawEventDeviceReady;
+    }
 
     private:
+        bool rawEventDeviceReady;
         struct input_event ev[64];
         int file_ref;
 };

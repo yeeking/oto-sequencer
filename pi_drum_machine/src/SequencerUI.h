@@ -6,26 +6,24 @@
 #include "IOUtils.h"
 
 #pragma once
-class SequencerUI : public juce::Component , public juce::Timer, public juce::Thread{
+class SequencerUI : public juce::Component {
     public:
         SequencerUI(Sequencer* sequencer);
         ~SequencerUI();
         void paint(juce::Graphics &) override;
         void resized() override;
         bool keyPressed(const juce::KeyPress &key) override;
-        /** Thread interface - actually runs the low level keyboard listener */
-        void run () override; 
-        /** Timer interface - actially updates the display of the sequencer*/
-        void timerCallback() override;
+        /** receives a key from a KeyReader raw device*/
+        void rawKeyPressed(char c);
   /** draws sequencer to offscreen image. */
-        void drawSequencer();
+        void drawSequencer(juce::Graphics& painterG, juce::Image& offscreenImg);
 private:
         Sequencer* sequencer; 
         SequencerEditor editor; 
         FrameBuffer frameBuffer; 
-        juce::Image offscreenImg;
-        juce::Graphics painterG;  
-        KeyReader keyReader;
+        // juce::Image offscreenImg;
+        // juce::Graphics painterG;  
+   
         void drawSequence(juce::Graphics& g, Sequence* seq, bool editorIsCurrent, unsigned int x, unsigned int y, unsigned int width, unsigned int height);
         void drawStep(juce::Graphics& g, Step* step, bool isCurrent, bool editorIsCurrent, unsigned int x, unsigned int y, unsigned int width, unsigned int height);
 };

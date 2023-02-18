@@ -13,8 +13,12 @@
 //==============================================================================
 DrumMachineUI::DrumMachineUI (DrumMachineAudio& p, Sequencer* sequencer)
     : AudioProcessorEditor {&p}, audioProcessor {p}, 
+      offscreenImg{juce::Image::RGB, 320, 240, true}, 
+     painterG{offscreenImg},
     kbd{kbdState, juce::MidiKeyboardComponent::horizontalKeyboard}, 
-    sequencerUI{sequencer}
+    sequencerUI{sequencer}, 
+      Thread{"keyReaderThread"}
+
 {
     DBG("CON HosterPluginAudioProcessorEditor");
     //https://docs.juce.com/master/classTopLevelWindow.html#details    
@@ -29,18 +33,21 @@ DrumMachineUI::DrumMachineUI (DrumMachineAudio& p, Sequencer* sequencer)
     kbdState.addListener(this);
     // in case we got recreated, get the plugin gui back
     releasePluginGUI();
-    addAndMakeVisible(loadBtn);
-    addAndMakeVisible(showUIBtn);
-    addAndMakeVisible(kbd);
-    addAndMakeVisible(sequencerUI);
-
-    // go native if we are in standalone mode
-    // uncomment if you want
-    // if (juce::PluginHostType::getPluginLoadedAs() == juce::AudioProcessor::wrapperType_Standalone){
-    //   juce::TopLevelWindow* win = juce::TopLevelWindow::getTopLevelWindow(0);
-    //   win->setUsingNativeTitleBar(true);
-    // }    
-  //startTimer(100);
+    // addAndMakeVisible(loadBtn);
+    // addAndMakeVisible(showUIBtn);
+    // addAndMakeVisible(kbd);
+    // don't need this as components draw to offscreen 
+    // image 'on command' :)
+    //addAndMakeVisible(sequencerUI);
+    
+    // redraw UI timer
+    startTimer(100);
+  // grab the keyboard
+    setWantsKeyboardFocus(true);
+    // this starts the raw key reader which
+    // should override the 
+    // key focus but only if its working
+    startThread(); // enable this if using low level keyboard driver e.g. pi
 }
 
 DrumMachineUI::~DrumMachineUI()
@@ -48,6 +55,7 @@ DrumMachineUI::~DrumMachineUI()
   DBG("DEST ~HosterPluginAudioProcessorEditor");
   //releasePluginGUI();
   //delete pluginWindow;
+  stopThread(100);
 }
 
 
@@ -167,19 +175,9 @@ void DrumMachineUI::paint (juce::Graphics& g)
 //    if (!getPeer()->isFullScreen()){
 //      getPeer()->setFullScreen(true); 
 //    }
+  // paint it
+  g.drawImageAt(offscreenImg, 0, 0);
 
-//  // DBG("HosterPluginAudioProcessorEditor::paint");
-//     // (Our component is opaque, so we must completely fill the background with a solid colour)
-//     g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-//     //juce::String msg {"" + std::to_string(juce::Time::currentTimeMillis())};
-//     //if (audioProcessor.pluginInstance) msg = audioProcessor.pluginInstance->getName() + msg; 
-//     //else msg = "no plugin " + msg; 
-//     g.setColour (juce::Colours::white);
-//     g.setFont (15.0f);
-//     juce::String msg{"cmake vst host v0.4"};
-//     g.drawFittedText (msg, getLocalBounds(), juce::Justification::centred, 1);
-//  // DBG("HosterPluginAudioProcessorEditor::paint ends");
-  
 }
 
 void DrumMachineUI::resized()
@@ -194,6 +192,36 @@ void DrumMachineUI::resized()
 
 void DrumMachineUI::timerCallback()
 {
-
+    sequencerUI.drawSequencer(painterG, offscreenImg);
+    if ( ! frameBuffer.ready()){// no framebuffer - normal painting mode
+        repaint();
+    }
 }
 
+
+bool DrumMachineUI::keyPressed(const juce::KeyPress &key)
+{
+    std::cout << "DrumMachineUI::keyPressed: " << key.getKeyCode() << std::endl;
+    sequencerUI.keyPressed(key);
+    return true; 
+}
+
+
+void DrumMachineUI::run()
+{   
+    while(true){    
+        char c1 = keyReader.getChar();
+        //setWantsKeyboardFocus(false);
+        if (this->hasKeyboardFocus(true)){
+          // we will manually trigger events
+          this->giveAwayKeyboardFocus();
+        }
+        char c = KeyReader::getCharNameMap()[c1];
+        DBG("DrumMachineUI::raw key: " << c1 << " to: " << c);
+
+        // now trigger key pressed
+        juce::KeyPress key{c};
+        sequencerUI.rawKeyPressed(c);
+        //this->keyPressed(key);
+    }// end while read key
+}
