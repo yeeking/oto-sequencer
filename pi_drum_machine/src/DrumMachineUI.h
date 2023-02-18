@@ -19,6 +19,15 @@
 /**
  */
 
+class SequencerUIListener {
+  public:
+  SequencerUIListener(){}
+  ~SequencerUIListener(){}
+  /** override this with functo*/
+  virtual void changeBPM() = 0;
+
+};
+
 class DrumMachineUI : public juce::AudioProcessorEditor,
                                          public juce::Button::Listener,
                                          public PluginWindowListener,

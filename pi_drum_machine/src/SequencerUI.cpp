@@ -86,6 +86,7 @@ bool SequencerUI::keyPressed(const juce::KeyPress &key)
     // 61 is + 
     // 45 is -
     // 
+
     if (key.getKeyCode() == '0'){ // increase tbp
         editor.incrementTicksPerStep();
         editor.incrementTicksPerStep();
