@@ -135,8 +135,26 @@ void SequencerUI::rawKeyPressed(char c)
         // toggle it
         stepData->at(Step::note1Ind) = 1 - stepData->at(Step::note1Ind);
     }
+    
     switch(c){
     case ' ':
+        break;
+    case '0':
+        editor.incrementTicksPerStep();
+        editor.incrementTicksPerStep();
+        break;
+    case '9':
+        editor.decrementTicksPerStep();    
+        editor.decrementTicksPerStep();   
+    case '-':
+        editor.setEditMode(SequencerEditorMode::settingSeqLength);
+        editor.moveCursorLeft();
+        editor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
+        break;        
+    case '+':
+        editor.setEditMode(SequencerEditorMode::settingSeqLength);
+        editor.moveCursorRight();
+        editor.setEditMode(SequencerEditorMode::selectingSeqAndStep);
         break;
     case 'U':
         editor.moveCursorUp();

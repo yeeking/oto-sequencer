@@ -217,8 +217,7 @@ void DrumMachineUI::run()
           this->giveAwayKeyboardFocus();
         }
         char c = KeyReader::getCharNameMap()[c1];
-        DBG("DrumMachineUI::raw key: " << c1 << " to: " << c);
-
+        DBG("DrumMachineUI::raw key '%c' to '%c'"<< (int)c1 <<  (int)c);
         // now trigger key pressed
         juce::KeyPress key{c};
         sequencerUI.rawKeyPressed(c);
