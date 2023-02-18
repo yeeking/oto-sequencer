@@ -11,7 +11,7 @@
 #include <string>
 #include <functional>
 #include <map>
-#include "MidiUtils.h"
+//#include "MidiUtils.h"
 
 /** default spec for a Step's data, 
  * so data[0] specifies length, 
@@ -77,6 +77,7 @@ class Sequence{
     std::vector<double> getStepData(int step) const;
     /** get the momory address of the step data for the requested step*/
     std::vector<double>* getStepDataDirect(int step);
+    Step* getStep(int step);
     /** set the data for the sent step */
     void setStepData(unsigned int step, std::vector<double> data);
     /** retrieve a copy of the step data for the current step */
@@ -113,7 +114,7 @@ class Sequence{
      * It is reset when the sequence
      * hits step 0 again
      */
-    void setLengthAdjustment(int lengthAdjust);
+    void setLengthAdjustment(signed int lengthAdjust);
 
     /** how many steps does this sequence have it total. This is independent of the length. Length can be lower than how many steps*/
     unsigned int howManySteps() const ;
@@ -166,15 +167,15 @@ class Sequence{
     /** provides access to the sequencer so this sequence can change things*/
     Sequencer* sequencer;
     /** current length. This is a signed int as we apply length adjustments to it that might be negative*/
-    signed int currentLength;
+    unsigned int currentLength;
     /** Current seq length. This is signed in case we are computing current step using currentLength*/
-    signed int currentStep;
+    unsigned int currentStep;
     unsigned short midiChannel;
     std::vector<Step> steps;
     SequenceType type;
     // temporary sequencer adjustment parameters that get reset at step 0
     double transpose; 
-    int lengthAdjustment;
+    signed int lengthAdjustment;
     int ticksPerStep;
     /** stores the current default for this sequence, whereas ticksperstep 
      * is the temporarily adjusted one 
@@ -248,7 +249,7 @@ class Sequencer  {
       bool assertSequence(unsigned int sequence) const;
       
       /// class data members  
-      std::vector<Sequence> sequences;;
+      std::vector<Sequence> sequences;
 };
 
 

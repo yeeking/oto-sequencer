@@ -72,11 +72,16 @@ class Display{
 class KeyReader 
 {
     public:
-        KeyReader(std::string device = "/dev/input/event0")
+        KeyReader(std::string device = "/dev/input/by-id/usb-CHERRY_CHERRY_Keyboard-event-kbd")
+        
+        //KeyReader(std::string device = "/dev/input/event0")
         {
             if ((file_ref = open(device.c_str(), O_RDONLY)) < 0) {
                 perror("KeyReader::construct cannot read keyboard device ");
                 perror(device.c_str());
+            }
+            else{
+                std::cout << "KeyReader reading from " << device << std::endl;
             }
         }
         /** 
@@ -116,9 +121,9 @@ class KeyReader
             {
                 rd = read(file_ref, ev, sizeof(struct input_event) * 64);
                 //printf("read %i\n", rd);
-                if (rd > 48) 
+                if (rd > 72) 
                 {
-                  //printf("Ignoring\n");
+                  printf("read size is %i Ignoring\n", rd);
                   continue; // holding lots of keys, ignore.
                 }
                 ev_count = rd / sizeof(struct input_event);
@@ -139,16 +144,16 @@ class KeyReader
                // if (ev[code_id].value == 1 || ev[code_id].value == 2)
                 //printf("KeyUtisl:: %i %i \n", key_code, ev[code_id].value);   
                
-                if (ev[code_id].value == 0) // only break on key up...
+                if (ev[code_id].value == 1) // only break on key down (0 is key up)...
                 {
-                   std::cout << "KeyUtils:: breaking " << std::endl;
+                   //std::cout << "KeyUtils:: breaking " << std::endl;
                     break;
                 }
                 else {
                     //std::cout << "KeyUtils:: waiting " << std::endl;
                 }
             }
-            //std::cout << "KeyUtils:: returning " << key_code << " calls " << calls << std::endl;
+            //std::cout << "KeyUtils:: returning " << key_code << std::endl;
             return key_code;  
         }
     /** returns a map from the chars obtained from getChar cast to ints to 

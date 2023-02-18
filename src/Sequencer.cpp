@@ -5,8 +5,8 @@
 #include <cmath> // fmod
 #include "Sequencer.h"
 #include <assert.h>     /* assert */
-#include "ChordUtils.h"
-
+//#include "ChordUtils.h"
+#include "SequencerUtils.h"
 Step::Step() : active{true}
 {
   data.push_back(0.0);
@@ -26,9 +26,9 @@ std::vector<double>* Step::getDataDirect()
 
 
 /** sets the data stored in this step */
-void Step::setData(std::vector<double> data)
+void Step::setData(std::vector<double> _data)
 {
-  this->data = data; 
+  this->data = _data; 
 }
 
 /** update one value in the data vector for this step*/
@@ -63,16 +63,16 @@ bool Step::isActive() const
   return active; 
 }
 
-Sequence::Sequence(Sequencer* sequencer, 
+Sequence::Sequence(Sequencer* _sequencer, 
                   unsigned int seqLength, 
-                  unsigned short midiChannel) 
-: sequencer{sequencer}, currentStep{0},  
-  midiChannel{midiChannel}, type{SequenceType::midiNote}, 
+                  unsigned short _midiChannel) 
+: sequencer{_sequencer}, currentStep{0},  
+  midiChannel{_midiChannel}, type{SequenceType::midiNote}, 
   transpose{0}, lengthAdjustment{0}, ticksPerStep{4}, originalTicksPerStep{4}, ticksElapsed{0}, 
   midiScaleToDrum{MidiUtils::getScaleMidiToDrumMidi()}
 {
   currentLength = seqLength;
-  for (auto i=0;i<seqLength;i++)
+  for (unsigned int i=0;i<seqLength;i++)
   {
     Step s;
     s.setCallback([i](std::vector<double>* data){
@@ -113,6 +113,10 @@ void Sequence::tick(bool trigger)
           break;
         case SequenceType::tickChanger:
           triggerTickType();
+          break;
+        case SequenceType::chordMidi:
+          break;
+        case SequenceType::samplePlayer:
           break;
         default:
           std::cout << "Sequnce::tick warning unkown seq type" << std::endl;
@@ -176,36 +180,21 @@ void Sequence::triggerMidiDrumType()
 
 void Sequence::triggerMidiChordType()
 {
-  // this is a nice tricksy one
-  // we make several local copies of the step
-  // one for each note in the chord
-  std::vector<double>* data = steps[currentStep].getDataDirect();
-  assert(data->size() > 0);
-  if (data->at(Step::note1Ind) > 0)
-  {
-  std::vector<double> notes = ChordUtils::getChord(
-   (unsigned int) data->at(Step::note1Ind),
-   (unsigned int) data->at(Step::velInd)
-  );
-  std::cout << "Sequencer::note " << notes[0] << ":" << data->at(Step::note1Ind) << std::endl;
-
-  // for (auto i=0;i<notes.size();i++)
+  // // this is a nice tricksy one
+  // // we make several local copies of the step
+  // // one for each note in the chord
+  // std::vector<double>* data = steps[currentStep].getDataDirect();
+  // assert(data->size() > 0);
+  // if (data->at(Step::note1Ind) > 0)
   // {
-  //   Step s = steps[currentStep];
-  //   std::vector<double>* data = s.getDataDirect();
-  //   data->at(Step::note1Ind) = notes[i];
-  //   // apply changes to local copy if needed      
-  //   if(transpose > 0) 
-  //   {
-  //     if (data->at(Step::note1Ind) > 0 ) // only transpose non-zero steps
-  //     {
-  //       data->at(Step::note1Ind) = fmod(data->at(Step::note1Ind) + transpose, 127);
-  //     }
-  //   }
-  //   // trigger the local, adjusted copy of the step
-  //   s.trigger();
-  // }
-  }   
+  // std::vector<double> notes = ChordUtils::getChord(
+  //  (unsigned int) data->at(Step::note1Ind),
+  //  (unsigned int) data->at(Step::velInd)
+  // );
+  // std::cout << "Sequencer::note " << notes[0] << ":" << data->at(Step::note1Ind) << std::endl;
+
+ 
+  // }   
 }
 
 
@@ -250,7 +239,7 @@ void Sequence::triggerTickType()
 } 
 
 
-void Sequence::setLengthAdjustment(int lenAdjust)
+void Sequence::setLengthAdjustment(signed int lenAdjust)
 {
   // make sure we have enough steps
   this->ensureEnoughStepsForLength(currentLength + lenAdjust);
@@ -292,6 +281,11 @@ std::vector<double>* Sequence::getStepDataDirect(int step)
 {
   return steps[step].getDataDirect();
 }
+Step* Sequence::getStep(int step)
+{
+  return &steps[step];
+}
+
 
 std::vector<double> Sequence::getCurrentStepData() const
 {
