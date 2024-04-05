@@ -1,4 +1,6 @@
-cmake_minimum_required (VERSION 3.00)
+cmake_minimum_required(VERSION 3.10)
+
+SET(CMAKE_CXX_STANDARD 14)
 
 SET(GCC_COVERAGE_COMPILE_FLAGS "-Wno-psabi")
 
@@ -8,6 +10,7 @@ SET(GCC_COVERAGE_COMPILE_FLAGS "-Wno-psabi")
 
 # Define the project
 project(oto-sequencer C CXX)
+
 
 add_definitions(${GCC_COVERAGE_COMPILE_FLAGS})
 
@@ -53,6 +56,12 @@ add_executable(testit src/unit_tests.cpp)
 add_executable(oto-sequencer-pi src/MainPi.cpp)
 # raw input version using linux /dev/input
 add_executable(oto-sequencer-raw src/MainRaw.cpp)
+
+# set_property(TARGET oto-sequencer  PROPERTY CXX_STANDARD 17)
+# set_property(TARGET testit  PROPERTY CXX_STANDARD 17)
+# set_property(TARGET oto-sequencer-pi  PROPERTY CXX_STANDARD 17)
+# set_property(TARGET oto-sequencer-raw  PROPERTY CXX_STANDARD 17)
+
 
 # link the main executable to the rapidlib library and pthreads
 target_link_libraries(oto-sequencer  seq-lib sequtil-lib chordutil-lib midi-lib  -lrtmidi ml-libs ${CMAKE_THREAD_LIBS_INIT})

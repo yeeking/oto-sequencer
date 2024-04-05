@@ -11,7 +11,7 @@
 #include <string>
 #include <functional>
 #include <map>
-//#include "MidiUtils.h"
+#include "MidiUtils.h"
 
 /** default spec for a Step's data, 
  * so data[0] specifies length, 
